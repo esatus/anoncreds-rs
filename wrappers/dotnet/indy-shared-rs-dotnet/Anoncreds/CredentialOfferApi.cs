@@ -1,12 +1,12 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class CredentialOfferApi
     {
@@ -16,7 +16,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="schemaId">Id of the corresponding schema.</param>
         /// <param name="credDefObject">Credential definition.</param>
         /// <param name="keyProofObject">Key correctness proof.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="CredentialOffer"/>.</returns>
         public static async Task<CredentialOffer> CreateCredentialOfferAsync(
             string schemaId,
@@ -29,7 +29,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             CredentialOffer credOfferObject = await CreateCredentialOfferObject(credOfferObjectHandle);
@@ -42,7 +42,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="schemaId">Id of the corresponding schema.</param>
         /// <param name="credDefObjectJson">Credential definition as JSON string.</param>
         /// <param name="keyProofObjectJson">Key correctness proof as JSON string.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="CredentialOffer"/> as JSON string.</returns>
         public static async Task<string> CreateCredentialOfferJsonAsync(
             string schemaId,
@@ -60,7 +60,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string credOfferJson = await ObjectApi.ToJsonAsync(credOfferObjectHandle);

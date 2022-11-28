@@ -1,12 +1,12 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class CredentialDefinitionApi
     {
@@ -18,7 +18,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="tag">Tag name.</param>
         /// <param name="signatureType">Type of the sginature.</param>
         /// <param name="supportRevocation">Flag if revocation is supported or not.</param>
-        /// <exception cref="SharedRsException">Throws if any provided parameters are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any provided parameters are invalid.</exception>
         /// <returns>The new <see cref="CredentialDefinition"/>, <see cref="CredentialDefinitionPrivate"/> and <see cref="CredentialKeyCorrectnessProof"/>.</returns>
         public static async Task<(CredentialDefinition, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof)> CreateCredentialDefinitionAsync(
             string originDid,
@@ -43,7 +43,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             CredentialDefinition credDefObject = await CreateCredentialDefinitonObject(credDefHandle);
@@ -60,7 +60,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="tag">Tag name.</param>
         /// <param name="signatureType">Type of the sginature.</param>
         /// <param name="supportRevocation">Flag if revocation is supported or not.</param>
-        /// <exception cref="SharedRsException">Throws if any provided parameters are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any provided parameters are invalid.</exception>
         /// <returns>The new <see cref="CredentialDefinition"/> as JSON string, <see cref="CredentialDefinitionPrivate"/> as JSON string and <see cref="CredentialKeyCorrectnessProof"/> as JSON String.</returns>
         public static async Task<(string, string, string)> CreateCredentialDefinitionJsonAsync(
             string originDid,
@@ -88,7 +88,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string credDefObjectJson = await ObjectApi.ToJsonAsync(credDefHandle);
@@ -103,7 +103,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="credDefObject">Definition to get the value from.</param>
         /// <param name="attributeName">Name of the attribute.</param>
-        /// <exception cref="SharedRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObject"/>.</returns>
         public static async Task<string> GetCredentialDefinitionAttributeAsync(CredentialDefinition credDefObject, string attributeName)
         {
@@ -113,7 +113,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             return await Task.FromResult(result);
         }
@@ -122,7 +122,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="credDefObjectJson">Definition as JSON string to get the value from.</param>
         /// <param name="attributeName">Name of the attribute.</param>
-        /// <exception cref="SharedRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObject"/>.</returns>
         public static async Task<string> GetCredentialDefinitionAttributeAsync(string credDefObjectJson, string attributeName)
         {
@@ -134,7 +134,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             return await Task.FromResult(result);
         }
@@ -144,7 +144,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a <see cref="CredentialDefinition"/> object from json <see cref="string"/>.
         /// </summary>
         /// <param name="credDefJson">Json string encoding a credential definition object.</param>
-        /// <exception cref="SharedRsException">Throws when <paramref name="credDefJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when <paramref name="credDefJson"/> is invalid.</exception>
         /// <returns>The new <see cref="CredentialDefinition"/> object.</returns>
         public static async Task<CredentialDefinition> CreateCredentialDefinitionFromJsonAsync(string credDefJson)
         {
@@ -154,7 +154,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             CredentialDefinition result = await CreateCredentialDefinitonObject(credDefHandle);

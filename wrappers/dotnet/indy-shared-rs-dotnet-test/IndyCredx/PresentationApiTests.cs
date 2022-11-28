@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class PresentationApiTests
     {
@@ -634,8 +634,8 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             _ = await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws SharedRsException when given invalid json string.")]
-        public async Task CreatePresentationFromJsonAsyncThrowsSharedRsException()
+        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when given invalid json string.")]
+        public async Task CreatePresentationFromJsonAsyncThrowsAnoncredsRsException()
         {
             //Arrange
             string presentationJson = "{}";
@@ -644,7 +644,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
 
             //Assert
-            _ = await act.Should().ThrowAsync<SharedRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 

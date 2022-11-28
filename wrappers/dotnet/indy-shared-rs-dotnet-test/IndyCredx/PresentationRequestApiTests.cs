@@ -1,11 +1,11 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class PresentationRequestApiTests
     {
@@ -100,7 +100,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws SharedRsException when Json string is invalid.")]
+        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when Json string is invalid.")]
         public async Task CreatePresReqFromJsonAsyncThrowsExceptionForInvalidString()
         {
             //Arrange
@@ -110,7 +110,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presReqJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

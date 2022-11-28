@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace indy_shared_rs_dotnet.Models
+namespace anoncreds_rs_dotnet.Models
 {
     public class Structures
     {

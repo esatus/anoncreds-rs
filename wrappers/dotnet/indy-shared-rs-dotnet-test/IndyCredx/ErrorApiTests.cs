@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Anoncreds;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class ErrorApiTests
     {

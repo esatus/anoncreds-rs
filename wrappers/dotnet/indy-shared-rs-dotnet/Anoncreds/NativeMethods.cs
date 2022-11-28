@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     internal static class NativeMethods
     {

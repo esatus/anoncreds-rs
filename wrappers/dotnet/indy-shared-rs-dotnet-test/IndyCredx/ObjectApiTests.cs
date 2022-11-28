@@ -1,11 +1,11 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     internal class ObjectApiTests
     {
@@ -24,7 +24,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
 
         }
 
-        [Test, TestCase(TestName = "GetTypeNameAsync() throws SharedRsException if object handle is invalid.")]
+        [Test, TestCase(TestName = "GetTypeNameAsync() throws AnoncredsRsException if object handle is invalid.")]
         public async Task GetTypeNameThrowsException()
         {
             //Arrange
@@ -33,7 +33,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await ObjectApi.GetTypeNameAsync(new IntPtr());
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 

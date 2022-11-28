@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace indy_shared_rs_dotnet.Models
+namespace anoncreds_rs_dotnet.Models
 {
     public enum PredicateTypes
     {

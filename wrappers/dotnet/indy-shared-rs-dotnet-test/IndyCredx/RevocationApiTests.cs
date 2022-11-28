@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class RevocationApiTests
     {
@@ -37,7 +37,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             revRegDeltaObject.Should().BeOfType(typeof(RevocationRegistryDelta));
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryAsync() throws SharedRsException when provided credential definition is invalid.")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryAsync() throws AnoncredsRsException when provided credential definition is invalid.")]
         public async Task CreateRevocationRegistryAsyncThrowsException()
         {
             //Arrange
@@ -55,7 +55,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryAsync(issuerDid, new(), "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>(); 
+            await act.Should().ThrowAsync<AnoncredsRsException>(); 
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() returns a CredentialDefintion, CredentialDefinitionPrivate and CredentialKeyCorrectnessProof object.")]
@@ -81,7 +81,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             JObject.Parse(revRegDeltaObject)["ver"].Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() throws SharedRsException when provided credential definition is invalid.")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() throws AnoncredsRsException when provided credential definition is invalid.")]
         public async Task CreateRevocationRegistryJsonAsyncThrowsException()
         {
             //Arrange
@@ -93,7 +93,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, "{}", "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -129,7 +129,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws SharedRsException when provided with invalid json string.")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
         public async Task CreateRevocationRegistryFromJsonAsyncThrowsExceptionForInvalidString()
         {
             //Arrange
@@ -139,7 +139,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -187,7 +187,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws SharedRsException when provided with invalid json string.")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
         public async Task CreateRevocationRegistryDefinitionFromJsonAsyncThrowsExceptionForInvalidString()
         {
             //Arrange
@@ -197,7 +197,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -238,7 +238,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             revRegDeltaObject.Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws SharedRsException when revocation registry is invalid.")]
+        [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws AnoncredsRsException when revocation registry is invalid.")]
         public async Task UpdateRevocationRegistryThrowsException()
         {
             //Arrange
@@ -269,7 +269,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() works.")]
@@ -307,7 +307,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             revRegDeltaJson.Should().NotBeEmpty();
         }
 
-        [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws SharedRsException when revocation registry is invalid.")]
+        [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws AnoncredsRsException when revocation registry is invalid.")]
         public async Task UpdateRevocationRegistryThrowsExceptionWithJson()
         {
             //Arrange
@@ -377,7 +377,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Value.Revoked.Should().HaveCount(1);
         }
 
-        [Test, TestCase(TestName = "RevokeCredential() throws SharedRsException when revocation registry is invalid.")]
+        [Test, TestCase(TestName = "RevokeCredential() throws AnoncredsRsException when revocation registry is invalid.")]
         public async Task RevokeCredentialThrowsException()
         {
             //Arrange
@@ -406,7 +406,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "RevokeCredentialAsync() works.")]
@@ -447,7 +447,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Value.Revoked.Should().HaveCount(1);
         }
 
-        [Test, TestCase(TestName = "RevokeCredential() throws SharedRsException when revocation registry is invalid.")]
+        [Test, TestCase(TestName = "RevokeCredential() throws AnoncredsRsException when revocation registry is invalid.")]
         public async Task RevokeCredentialThrowsExceptionWithJson()
         {
             //Arrange
@@ -527,7 +527,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Value.Revoked.Contains(2).Should().BeTrue();
         }
 
-        [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws SharedRsException when one delta is invalid.")]
+        [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws AnoncredsRsException when one delta is invalid.")]
         public async Task MergeRevocationRegistryDeltasASyncThrowsException()
         {
             //Arrange
@@ -569,7 +569,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.MergeRevocationRegistryDeltasAsync(delta1, new());
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "MergeRevocationRegistryAsync() works.")]
@@ -622,7 +622,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Value.Revoked.Contains(2).Should().BeTrue();
         }
 
-        [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws SharedRsException when one delta is invalid.")]
+        [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws AnoncredsRsException when one delta is invalid.")]
         public async Task MergeRevocationRegistryDeltasASyncThrowsExceptionWithJson()
         {
             //Arrange
@@ -700,7 +700,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws SharedRsException when revocation registry delta is invalid.")]
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
         public async Task CreateOrUpdateRevocationStateAsyncThrowsException()
         {
             //Arrange
@@ -733,7 +733,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() works.")]
@@ -772,7 +772,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws SharedRsException when revocation registry delta is invalid.")]
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
         public async Task CreateOrUpdateRevocationStateAsyncThrowsExceptionWithJson()
         {
             //Arrange
@@ -805,7 +805,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -846,7 +846,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws SharedRsException when provided with an invalid json string.")]
+        [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws AnoncredsRsException when provided with an invalid json string.")]
         public async Task CreateRevocationStateFromJsonAsyncThrowsExceptionsForInvalidString()
         {
             //Arrange
@@ -856,7 +856,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationStateFromJsonAsync(revStateJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -892,7 +892,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() throws SharedRsException for invalid attribute name.")]
+        [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() throws AnoncredsRsException for invalid attribute name.")]
         public async Task GetRevocationDefinitionAttributeAsyncThrowsException()
         {
             //Arrange
@@ -918,7 +918,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(revRegDefObject, attributeName);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

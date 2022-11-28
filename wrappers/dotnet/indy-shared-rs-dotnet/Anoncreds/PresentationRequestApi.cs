@@ -1,20 +1,20 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class PresentationRequestApi
     {
         /// <summary>
         /// Generates a new <see cref="string"/> representation of a random nonce.
         /// </summary>
-        /// <exception cref="SharedRsException">Throws when nonce can not be generated.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when nonce can not be generated.</exception>
         /// <returns>New nonce.</returns>
         public static async Task<string> GenerateNonceAsync()
         {
@@ -23,7 +23,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             return await Task.FromResult(result);
         }
@@ -32,7 +32,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a new <see cref="PresentationRequest"/> object from a provided json <see cref="string"/>.
         /// </summary>
         /// <param name="presReqJson">Json string representing a presentation request object.</param>
-        /// <exception cref="SharedRsException">Throws when <paramref name="presReqJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when <paramref name="presReqJson"/> is invalid.</exception>
         /// <exception cref="IndexOutOfRangeException">Throws when <paramref name="presReqJson"/> is empty.</exception>
         /// <returns>A new <see cref="PresentationRequest"/>.</returns>
         public static async Task<PresentationRequest> CreatePresReqFromJsonAsync(string presReqJson)
@@ -42,7 +42,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             PresentationRequest presReq = await CreatePresentationRequestObject(presReqObjectHandle);
             return await Task.FromResult(presReq);

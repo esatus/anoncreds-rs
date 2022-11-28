@@ -1,11 +1,11 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class RevocationApi
     {
@@ -19,7 +19,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="issuanceType">Type of issuance.</param>
         /// <param name="maxCredNumber">Maximum number of credential entries.</param>
         /// <param name="tailsDirPath">Path to tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> objects.</returns>
         public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationRegistry, RevocationRegistryDelta)> CreateRevocationRegistryAsync(
             string originDid,
@@ -51,7 +51,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             RevocationRegistryDefinition regDefObject = await CreateRevocationRegistryDefinitionObject(regDefObjectHandle);
             RevocationRegistryDefinitionPrivate regDefPvtObject = await CreateRevocationRegistryDefinitionPrivateObject(regDefPvtObjectHandle);
@@ -71,7 +71,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="issuanceType">Type of issuance.</param>
         /// <param name="maxCredNumber">Maximum number of credential entries.</param>
         /// <param name="tailsDirPath">Path to tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> all as JSON.</returns>
         public static async Task<(string, string, string, string)> CreateRevocationRegistryJsonAsync(
             string originDid,
@@ -105,7 +105,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             string regDefJson = await ObjectApi.ToJsonAsync(regDefObjectHandle);
             string regDefPvtJson = await ObjectApi.ToJsonAsync(regDefPvtObjectHandle);
@@ -119,7 +119,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a new <see cref="RevocationRegistry"/> object from json <see cref="string"/>.
         /// </summary>
         /// <param name="revRegJson">Json <see cref="string"/> representing a <see cref="RevocationRegistry"/> object.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="revRegJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revRegJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revRegJson"/> is empty.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/> object.</returns>
         public static async Task<RevocationRegistry> CreateRevocationRegistryFromJsonAsync(string revRegJson)
@@ -129,7 +129,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             RevocationRegistry revRegObject = await CreateRevocationRegistryObject(regEntryObjectHandle);
@@ -140,7 +140,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a new <see cref="RevocationRegistryDefinition"/> object from json <see cref="string"/>.
         /// </summary>
         /// <param name="revRegDefJson">Json <see cref="string"/> representing a <see cref="RevocationRegistryDefinition"/> object.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="revRegDefJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revRegDefJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revRegDefJson"/> is empty.</exception>
         /// <returns>The deserialized <see cref="RevocationRegistryDefinition"/> object that was serialized in json.</returns>
         public static async Task<RevocationRegistryDefinition> CreateRevocationRegistryDefinitionFromJsonAsync(string revRegDefJson)
@@ -150,7 +150,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             RevocationRegistryDefinition revRegDefObject = await CreateRevocationRegistryDefinitionObject(revRegDefObjectHandle);
@@ -165,7 +165,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="issued">Issued entries.</param>
         /// <param name="revoked">Revoked entries.</param>
         /// <param name="tailsPath">Path of tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/>.</returns>
         public static async Task<(RevocationRegistry, RevocationRegistryDelta)> UpdateRevocationRegistryAsync(
             RevocationRegistryDefinition revRegDefObject,
@@ -189,7 +189,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             RevocationRegistry revRegObjectUpdated = await CreateRevocationRegistryObject(revRegObjectHandle);
             RevocationRegistryDelta revRegDeltaObject = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandle);
@@ -205,7 +205,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="issued">Issued entries.</param>
         /// <param name="revoked">Revoked entries.</param>
         /// <param name="tailsPath">Path of tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/> as JSON.</returns>
         public static async Task<(string, string)> UpdateRevocationRegistryAsync(
             string revRegDefJson,
@@ -234,7 +234,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             string revRegUpdatedJson = await ObjectApi.ToJsonAsync(revRegObjectHandle);
             string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandle);
@@ -249,7 +249,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="revRegObject">Corresponding revocation registry.</param>
         /// <param name="credRevIdx">Index of the <see cref="Credential"/> in the revocation registry.</param>
         /// <param name="tailsPath">Path to tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> object with the refered <see cref="Credential"/> revoked.</returns>
         public static async Task<(RevocationRegistry, RevocationRegistryDelta)> RevokeCredentialAsync(
             RevocationRegistryDefinition revRegDefObject,
@@ -271,7 +271,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             RevocationRegistry revRegObjectUpdated = await CreateRevocationRegistryObject(revRegObjectHandle);
             RevocationRegistryDelta revRegDeltaObject = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandle);
@@ -286,7 +286,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="revRegJson">Corresponding revocation registry.</param>
         /// <param name="credRevIdx">Index of the <see cref="Credential"/> in the revocation registry.</param>
         /// <param name="tailsPath">Path to tails file.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> object with the refered <see cref="Credential"/> revoked.</returns>
         public static async Task<(string, string)> RevokeCredentialAsync(
             string revRegDefJson,
@@ -313,7 +313,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             string revRegUpdatedJson = await ObjectApi.ToJsonAsync(revRegObjectHandle);
             string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandle);
@@ -326,7 +326,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="revRegDeltaObject1">First delta.</param>
         /// <param name="revRegDeltaObject2">Second delta.</param>
-        /// <exception cref="SharedRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
         /// <returns>The merged <see cref="RevocationRegistryDelta"/>.</returns>
         public static async Task<RevocationRegistryDelta> MergeRevocationRegistryDeltasAsync(
             RevocationRegistryDelta revRegDeltaObject1,
@@ -342,7 +342,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             RevocationRegistryDelta revRegDeltaObjectNew = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandleNew);
@@ -355,7 +355,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="revRegDeltaJson1">First delta.</param>
         /// <param name="revRegDeltaJson2">Second delta.</param>
-        /// <exception cref="SharedRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
         /// <returns>The merged <see cref="RevocationRegistryDelta"/>.</returns>
         public static async Task<string> MergeRevocationRegistryDeltasAsync(
             string revRegDeltaJson1,
@@ -376,7 +376,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandleNew);
@@ -393,7 +393,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
         /// <param name="revState">Revocation state to update.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
         public static async Task<CredentialRevocationState> CreateOrUpdateRevocationStateAsync(
             RevocationRegistryDefinition revRegDefObject,
@@ -417,7 +417,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             CredentialRevocationState credRevStateObject = await CreateCredentialRevocationStateObject(credRevStateObjectHandle);
@@ -434,7 +434,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
         /// <param name="revState">Revocation state to update.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
         public static async Task<string> CreateOrUpdateRevocationStateAsync(
             string revRegDefJson,
@@ -465,7 +465,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string credRevStateJson = await ObjectApi.ToJsonAsync(credRevStateObjectHandle);
@@ -477,7 +477,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a new <see cref="CredentialRevocationState"/> object from json <see cref="string"/>.
         /// </summary>
         /// <param name="revStateJson">Json <see cref="string"/> representing a revocation object.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="revStateJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revStateJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revStateJson"/> is empty.</exception>
         /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
         public static async Task<CredentialRevocationState> CreateRevocationStateFromJsonAsync(string revStateJson)
@@ -487,7 +487,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             CredentialRevocationState revStateObject = await CreateCredentialRevocationStateObject(revStateObjectHandle);
             return await Task.FromResult(revStateObject);
@@ -498,7 +498,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="revRegDefObject">Revocation registry definition from which the attribute is requested.</param>
         /// <param name="attributeName">Name of the requested attribute.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="attributeName"/> or <paramref name="revRegDefObject"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="attributeName"/> or <paramref name="revRegDefObject"/> are invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="revRegDefObject"/>.</returns>
         public static async Task<string> GetRevocationRegistryDefinitionAttributeAsync(
             RevocationRegistryDefinition revRegDefObject,
@@ -514,7 +514,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(result);
@@ -525,7 +525,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="revRegDefJson">Revocation registry definition from which the attribute is requested.</param>
         /// <param name="attributeName">Name of the requested attribute.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="attributeName"/> or <paramref name="revRegDefObject"/> are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="attributeName"/> or <paramref name="revRegDefObject"/> are invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="revRegDefObject"/>.</returns>
         public static async Task<string> GetRevocationRegistryDefinitionAttributeAsync(
             string revRegDefJson,
@@ -544,7 +544,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(result);

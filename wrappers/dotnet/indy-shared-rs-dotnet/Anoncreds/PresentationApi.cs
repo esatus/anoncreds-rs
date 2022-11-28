@@ -1,12 +1,12 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class PresentationApi
     {
@@ -21,7 +21,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="masterSecret">Master secret.</param>
         /// <param name="schemas">Corresponding schemas.</param>
         /// <param name="credDefs">Credential definitions.</param>
-        /// <exception cref="SharedRsException">Throws when any parameters are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when any parameters are invalid.</exception>
         /// <returns>New <see cref="Presentation"/> object.</returns>
         public static async Task<Presentation> CreatePresentationAsync(
             PresentationRequest presentationRequest,
@@ -53,7 +53,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             Presentation presentationObject = await CreatePresentationObject(presentationObjectHandle);
@@ -71,7 +71,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="masterSecretJson">Master secret JSON.</param>
         /// <param name="schemaJsons">Corresponding schema JSONs.</param>
         /// <param name="credDefJsons">Credential definition JSONs.</param>
-        /// <exception cref="SharedRsException">Throws when any parameters are invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when any parameters are invalid.</exception>
         /// <returns>New <see cref="Presentation"/> JSON.</returns>
         public static async Task<string> CreatePresentationAsync(
             string presentationRequestJson,
@@ -128,7 +128,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string presentationJson = await ObjectApi.ToJsonAsync(presentationObjectHandle);
@@ -140,7 +140,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="presentationJson">Json string of presentation object.</param>
         /// <exception cref="IndexOutOfRangeException">Throws when <paramref name="presentationJson"/> is empty.</exception>
-        /// <exception cref="SharedRsException">Throws if <paramref name="presentationJson"/> is an invalid json object.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="presentationJson"/> is an invalid json object.</exception>
         /// <returns>New <see cref="Presentation"/> object.</returns>
         public static async Task<Presentation> CreatePresentationFromJsonAsync(string presentationJson)
         {
@@ -149,7 +149,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             Presentation presentationObject = await CreatePresentationObject(presentationObjectHandle);
             return await Task.FromResult(presentationObject);
@@ -164,7 +164,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="credentialDefinitions"></param>
         /// <param name="revocationRegistryDefinitions"></param>
         /// <param name="revocationRegistryEntries"></param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>True if provided <see cref="Presentation"/> can be verified, false if not.</returns>
         public static async Task<bool> VerifyPresentationAsync(
             Presentation presentation,
@@ -194,7 +194,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(Convert.ToBoolean(verify));
@@ -209,7 +209,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="credentialDefinitionJsons"></param>
         /// <param name="revocationRegistryDefinitionJsons"></param>
         /// <param name="revocationRegistryEntryJsons"></param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>True if provided <see cref="Presentation"/> can be verified, false if not.</returns>
         public static async Task<bool> VerifyPresentationAsync(
             string presentationJson,
@@ -265,7 +265,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(Convert.ToBoolean(verify));

@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\indy-shared-rs-dotnet\indy-shared-rs-dotnet.csproj" />
+    <ProjectReference Include="..\indy-shared-rs-dotnet\anoncreds-rs-dotnet.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,12 +1,12 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class CredentialOfferApiTests
     {
@@ -58,11 +58,11 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             yield return new TestCaseData(false, false, false)
                 .SetName("CreateCredentialOfferAsync() throws Exception if all arguments are null.");
             yield return new TestCaseData(false, true, true)
-                .SetName("CreateCredentialOfferAsync() throws SharedRsException if SchemaId is null.");
+                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if SchemaId is null.");
             yield return new TestCaseData(true, false, true)
-                .SetName("CreateCredentialOfferAsync() throws SharedRsException if CredentialDefinition is null.");
+                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if CredentialDefinition is null.");
             yield return new TestCaseData(true, true, false)
-                .SetName("CreateCredentialOfferAsync() throws SharedRsException if CredentialKeyCorrectnessProof is null.");
+                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if CredentialKeyCorrectnessProof is null.");
         }
 
         [Test, TestCaseSource(nameof(CreateCredentialOfferCases))]

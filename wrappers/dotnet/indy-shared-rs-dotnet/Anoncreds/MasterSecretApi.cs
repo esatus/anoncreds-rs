@@ -1,17 +1,17 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class MasterSecretApi
     {
         /// <summary>
         /// Creates a new <see cref="MasterSecret"/>.
         /// </summary>
-        /// <exception cref="SharedRsException">Throws when <see cref="MasterSecret"/> can't be created.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when <see cref="MasterSecret"/> can't be created.</exception>
         /// <returns>New <see cref="MasterSecret"/>.</returns>
         public static async Task<MasterSecret> CreateMasterSecretAsync()
         {
@@ -21,7 +21,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string masterSecretJson = await ObjectApi.ToJsonAsync(result);
@@ -33,7 +33,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <summary>
         /// Creates a new <see cref="MasterSecret"/>.
         /// </summary>
-        /// <exception cref="SharedRsException">Throws when <see cref="MasterSecret"/> can't be created.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when <see cref="MasterSecret"/> can't be created.</exception>
         /// <returns>New <see cref="MasterSecret"/> as JSON string.</returns>
         public static async Task<string> CreateMasterSecretJsonAsync()
         {
@@ -43,7 +43,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             string masterSecretJson = await ObjectApi.ToJsonAsync(result);

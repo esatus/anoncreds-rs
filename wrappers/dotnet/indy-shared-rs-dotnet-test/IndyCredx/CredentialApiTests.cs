@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class CredentialApiTests
     {
@@ -91,7 +91,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             //revDeltaObject.Should().BeOfType(typeof(RevocationRegistryDelta));
         }
 
-        [Test, TestCase(TestName = "CreateCredentialAsync() throws SharedRsException when attribute names do not match their values.")]
+        [Test, TestCase(TestName = "CreateCredentialAsync() throws AnoncredsRsException when attribute names do not match their values.")]
         public async Task CreateCredentialAsyncThrowsException()
         {
             //Arrange
@@ -124,7 +124,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                 attrNames, attrNamesRaw, attrNamesEnc, revRegDefObject, revRegDefPvtObject, revRegObject, 1, new List<long>() { 1 });
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -238,7 +238,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             credObjectProcessedJson.Should().NotBeNullOrEmpty();
         }
 
-        [Test, TestCase(TestName = "ProcessCredentialAsync() throws SharedRsException when maste secret does not match credential.")]
+        [Test, TestCase(TestName = "ProcessCredentialAsync() throws AnoncredsRsException when maste secret does not match credential.")]
         public async Task ProcessCredentialAsyncThrowsException()
         {
             //Arrange
@@ -275,7 +275,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialApi.ProcessCredentialAsync(credObject, metaDataObject, masterSecretObject2, credDefObject, revRegDefObject);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -373,7 +373,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
 
         }
 
-        [Test, TestCase(TestName = "GetCredentialAttributeAsync() throws SharedRsException when given empty attribute name.")]
+        [Test, TestCase(TestName = "GetCredentialAttributeAsync() throws AnoncredsRsException when given empty attribute name.")]
         public async Task GetCredentialAttributeAsyncThrowsException()
         {
             //Arrange
@@ -409,10 +409,10 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(credObject, attributeName);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "GetCredentialAttributeAsync() with JSON inputs throws SharedRsException when given empty attribute name.")]
+        [Test, TestCase(TestName = "GetCredentialAttributeAsync() with JSON inputs throws AnoncredsRsException when given empty attribute name.")]
         public async Task GetCredentialAttributeJsonAsyncThrowsException()
         {
             //Arrange
@@ -449,7 +449,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(credObject, attributeName);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
 
         }
         #endregion

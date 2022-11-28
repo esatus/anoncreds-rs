@@ -1,12 +1,12 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     public class CredentialDefinitionApiTests
     {
@@ -35,13 +35,13 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
         private static IEnumerable<TestCaseData> CreateCredentialDefinitionCases()
         {
             yield return new TestCaseData(null, null, null, null)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if all arguments are null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if all arguments are null.");
             yield return new TestCaseData(null, "tag", SignatureType.CL, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if issuerDid is null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if issuerDid is null.");
             yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e", null, SignatureType.CL, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if tag is null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if tag is null.");
             yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e", "tag", 99, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if signatureType is invalid.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if signatureType is invalid.");
         }
 
         [Test, TestCaseSource(nameof(CreateCredentialDefinitionCases))]
@@ -58,7 +58,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, tag, signatureType, supportRevocation);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -87,13 +87,13 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
         private static IEnumerable<TestCaseData> CreateCredentialDefinitionJsonCases()
         {
             yield return new TestCaseData(null, null, null, null)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if all arguments are null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if all arguments are null.");
             yield return new TestCaseData(null, "tag", SignatureType.CL, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if issuerDid is null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if issuerDid is null.");
             yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e", null, SignatureType.CL, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if tag is null.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if tag is null.");
             yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e", "tag", 99, true)
-                .SetName("CreateCredentialDefinition() throws SharedRsException if signatureType is invalid.");
+                .SetName("CreateCredentialDefinition() throws AnoncredsRsException if signatureType is invalid.");
         }
 
         [Test, TestCaseSource(nameof(CreateCredentialDefinitionJsonCases))]
@@ -110,7 +110,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, tag, signatureType, supportRevocation);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -143,7 +143,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.Should().BeEquivalentTo(expected);
         }
 
-        [Test, TestCase(TestName = "GetCredentialDefinitionAttributeAsync() throws SharedRsException when requested attribute name is invalid.")]
+        [Test, TestCase(TestName = "GetCredentialDefinitionAttributeAsync() throws AnoncredsRsException when requested attribute name is invalid.")]
         public async Task GetCredentialDefinitionAttributeAsyncThrowsException()
         {
             //Arrange
@@ -159,7 +159,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async() => await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "blubb");
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -213,7 +213,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             actual.SchemaId.Should().Be(schemaId);
         }
 
-        [Test, TestCase(TestName = "CreateCredentialDefinitionFromJsonAsync() throws SharedRsException when the provided json string is invalid.")]
+        [Test, TestCase(TestName = "CreateCredentialDefinitionFromJsonAsync() throws AnoncredsRsException when the provided json string is invalid.")]
         public async Task CreateCredentialDefinitionFromJsonAsyncThrowsException()
         {
             //Arrange
@@ -223,7 +223,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionFromJsonAsync(credDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

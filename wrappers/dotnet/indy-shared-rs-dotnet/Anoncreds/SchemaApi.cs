@@ -1,11 +1,11 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public class SchemaApi
     {
@@ -17,7 +17,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="schemaVersion">Version of schema.</param>
         /// <param name="attrNames">Names of the schema attributes.</param>
         /// <param name="seqNo">Sequence number.</param>
-        /// <exception cref="SharedRsException">Throws when any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when any parameter is invalid.</exception>
         /// <exception cref="System.InvalidOperationException">Throws when <paramref name="attrNames"/> are empty.</exception>
         /// <returns>A new <see cref="Schema"/> object.</returns>
         public static async Task<Schema> CreateSchemaAsync(
@@ -34,7 +34,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             Schema schemaObject = await CreateSchemaObjectAsync(schemaObjectHandle);
@@ -49,7 +49,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="schemaVersion">Version of schema.</param>
         /// <param name="attrNames">Names of the schema attributes.</param>
         /// <param name="seqNo">Sequence number.</param>
-        /// <exception cref="SharedRsException">Throws when any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when any parameter is invalid.</exception>
         /// <exception cref="System.InvalidOperationException">Throws when <paramref name="attrNames"/> are empty.</exception>
         /// <returns>A new <see cref="string"/> schema json.</returns>
         public static async Task<string> CreateSchemaJsonAsync(
@@ -66,7 +66,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await ObjectApi.ToJsonAsync(schemaObjectHandle);
@@ -76,7 +76,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Creates a new <see cref="Schema"/> object from json <see cref="string"/>.
         /// </summary>
         /// <param name="schemaJson">Json <see cref="string"/> representing a <see cref="Schema"/> object.</param>
-        /// <exception cref="SharedRsException">Throws when provided <paramref name="schemaJson"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="schemaJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when <paramref name="schemaJson"/> is empty.</exception>
         /// <returns>A new <see cref="Schema"/> object.</returns>
         public static async Task<Schema> CreateSchemaFromJsonAsync(string schemaJson)
@@ -87,7 +87,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             Schema schemaObject = await CreateSchemaObjectAsync(schemaObjectHandle);
@@ -99,7 +99,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="schema">The schema from which the attribute is requested.</param>
         /// <param name="attributeName">The name of the attribute.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="schema"/>.</returns>
         public static async Task<string> GetSchemaAttributeAsync(Schema schema, string attributeName)
         {
@@ -110,7 +110,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(result);
@@ -121,7 +121,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="schemaJson">The schema json from which the attribute is requested.</param>
         /// <param name="attributeName">The name of the attribute.</param>
-        /// <exception cref="SharedRsException">Throws if any parameter is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="schema"/>.</returns>
         public static async Task<string> GetSchemaAttributeAsync(string schemaJson, string attributeName)
         {
@@ -133,7 +133,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
 
             return await Task.FromResult(result);

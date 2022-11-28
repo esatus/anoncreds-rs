@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class ErrorApi
     {

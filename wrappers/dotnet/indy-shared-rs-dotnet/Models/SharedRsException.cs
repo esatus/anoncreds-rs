@@ -2,23 +2,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace indy_shared_rs_dotnet.Models
+namespace anoncreds_rs_dotnet.Models
 {
-    public class SharedRsException : Exception
+    public class AnoncredsRsException : Exception
     {
-        public SharedRsException(string message) : base(message)
+        public AnoncredsRsException(string message) : base(message)
         {
 
         }
 
-        public static SharedRsException FromSdkError(string message)
+        public static AnoncredsRsException FromSdkError(string message)
         {
             string msg = JsonConvert.DeserializeObject<Dictionary<string, string>>(message)["message"];
             string errCode = JsonConvert.DeserializeObject<Dictionary<string, string>>(message)["code"];
             return int.TryParse(errCode, out int errCodeInt)
-                ? new SharedRsException(
+                ? new AnoncredsRsException(
                     $"'{((ErrorCode)errCodeInt).ToErrorCodeString()}' error occured with ErrorCode '{errCode}' : {msg}.")
-                : new SharedRsException("An unknown error code was received.");
+                : new AnoncredsRsException("An unknown error code was received.");
         }
     }
 }

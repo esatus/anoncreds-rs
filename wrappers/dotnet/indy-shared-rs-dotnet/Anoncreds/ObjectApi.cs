@@ -1,10 +1,10 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class ObjectApi
     {
@@ -12,7 +12,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// Returns the typename of an object <see cref="string"/> representation from its handle.
         /// </summary>
         /// <param name="objectHandle">The handle of the specific object.</param>
-        /// <exception cref="SharedRsException">Throws when <paramref name="objectHandle"/> is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws when <paramref name="objectHandle"/> is invalid.</exception>
         /// <returns>The typename of the object.</returns>
         public static async Task<string> GetTypeNameAsync(IntPtr objectHandle)
         {
@@ -48,7 +48,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             return await Task.FromResult(result);
         }
@@ -65,7 +65,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = ErrorApi.GetCurrentErrorAsync().GetAwaiter().GetResult();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             return Task.FromResult(result);
         }

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace indy_shared_rs_dotnet
+namespace anoncreds_rs_dotnet
 {
     public class Settings
     {

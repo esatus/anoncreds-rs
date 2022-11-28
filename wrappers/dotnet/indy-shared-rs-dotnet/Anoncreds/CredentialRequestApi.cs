@@ -1,10 +1,10 @@
-﻿using indy_shared_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
-using static indy_shared_rs_dotnet.Models.Structures;
+using static anoncreds_rs_dotnet.Models.Structures;
 
-namespace indy_shared_rs_dotnet.Anoncreds
+namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class CredentialRequestApi
     {
@@ -16,7 +16,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="masterSecret">New master secret.</param>
         /// <param name="masterSecretId">Id of master secret.</param>
         /// <param name="credentialOffer">Credential offer.</param>
-        /// <exception cref="SharedRsException">Throws if any argument is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/>.</returns>
         public static async Task<(CredentialRequest, CredentialRequestMetadata)> CreateCredentialRequestAsync(
             string proverDid,
@@ -39,7 +39,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             CredentialRequest requestObject = await CreateCredentialRequestObject(requestHandle);
             CredentialRequestMetadata metadataObject = await CreateCredentialRequestMetadataObject(metadataHandle);
@@ -54,7 +54,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
         /// <param name="masterSecret">New master secret.</param>
         /// <param name="masterSecretId">Id of master secret.</param>
         /// <param name="credentialOffer">Credential offer.</param>
-        /// <exception cref="SharedRsException">Throws if any argument is invalid.</exception>
+        /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> as JSON string and its <see cref="CredentialRequestMetadata"/> as JSON string.</returns>
         public static async Task<(string, string)> CreateCredentialRequestJsonAsync(
             string proverDid,
@@ -85,7 +85,7 @@ namespace indy_shared_rs_dotnet.Anoncreds
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
-                throw SharedRsException.FromSdkError(error);
+                throw AnoncredsRsException.FromSdkError(error);
             }
             string requestJson = await ObjectApi.ToJsonAsync(requestHandle);
             string metadataJson = await ObjectApi.ToJsonAsync(metadataHandle);

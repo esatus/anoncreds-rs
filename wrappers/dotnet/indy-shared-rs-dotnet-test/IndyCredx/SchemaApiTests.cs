@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
-using indy_shared_rs_dotnet.Anoncreds;
-using indy_shared_rs_dotnet.Models;
+using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace indy_shared_rs_dotnet_test.IndyCredx
+namespace anoncreds_rs_dotnet_test.IndyCredx
 {
     internal class SchemaApiTests
     {
@@ -28,7 +28,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             testObject.Should().BeOfType(typeof(Schema));
         }
 
-        [Test, TestCase(TestName = "CreateSchemaAsync() throws a SharedRsException if no issuerDid is provided.")]
+        [Test, TestCase(TestName = "CreateSchemaAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
         public async Task CreateSchemaThrowsExceptionForMissingIssuerDid()
         {
             //Arrange
@@ -41,7 +41,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaAsync() throws a InvalidOperationException if no attribute names are provided.")]
@@ -78,7 +78,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             testObject.Should().BeOfType(typeof(string));
         }
 
-        [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a SharedRsException if no issuerDid is provided.")]
+        [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
         public async Task CreateSchemaJsonAsyncThrowsExceptionForMissingIssuerDid()
         {
             //Arrange
@@ -91,7 +91,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a InvalidOperationException if no attribute names are provided.")]
@@ -146,7 +146,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<IndexOutOfRangeException>();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a SharedRsException if an invalid json string is provided.")]
+        [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an invalid json string is provided.")]
         public async Task CreateSchemaFromJsonAsyncThrowsExceptionForInvalidString()
         {
             //Arrange
@@ -156,7 +156,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -193,7 +193,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "GetSchemaAttributeAsync(string schemaJson, string attributeName) works for supported attribute names.")]
@@ -224,7 +224,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust
 
             //Assert
-            await act.Should().ThrowAsync<SharedRsException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }
