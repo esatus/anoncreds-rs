@@ -55,7 +55,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryAsync(issuerDid, new(), "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>(); 
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() returns a CredentialDefintion, CredentialDefinitionPrivate and CredentialKeyCorrectnessProof object.")]
@@ -73,7 +73,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             //Act
             (string revRegDefObject, string revRegDefPvtObject, string revRegObject, string revRegDeltaObject) = await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
-            
+
             //Assert
             JObject.Parse(revRegDefObject)["ver"].Should().NotBeNull();
             JObject.Parse(revRegDefPvtObject)["value"].Should().NotBeNull();
@@ -116,7 +116,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             expected.Should().BeOfType<RevocationRegistry>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws IndexOutOfRangeException when provided with an empty json string ")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws AnoncredsRsException when provided with an empty json string ")]
         public async Task CreateRevocationRegistryFromJsonAsyncThrowsExceptionForEmptyString()
         {
             //Arrange
@@ -126,7 +126,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
 
             //Assert
-            await act.Should().ThrowAsync<IndexOutOfRangeException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
@@ -174,7 +174,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             expected.Should().BeOfType<RevocationRegistryDefinition>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws IndexOutOfRangeException when provided with empty json string.")]
+        [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws AnoncredsRsException when provided with empty json string.")]
         public async Task CreateRevocationRegistryDefinitionFromJsonAsyncThrowsExceptionForEmptyString()
         {
             //Arrange
@@ -184,7 +184,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<IndexOutOfRangeException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
@@ -684,17 +684,55 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, _, RevocationRegistryDelta revRegDeltaObject) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            CredentialRevocationState revState = new();
+            CredentialRevocationState init = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject,
+                revRegDeltaObject,
+                1,
+                100,
+                revRegDefObject.Value.TailsLocation,
+                null);
 
             //Act
             CredentialRevocationState actual = await RevocationApi.CreateOrUpdateRevocationStateAsync(
                 revRegDefObject,
                 revRegDeltaObject,
-                0,
-                0,
+                2,
+                400,
                 revRegDefObject.Value.TailsLocation,
-                revState
-                );
+                init);
+
+            //Assert
+            actual.Should().NotBeNull();
+        }
+
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() works with rev state equals null.")]
+        public async Task CreateOrUpdateRevocationStateNullAsyncWorks()
+        {
+            //Arrange
+            List<string> attrNames = new() { "gender", "age", "sex" };
+            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string schemaName = "gvt";
+            string schemaVersion = "1.0";
+            string testTailsPath = null;
+
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+
+            (CredentialDefinition credDef,
+                _,
+                _) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+
+
+            (RevocationRegistryDefinition revRegDefObject, _, _, RevocationRegistryDelta revRegDeltaObject) =
+                await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
+
+            //Act
+            CredentialRevocationState actual = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject,
+                revRegDeltaObject,
+                1,
+                200,
+                revRegDefObject.Value.TailsLocation,
+                null);
 
             //Assert
             actual.Should().NotBeNull();
@@ -729,14 +767,13 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 0,
                 0,
                 revRegDefObject.Value.TailsLocation,
-                revState
-                );
+                revState);
 
             //Assert
             await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() works.")]
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() works.")]
         public async Task CreateOrUpdateRevocationStateAsyncWorksWithJson()
         {
             //Arrange
@@ -756,23 +793,61 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, _, RevocationRegistryDelta revRegDeltaObject) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            CredentialRevocationState revState = new();
+            string init = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject.JsonString,
+                revRegDeltaObject.JsonString,
+                1,
+                200,
+                revRegDefObject.Value.TailsLocation,
+                null);
 
             //Act
-            CredentialRevocationState actual = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revRegDeltaObject,
-                0,
-                0,
+            string actual = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject.JsonString,
+                revRegDeltaObject.JsonString,
+                2,
+                400,
                 revRegDefObject.Value.TailsLocation,
-                revState
-                );
+                init);
 
             //Assert
             actual.Should().NotBeNull();
         }
 
-        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() works with rev state equals null.")]
+        public async Task CreateOrUpdateRevocationStateNullAsyncWorksWithJson()
+        {
+            //Arrange
+            List<string> attrNames = new() { "gender", "age", "sex" };
+            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string schemaName = "gvt";
+            string schemaVersion = "1.0";
+            string testTailsPath = null;
+
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+
+            (CredentialDefinition credDef,
+                _,
+                _) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+
+
+            (RevocationRegistryDefinition revRegDefObject, _, _, RevocationRegistryDelta revRegDeltaObject) =
+                await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
+
+            //Act
+            string actual = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject.JsonString,
+                revRegDeltaObject.JsonString,
+                1,
+                200,
+                revRegDefObject.Value.TailsLocation,
+                null);
+
+            //Assert
+            actual.Should().NotBeNull();
+        }
+
+        [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
         public async Task CreateOrUpdateRevocationStateAsyncThrowsExceptionWithJson()
         {
             //Arrange
@@ -792,16 +867,14 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, _, RevocationRegistryDelta revRegDeltaObject) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            CredentialRevocationState revState = new();
-
             //Act
             Func<Task> act = async () => await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                new(),
-                0,
-                0,
+                revRegDefObject.JsonString,
+                "",
+                1,
+                200,
                 revRegDefObject.Value.TailsLocation,
-                revState
+                null
                 );
 
             //Assert
@@ -833,7 +906,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             actual.Should().BeOfType<CredentialRevocationState>();
         }
 
-        [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws IndexOutOfRangeException when provided with an empty json string.")]
+        [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws AnoncredsRsException when provided with an empty json string.")]
         public async Task CreateRevocationStateFromJsonAsyncThrowsExceptionsForEmptyString()
         {
             //Arrange
@@ -843,7 +916,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationStateFromJsonAsync(revStateJson);
 
             //Assert
-            await act.Should().ThrowAsync<IndexOutOfRangeException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws AnoncredsRsException when provided with an invalid json string.")]
@@ -862,7 +935,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
         #region Tests for GetRevocationRegistryDefinitionAttribute
         [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'id'.")]
-        public async Task GetRevocationRegistryDefinitionAttributeAsyncWorks()
+        public async Task GetRevocationRegistryDefinitionAttributeAsyncIdWorks()
         {
             //Arrange
             List<string> attrNames = new() { "gender", "age", "sex" };
@@ -886,6 +959,99 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(
                 revRegDefObject,
                 "id"
+                );
+
+            //Assert
+            actual.Should().NotBeNull();
+        }
+
+        [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'max_cred_num'.")]
+        public async Task GetRevocationRegistryDefinitionAttributeAsyncMaxCredNumWorks()
+        {
+            //Arrange
+            List<string> attrNames = new() { "gender", "age", "sex" };
+            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string schemaName = "gvt";
+            string schemaVersion = "1.0";
+            string testTailsPath = null;
+
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+
+            (CredentialDefinition credDef,
+                _,
+                _) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+
+            (RevocationRegistryDefinition revRegDefObject,
+                _,
+                _,
+                _) = await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
+
+            //Act
+            string actual = await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(
+                revRegDefObject,
+                "max_cred_num"
+                );
+
+            //Assert
+            actual.Should().NotBeNull();
+        }
+
+        [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'tails_hash'.")]
+        public async Task GetRevocationRegistryDefinitionAttributeAsyncTailsHashWorks()
+        {
+            //Arrange
+            List<string> attrNames = new() { "gender", "age", "sex" };
+            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string schemaName = "gvt";
+            string schemaVersion = "1.0";
+            string testTailsPath = null;
+
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+
+            (CredentialDefinition credDef,
+                _,
+                _) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+
+            (RevocationRegistryDefinition revRegDefObject,
+                _,
+                _,
+                _) = await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
+
+            //Act
+            string actual = await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(
+                revRegDefObject,
+                "tails_hash"
+                );
+
+            //Assert
+            actual.Should().NotBeNull();
+        }
+
+        [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'tails_location'.")]
+        public async Task GetRevocationRegistryDefinitionAttributeAsyncTailsLocationWorks()
+        {
+            //Arrange
+            List<string> attrNames = new() { "gender", "age", "sex" };
+            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string schemaName = "gvt";
+            string schemaVersion = "1.0";
+            string testTailsPath = null;
+
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+
+            (CredentialDefinition credDef,
+                _,
+                _) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+
+            (RevocationRegistryDefinition revRegDefObject,
+                _,
+                _,
+                _) = await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
+
+            //Act
+            string actual = await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(
+                revRegDefObject,
+                "tails_location"
                 );
 
             //Assert

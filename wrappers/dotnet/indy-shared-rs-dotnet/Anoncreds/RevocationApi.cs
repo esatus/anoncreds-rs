@@ -1,4 +1,6 @@
-﻿using anoncreds_rs_dotnet.Models;
+﻿using anoncreds_rs_dotnet.Anoncreds;
+using anoncreds_rs_dotnet.Models;
+using anoncreds_rs_dotnet;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -401,7 +403,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             long revRegIndex,
             long timestamp,
             string tailsPath,
-            CredentialRevocationState revState)
+            CredentialRevocationState revState = null)
         {
             IntPtr credRevStateObjectHandle = new IntPtr();
 
@@ -411,7 +413,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 revRegIndex,
                 timestamp,
                 FfiStr.Create(tailsPath),
-                revState.Handle,
+                revState == null ? new IntPtr() : revState.Handle,
                 ref credRevStateObjectHandle);
 
             if (errorCode != 0)
@@ -442,7 +444,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             long revRegIndex,
             long timestamp,
             string tailsPath,
-            string revStateJson)
+            string revStateJson = null)
         {
             IntPtr credRevStateObjectHandle = new IntPtr();
             IntPtr revRegDefHandle = new IntPtr();
@@ -451,7 +453,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefHandle);
             _ = NativeMethods.anoncreds_revocation_registry_delta_from_json(ByteBuffer.Create(revRegDeltaJson), ref revRegDeltaHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_delta_from_json(ByteBuffer.Create(revStateJson), ref revStateHandle);
+            if (revStateJson != null)
+                _ = NativeMethods.anoncreds_revocation_state_from_json(ByteBuffer.Create(revStateJson), ref revStateHandle);
 
             int errorCode = NativeMethods.anoncreds_create_or_update_revocation_state(
                 revRegDefHandle,
@@ -505,7 +508,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string attributeName)
         {
             string result = "";
-            
+
             int errorCode = NativeMethods.anoncreds_revocation_registry_definition_get_attribute(
                 revRegDefObject.Handle,
                 FfiStr.Create(attributeName),
@@ -524,7 +527,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// Get the value of an <see cref="RevocationRegistryDefinition"/> attribute (Supported attribute names so far: id, max_cred_num, tails_hash or tails_location).
         /// </summary>
         /// <param name="revRegDefJson">Revocation registry definition from which the attribute is requested.</param>
-        /// <param name="attributeName">Name of the requested attribute.</param>
+        /// <param name="attributeName">Name of the requested attribute. Possible values are: id, max_cred_num, tails_hash, tails_location. </param>
         /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="attributeName"/> or <paramref name="revRegDefObject"/> are invalid.</exception>
         /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="revRegDefObject"/>.</returns>
         public static async Task<string> GetRevocationRegistryDefinitionAttributeAsync(

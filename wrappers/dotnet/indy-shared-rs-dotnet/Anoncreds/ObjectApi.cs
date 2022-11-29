@@ -58,7 +58,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             ByteBuffer result = new ByteBuffer()
             {
                 len = 0,
-                value = null
+                value = new IntPtr()
             };
 
             int errorCode = NativeMethods.anoncreds_object_get_json(handle, ref result);
@@ -77,7 +77,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             fixed (char* char_ptr = &charArray[0])
             {
-                _ = utf8Decoder.GetChars(byteBuffer.value, (int)byteBuffer.len, char_ptr, (int)byteBuffer.len);
+                _ = utf8Decoder.GetChars((byte*)byteBuffer.value, (int)byteBuffer.len, char_ptr, (int)byteBuffer.len);
             }
             return Task.FromResult(new string(charArray));
         }

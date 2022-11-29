@@ -1,4 +1,5 @@
-﻿using System;
+﻿using anoncreds_rs_dotnet.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace anoncreds_rs_dotnet.Models
 {
-    public class Structures
+    internal class Structures
     {
         [StructLayout(LayoutKind.Sequential)]
         public unsafe struct FfiStrList
@@ -15,28 +16,41 @@ namespace anoncreds_rs_dotnet.Models
             public FfiStr* data;
             public static FfiStrList Create(string[] args)
             {
-                FfiStrList list = new FfiStrList()
+                FfiStrList list = new FfiStrList();
+                if (args != null && args.Any())
                 {
-                    count = (IntPtr)args.Length
-                };
-                if (args.First() != null)
+                    list.count = (IntPtr)args.Length;
+                    if (args.First() != null)
+                    {
+                        FfiStr[] ffiStrings = new FfiStr[(uint)args.Length];
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            ffiStrings[i] = FfiStr.Create(args[i]);
+                        }
+                        fixed (FfiStr* ffiStr_p = &ffiStrings[0])
+                        {
+                            list.data = ffiStr_p;
+                        }
+                    }
+                }
+                else
                 {
-                    FfiStr[] ffiStrings = new FfiStr[(uint)args.Length];
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        ffiStrings[i] = FfiStr.Create(args[i]);
-                    }
-                    fixed (FfiStr* ffiStr_p = &ffiStrings[0])
-                    {
-                        list.data = ffiStr_p;
-                    }
+                    list.count = IntPtr.Zero;
+                    list.data = null;
                 }
                 return list;
             }
 
             public static FfiStrList Create(List<string> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<string>());
+                }
             }
         }
 
@@ -63,27 +77,33 @@ namespace anoncreds_rs_dotnet.Models
         public unsafe struct ByteBuffer
         {
             public long len;
-            public byte* value;
+            public IntPtr value;
 
             public static ByteBuffer Create(string json)
             {
-                UTF8Encoding decoder = new UTF8Encoding(true, true);
-                byte[] bytes = new byte[json.Length];
-                _ = decoder.GetBytes(json, 0, json.Length, bytes, 0);
-                ByteBuffer buffer = new ByteBuffer()
+                ByteBuffer buffer = new ByteBuffer();
+                if (!string.IsNullOrEmpty(json))
                 {
-                    len = json.Length
-                };
-                fixed (byte* bytebuffer_p = &bytes[0])
+                    UTF8Encoding decoder = new UTF8Encoding(true, true);
+                    byte[] bytes = new byte[json.Length];
+                    _ = decoder.GetBytes(json, 0, json.Length, bytes, 0);
+                    buffer.len = json.Length;
+                    fixed (byte* bytebuffer_p = &bytes[0])
+                    {
+                        buffer.value = new IntPtr(bytebuffer_p);
+                    }
+                }
+                else
                 {
-                    buffer.value = bytebuffer_p;
+                    buffer.len = 0;
+                    buffer.value = new IntPtr();
                 }
                 return buffer;
             }
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct FfiCredRevInfo
+        public unsafe struct FfiCredRevInfo
         {
             public IntPtr regDefObjectHandle;
             public IntPtr regDefPvtObjectHandle;
@@ -92,18 +112,17 @@ namespace anoncreds_rs_dotnet.Models
             public FfiLongList regUsed;
             public FfiStr tailsPath;
 
-            public static FfiCredRevInfo Create(CredentialRevocationConfig entry)
+            internal static FfiCredRevInfo Create(Models.CredentialRevocationConfig entry)
             {
                 FfiCredRevInfo result = new FfiCredRevInfo();
-                if (entry != null)
-                {
-                    result.regDefObjectHandle = (IntPtr)entry.RevRegDefObjectHandle;
-                    result.regDefPvtObjectHandle = (IntPtr)entry.RevRegDefPvtObjectHandle;
-                    result.registryObjectHandle = (IntPtr)entry.RevRegObjectHandle;
-                    result.regIdx = (IntPtr)entry.RegIdx;
-                    result.regUsed = FfiLongList.Create(entry.RegUsed);
-                    result.tailsPath = FfiStr.Create(entry.TailsPath);
-                }
+
+                result.regDefObjectHandle = entry.RevRegDefObjectHandle;
+                result.regDefPvtObjectHandle = entry.RevRegDefPvtObjectHandle;
+                result.registryObjectHandle = entry.RevRegObjectHandle;
+                result.regIdx = (IntPtr)entry.RegIdx;
+                result.regUsed = FfiLongList.Create(entry.RegUsed);
+                result.tailsPath = FfiStr.Create(entry.TailsPath);
+
                 return result;
             }
         }
@@ -113,22 +132,35 @@ namespace anoncreds_rs_dotnet.Models
         {
             public IntPtr count;
             public long* data;
-            public static FfiLongList Create(long[] args)
+            public static FfiLongList Create(long[] args = null)
             {
-                FfiLongList list = new FfiLongList()
+                FfiLongList list = new FfiLongList();
+                if (args != null)
                 {
-                    count = (IntPtr)args.Length
-                };
-                fixed (long* uintP = &args[0])
+                    list.count = (IntPtr)args.Length;
+                    fixed (long* uintP = &args[0])
+                    {
+                        list.data = uintP;
+                    }
+                }
+                else
                 {
-                    list.data = uintP;
+                    list.count = IntPtr.Zero;
+                    list.data = (long*)0;
                 }
                 return list;
             }
 
             public static FfiLongList Create(List<long> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create();
+                }
             }
         }
 
@@ -144,25 +176,25 @@ namespace anoncreds_rs_dotnet.Models
                 FfiCredentialEntry result = new FfiCredentialEntry();
                 if (entry != null)
                 {
-                    result.CredentialObjectHandle = (IntPtr)entry.CredentialObjectHandle;
+                    result.CredentialObjectHandle = entry.CredentialObjectHandle;
                     result.Timestamp = entry.Timestamp;
-                    result.RevStateObjectHandle = (IntPtr)entry.RevStateObjectHandle;
+                    result.RevStateObjectHandle = entry.RevStateObjectHandle;
                 }
                 return result;
             }
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct FfiCredentialProoof
+        public struct FfiCredentialProof
         {
             public long EntryIndex;
             public FfiStr Referent;
             public byte IsPredicate;
             public byte Reveal;
 
-            public static FfiCredentialProoof Create(CredentialProof prove)
+            public static FfiCredentialProof Create(CredentialProof prove)
             {
-                FfiCredentialProoof result = new FfiCredentialProoof()
+                FfiCredentialProof result = new FfiCredentialProof()
                 {
                     EntryIndex = prove.EntryIndex,
                     Referent = FfiStr.Create(prove.Referent),
@@ -198,27 +230,43 @@ namespace anoncreds_rs_dotnet.Models
         {
             public IntPtr count;
             public FfiCredentialEntry* data;
+
             public static FfiCredentialEntryList Create(CredentialEntry[] args)
             {
-                FfiCredentialEntryList list = new FfiCredentialEntryList()
+                FfiCredentialEntryList list = new FfiCredentialEntryList();
+
+                if (args != null && args.Any())
                 {
-                    count = (IntPtr)args.Length
-                };
-                FfiCredentialEntry[] ffiCredentialEntries = new FfiCredentialEntry[args.Length];
-                for (int i = 0; i < args.Length; i++)
-                {
-                    ffiCredentialEntries[i] = FfiCredentialEntry.Create(args[i]);
+                    list.count = (IntPtr)args.Length;
+                    FfiCredentialEntry[] ffiCredentialEntries = new FfiCredentialEntry[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        ffiCredentialEntries[i] = FfiCredentialEntry.Create(args[i]);
+                    }
+                    fixed (FfiCredentialEntry* ffiEntryP = &ffiCredentialEntries[0])
+                    {
+                        list.data = ffiEntryP;
+                    }
                 }
-                fixed (FfiCredentialEntry* ffiEntryP = &ffiCredentialEntries[0])
+                else
                 {
-                    list.data = ffiEntryP;
+                    list.count = IntPtr.Zero;
+                    list.data = null;
                 }
+
                 return list;
             }
 
             public static FfiCredentialEntryList Create(List<CredentialEntry> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<CredentialEntry>());
+                }
             }
         }
 
@@ -226,28 +274,44 @@ namespace anoncreds_rs_dotnet.Models
         public unsafe struct FfiCredentialProveList
         {
             public IntPtr count;
-            public FfiCredentialProoof* data;
+            public FfiCredentialProof* data;
+
             public static FfiCredentialProveList Create(CredentialProof[] args)
             {
-                FfiCredentialProveList list = new FfiCredentialProveList()
+                FfiCredentialProveList list = new FfiCredentialProveList();
+
+                if (args != null && args.Any())
                 {
-                    count = (IntPtr)args.Length
-                };
-                FfiCredentialProoof[] ffiCredentialProves = new FfiCredentialProoof[args.Length];
-                for (int i = 0; i < args.Length; i++)
-                {
-                    ffiCredentialProves[i] = FfiCredentialProoof.Create(args[i]);
+                    list.count = (IntPtr)args.Length;
+                    FfiCredentialProof[] ffiCredentialProves = new FfiCredentialProof[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        ffiCredentialProves[i] = FfiCredentialProof.Create(args[i]);
+                    }
+                    fixed (FfiCredentialProof* ffiProveP = &ffiCredentialProves[0])
+                    {
+                        list.data = ffiProveP;
+                    }
                 }
-                fixed (FfiCredentialProoof* ffiProveP = &ffiCredentialProves[0])
+                else
                 {
-                    list.data = ffiProveP;
+                    list.count = IntPtr.Zero;
+                    list.data = null;
                 }
+
                 return list;
             }
 
             public static FfiCredentialProveList Create(List<CredentialProof> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<CredentialProof>());
+                }
             }
         }
 
@@ -256,22 +320,38 @@ namespace anoncreds_rs_dotnet.Models
         {
             public IntPtr count;
             public IntPtr* data;
+
             public static FfiUIntList Create(IntPtr[] args)
             {
-                FfiUIntList list = new FfiUIntList()
+                FfiUIntList list = new FfiUIntList();
+
+                if (args != null && args.Any())
                 {
-                    count = (IntPtr)args.Length
-                };
-                fixed (IntPtr* uintP = &args[0])
-                {
-                    list.data = uintP;
+                    list.count = (IntPtr)args.Length;
+                    fixed (IntPtr* uintP = &args[0])
+                    {
+                        list.data = uintP;
+                    }
                 }
+                else
+                {
+                    list.count = IntPtr.Zero;
+                    list.data = null;
+                }
+
                 return list;
             }
 
             public static FfiUIntList Create(List<IntPtr> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<IntPtr>());
+                }
             }
         }
 
@@ -280,27 +360,42 @@ namespace anoncreds_rs_dotnet.Models
         {
             public IntPtr count;
             public FfiRevocationEntry* data;
-            public static FfiRevocationEntryList Create(RevocationRegistryEntry[] args)
+            public static FfiRevocationEntryList Create(RevocationRegistryEntry[] args = null)
             {
-                FfiRevocationEntryList list = new FfiRevocationEntryList()
+                FfiRevocationEntryList list = new FfiRevocationEntryList();
+
+                if (args != null && args.Any())
                 {
-                    count = (IntPtr)args.Length
-                };
-                FfiRevocationEntry[] ffiRevocationEntries = new FfiRevocationEntry[args.Length];
-                for (int i = 0; i < args.Length; i++)
-                {
-                    ffiRevocationEntries[i] = FfiRevocationEntry.Create(args[i]);
+                    list.count = (IntPtr)args.Length;
+                    FfiRevocationEntry[] ffiRevocationEntries = new FfiRevocationEntry[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        ffiRevocationEntries[i] = FfiRevocationEntry.Create(args[i]);
+                    }
+                    fixed (FfiRevocationEntry* ffiEntryP = &ffiRevocationEntries[0])
+                    {
+                        list.data = ffiEntryP;
+                    }
                 }
-                fixed (FfiRevocationEntry* ffiEntryP = &ffiRevocationEntries[0])
+                else
                 {
-                    list.data = ffiEntryP;
+                    list.count = IntPtr.Zero;
+                    list.data = null;
                 }
+
                 return list;
             }
 
             public static FfiRevocationEntryList Create(List<RevocationRegistryEntry> args)
             {
-                return Create(args.ToArray());
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<RevocationRegistryEntry>());
+                }
             }
         }
     }
