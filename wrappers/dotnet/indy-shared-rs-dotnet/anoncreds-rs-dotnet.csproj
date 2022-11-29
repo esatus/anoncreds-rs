@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>netstandard2.0</TargetFramework>
+	<TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>anoncreds_rs_dotnet</RootNamespace>
 	<AssemblyName>Hyperledger.Anoncreds-Rs</AssemblyName>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

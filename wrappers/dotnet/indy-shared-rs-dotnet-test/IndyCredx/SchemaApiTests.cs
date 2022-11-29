@@ -44,8 +44,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaAsync() throws a InvalidOperationException if no attribute names are provided.")]
-        public async Task CreateSchemaThrowsExceptionForMissingAttributeNames()
+        [Test, TestCase(TestName = "CreateSchemaAsync() works if no attribute names are provided.")]
+        public async Task CreateSchemaWorksWithMissingAttributeNames()
         {
             //Arrange
             List<string> attrNames = new() { };
@@ -54,10 +54,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string schemaVersion = "1.0";
 
             //Act
-            Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<InvalidOperationException>();
+            testObject.Should().BeOfType(typeof(Schema));
         }
         #endregion
 
@@ -94,8 +94,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a InvalidOperationException if no attribute names are provided.")]
-        public async Task CreateSchemaJsonAsyncThrowsExceptionForMissingAttributeNames()
+        [Test, TestCase(TestName = "CreateSchemaJsonAsync() works if no attribute names are provided.")]
+        public async Task CreateSchemaJsonAsyncWorksWIthMissingAttributeNames()
         {
             //Arrange
             List<string> attrNames = new() { };
@@ -104,10 +104,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string schemaVersion = "1.0";
 
             //Act
-            Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<InvalidOperationException>();
+            testObject.Should().BeOfType(typeof(string));
         }
         #endregion
 
@@ -133,7 +133,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             actual.Id.Should().Be("55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version");
         }
 
-        [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a IndexOutOfRangeException if an empty json string is provided.")]
+        [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an empty json string is provided.")]
         public async Task CreateSchemaFromJsonAsyncThrowsExceptionForEmptyString()
         {
             //Arrange
@@ -143,7 +143,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
-            await act.Should().ThrowAsync<IndexOutOfRangeException>();
+            await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an invalid json string is provided.")]

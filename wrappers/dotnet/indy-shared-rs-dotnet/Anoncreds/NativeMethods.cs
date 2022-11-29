@@ -80,6 +80,20 @@ namespace anoncreds_rs_dotnet.Anoncreds
             ref IntPtr revDeltaObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_create_credential(
+            IntPtr credDefObjectHandle,
+            IntPtr credDefPrivateObjectHandle,
+            IntPtr credOfferObjectHandle,
+            IntPtr credRequestObjectHandle,
+            FfiStrList attrNames,
+            FfiStrList attrRawValues,
+            FfiStrList attrEncValues,
+            IntPtr revocation,
+            ref IntPtr credObjectHandle,
+            ref IntPtr revRegObjectHandle,
+            ref IntPtr revDeltaObjectHandle);
+
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_encode_credential_attributes(FfiStrList attrRawValues, ref string result);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
