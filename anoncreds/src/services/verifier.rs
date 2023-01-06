@@ -5,23 +5,29 @@ use regex::Regex;
 
 use super::helpers::*;
 use super::types::*;
-use crate::error::Result;
-use crate::ursa::cl::{verifier::Verifier as CryptoVerifier, CredentialPublicKey};
+use crate::data_types::anoncreds::cred_def::CredentialDefinition;
+use crate::data_types::anoncreds::cred_def::CredentialDefinitionId;
+use crate::data_types::anoncreds::rev_reg::RevocationRegistryId;
+use crate::data_types::anoncreds::rev_reg_def::RevocationRegistryDefinitionId;
+use crate::data_types::anoncreds::schema::Schema;
+use crate::data_types::anoncreds::schema::SchemaId;
 use crate::data_types::anoncreds::{
     nonce::Nonce,
     pres_request::{AttributeInfo, NonRevocedInterval, PredicateInfo, PresentationRequestPayload},
     presentation::{Identifier, RequestedProof, RevealedAttributeInfo},
 };
+use crate::error::Result;
+use crate::ursa::cl::{verifier::Verifier as CryptoVerifier, CredentialPublicKey};
 use indy_utils::query::Query;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Filter {
-    schema_id: String,
+    schema_id: SchemaId,
     schema_issuer_did: String,
     schema_name: String,
     schema_version: String,
     issuer_did: String,
-    cred_def_id: String,
+    cred_def_id: CredentialDefinitionId,
 }
 
 static INTERNAL_TAG_MATCHER: Lazy<Regex> =
@@ -30,9 +36,9 @@ static INTERNAL_TAG_MATCHER: Lazy<Regex> =
 pub fn verify_presentation(
     presentation: &Presentation,
     pres_req: &PresentationRequest,
-    schemas: &HashMap<SchemaId, &Schema>,
-    cred_defs: &HashMap<CredentialDefinitionId, &CredentialDefinition>,
-    rev_reg_defs: Option<&HashMap<RevocationRegistryId, &RevocationRegistryDefinition>>,
+    schemas: &HashMap<&SchemaId, &Schema>,
+    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
+    rev_reg_defs: Option<&HashMap<&RevocationRegistryDefinitionId, &RevocationRegistryDefinition>>,
     rev_regs: Option<&HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>>,
 ) -> Result<bool> {
     trace!("verify >>> presentation: {:?}, pres_req: {:?}, schemas: {:?}, cred_defs: {:?}, rev_reg_defs: {:?} rev_regs: {:?}",
@@ -40,11 +46,11 @@ pub fn verify_presentation(
 
     let pres_req = pres_req.value();
     let received_revealed_attrs: HashMap<String, Identifier> =
-        received_revealed_attrs(&presentation)?;
+        received_revealed_attrs(presentation)?;
     let received_unrevealed_attrs: HashMap<String, Identifier> =
-        received_unrevealed_attrs(&presentation)?;
-    let received_predicates: HashMap<String, Identifier> = received_predicates(&presentation)?;
-    let received_self_attested_attrs: HashSet<String> = received_self_attested_attrs(&presentation);
+        received_unrevealed_attrs(presentation)?;
+    let received_predicates: HashMap<String, Identifier> = received_predicates(presentation)?;
+    let received_self_attested_attrs: HashSet<String> = received_self_attested_attrs(presentation);
 
     compare_attr_from_proof_and_request(
         pres_req,
@@ -54,10 +60,10 @@ pub fn verify_presentation(
         &received_predicates,
     )?;
 
-    verify_revealed_attribute_values(&pres_req, &presentation)?;
+    verify_revealed_attribute_values(pres_req, presentation)?;
 
     verify_requested_restrictions(
-        &pres_req,
+        pres_req,
         &presentation.requested_proof,
         &received_revealed_attrs,
         &received_unrevealed_attrs,
@@ -79,21 +85,17 @@ pub fn verify_presentation(
     for sub_proof_index in 0..presentation.identifiers.len() {
         let identifier = presentation.identifiers[sub_proof_index].clone();
 
-        let schema = match schemas
+        let schema = schemas
             .get(&identifier.schema_id)
-            .ok_or_else(|| err_msg!("Schema not provided for ID: {:?}", identifier.schema_id))?
-        {
-            Schema::SchemaV1(schema) => schema,
-        };
+            .ok_or_else(|| err_msg!("Schema not provided for ID: {:?}", identifier.schema_id))?;
 
-        let cred_def = match cred_defs.get(&identifier.cred_def_id).ok_or_else(|| {
+        let cred_def_id = CredentialDefinitionId::new(identifier.cred_def_id.clone())?;
+        let cred_def = cred_defs.get(&cred_def_id).ok_or_else(|| {
             err_msg!(
                 "Credential Definition not provided for ID: {:?}",
                 identifier.cred_def_id
             )
-        })? {
-            CredentialDefinition::CredentialDefinitionV1(cred_def) => cred_def,
-        };
+        })?;
 
         let (rev_reg_def, rev_reg) = if let Some(timestamp) = identifier.timestamp {
             let rev_reg_id = identifier.rev_reg_id.clone().ok_or_else(|| {
@@ -110,14 +112,19 @@ pub fn verify_presentation(
                 ));
             }
 
-            let rev_reg_def = Some(rev_reg_defs.as_ref().unwrap().get(&rev_reg_id).ok_or_else(
-                || {
-                    err_msg!(
-                        "Revocation Registry Definition not provided for ID: {:?}",
-                        rev_reg_id
-                    )
-                },
-            )?);
+            let rev_reg_def_id = RevocationRegistryDefinitionId::new(rev_reg_id.clone())?;
+            let rev_reg_def = Some(
+                rev_reg_defs
+                    .as_ref()
+                    .unwrap()
+                    .get(&rev_reg_def_id)
+                    .ok_or_else(|| {
+                        err_msg!(
+                            "Revocation Registry Definition not provided for ID: {:?}",
+                            rev_reg_def_id
+                        )
+                    })?,
+            );
 
             let rev_reg = Some(
                 rev_regs
@@ -200,7 +207,7 @@ fn get_revealed_attributes_for_credential(
     let mut revealed_attrs_for_credential = requested_proof
         .revealed_attrs
         .iter()
-        .filter(|&(attr_referent, ref revealed_attr_info)| {
+        .filter(|&(attr_referent, revealed_attr_info)| {
             sub_proof_index == revealed_attr_info.sub_proof_index as usize
                 && pres_req.requested_attributes.contains_key(attr_referent)
         })
@@ -211,7 +218,7 @@ fn get_revealed_attributes_for_credential(
         &mut requested_proof
             .revealed_attr_groups
             .iter()
-            .filter(|&(attr_referent, ref revealed_attr_info)| {
+            .filter(|&(attr_referent, revealed_attr_info)| {
                 sub_proof_index == revealed_attr_info.sub_proof_index as usize
                     && pres_req.requested_attributes.contains_key(attr_referent)
             })
@@ -269,7 +276,7 @@ fn compare_attr_from_proof_and_request(
         .chain(received_unrevealed_attrs)
         .map(|(r, _)| r.to_string())
         .collect::<HashSet<String>>()
-        .union(&received_self_attested_attrs)
+        .union(received_self_attested_attrs)
         .cloned()
         .collect();
 
@@ -308,14 +315,14 @@ fn compare_timestamps_from_proof_and_request(
         .iter()
         .map(|(referent, info)| {
             validate_timestamp(
-                &received_revealed_attrs,
+                received_revealed_attrs,
                 referent,
                 &pres_req.non_revoked,
                 &info.non_revoked,
             )
             .or_else(|_| {
                 validate_timestamp(
-                    &received_unrevealed_attrs,
+                    received_unrevealed_attrs,
                     referent,
                     &pres_req.non_revoked,
                     &info.non_revoked,
@@ -448,7 +455,7 @@ fn verify_revealed_attribute_values(
                     attr_referent,
                 )
             })?;
-        verify_revealed_attribute_value(attr_name.as_str(), proof, &attr_info)?;
+        verify_revealed_attribute_value(attr_name.as_str(), proof, attr_info)?;
     }
 
     for (attr_referent, attr_infos) in proof.requested_proof.revealed_attr_groups.iter() {
@@ -504,8 +511,7 @@ fn verify_revealed_attribute_value(
     let reveal_attr_encoded = attr_info.encoded.to_string();
     let reveal_attr_encoded = Regex::new("^0*")
         .unwrap()
-        .replace_all(&reveal_attr_encoded, "")
-        .to_owned();
+        .replace_all(&reveal_attr_encoded, "");
     let sub_proof_index = attr_info.sub_proof_index as usize;
 
     let crypto_proof_encoded = proof
@@ -521,7 +527,7 @@ fn verify_revealed_attribute_value(
         })?
         .revealed_attrs()?
         .iter()
-        .find(|(key, _)| attr_common_view(attr_name) == attr_common_view(&key))
+        .find(|(key, _)| attr_common_view(attr_name) == attr_common_view(key))
         .map(|(_, val)| val.to_string())
         .ok_or_else(|| {
             err_msg!(
@@ -556,13 +562,13 @@ fn verify_requested_restrictions(
     let requested_attrs: HashMap<String, AttributeInfo> = pres_req
         .requested_attributes
         .iter()
-        .filter(|&(referent, info)| !is_self_attested(&referent, &info, self_attested_attrs))
+        .filter(|&(referent, info)| !is_self_attested(referent, info, self_attested_attrs))
         .map(|(referent, info)| (referent.to_string(), info.clone()))
         .collect();
 
     for (referent, info) in requested_attrs.iter() {
         if let Some(ref query) = info.restrictions {
-            let filter = gather_filter_info(&referent, &proof_attr_identifiers)?;
+            let filter = gather_filter_info(referent, &proof_attr_identifiers)?;
 
             let attr_value_map: HashMap<String, Option<&str>> = if let Some(name) =
                 info.name.as_ref()
@@ -597,7 +603,7 @@ fn verify_requested_restrictions(
                 ));
             };
 
-            process_operator(&attr_value_map, &query, &filter).map_err(err_map!(
+            process_operator(&attr_value_map, query, &filter).map_err(err_map!(
                 "Requested restriction validation failed for \"{:?}\" attributes",
                 &attr_value_map
             ))?;
@@ -606,7 +612,7 @@ fn verify_requested_restrictions(
 
     for (referent, info) in pres_req.requested_predicates.iter() {
         if let Some(ref query) = info.restrictions {
-            let filter = gather_filter_info(&referent, received_predicates)?;
+            let filter = gather_filter_info(referent, received_predicates)?;
 
             // start with the predicate requested attribute, which is un-revealed
             let mut attr_value_map = HashMap::new();
@@ -637,12 +643,12 @@ fn verify_requested_restrictions(
                 if pred_sub_proof_index == attr_sub_proof_index {
                     for name in attr_info.values.keys() {
                         let raw_val = attr_info.values.get(name).unwrap().raw.as_str();
-                        attr_value_map.insert(name.clone(), Some(raw_val.clone()));
+                        attr_value_map.insert(name.to_string(), Some(raw_val));
                     }
                 }
             }
 
-            process_operator(&attr_value_map, &query, &filter).map_err(err_map!(
+            process_operator(&attr_value_map, query, &filter).map_err(err_map!(
                 "Requested restriction validation failed for \"{}\" predicate",
                 &info.name
             ))?;
@@ -675,28 +681,26 @@ fn gather_filter_info(referent: &str, identifiers: &HashMap<String, Identifier>)
         )
     })?;
 
-    let (_, schema_issuer_did, schema_name, schema_version) =
-        identifier.schema_id.parts().ok_or_else(|| {
-            err_msg!(
-                "Invalid Schema ID `{}`: wrong number of parts",
-                identifier.schema_id.0
-            )
-        })?;
+    // TODO: how can we get these as as we can not extract them from the ID anymore
+    let schema_name = String::from("");
+    let schema_version = String::from("");
+    let schema_issuer_did = String::from("");
+    let cred_def_issuer_did = Some(String::from(""));
 
-    let issuer_did = identifier.cred_def_id.issuer_did().ok_or_else(|| {
+    let issuer_did = cred_def_issuer_did.ok_or_else(|| {
         err_msg!(
             "Invalid Credential Definition ID `{}`: wrong number of parts",
-            identifier.cred_def_id.0
+            identifier.cred_def_id
         )
     })?;
 
     Ok(Filter {
-        schema_id: identifier.schema_id.0.to_string(),
+        schema_id: identifier.schema_id.to_owned(),
         schema_name,
-        schema_issuer_did: schema_issuer_did.0,
+        schema_issuer_did,
         schema_version,
-        cred_def_id: identifier.cred_def_id.0.to_string(),
-        issuer_did: issuer_did.0,
+        cred_def_id: identifier.cred_def_id.to_owned(),
+        issuer_did,
     })
 }
 
@@ -707,14 +711,14 @@ fn process_operator(
 ) -> Result<()> {
     match restriction_op {
         Query::Eq(ref tag_name, ref tag_value) => {
-            process_filter(attr_value_map, &tag_name, &tag_value, filter).map_err(err_map!(
+            process_filter(attr_value_map, tag_name, tag_value, filter).map_err(err_map!(
                 "$eq operator validation failed for tag: \"{}\", value: \"{}\"",
                 tag_name,
                 tag_value
             ))
         }
         Query::Neq(ref tag_name, ref tag_value) => {
-            if process_filter(attr_value_map, &tag_name, &tag_value, filter).is_err() {
+            if process_filter(attr_value_map, tag_name, tag_value, filter).is_err() {
                 Ok(())
             } else {
                 Err(err_msg!(ProofRejected,
@@ -724,7 +728,7 @@ fn process_operator(
         Query::In(ref tag_name, ref tag_values) => {
             let res = tag_values
                 .iter()
-                .any(|val| process_filter(attr_value_map, &tag_name, &val, filter).is_ok());
+                .any(|val| process_filter(attr_value_map, tag_name, val, filter).is_ok());
             if res {
                 Ok(())
             } else {
@@ -756,7 +760,7 @@ fn process_operator(
             }
         }
         Query::Not(ref operator) => {
-            if process_operator(attr_value_map, &*operator, filter).is_err() {
+            if process_operator(attr_value_map, operator, filter).is_err() {
                 Ok(())
             } else {
                 Err(err_msg!(
@@ -783,11 +787,11 @@ fn process_filter(
         filter
     );
     match tag {
-        tag_ @ "schema_id" => precess_filed(tag_, &filter.schema_id, tag_value),
+        tag_ @ "schema_id" => precess_filed(tag_, filter.schema_id.to_string(), tag_value),
         tag_ @ "schema_issuer_did" => precess_filed(tag_, &filter.schema_issuer_did, tag_value),
         tag_ @ "schema_name" => precess_filed(tag_, &filter.schema_name, tag_value),
         tag_ @ "schema_version" => precess_filed(tag_, &filter.schema_version, tag_value),
-        tag_ @ "cred_def_id" => precess_filed(tag_, &filter.cred_def_id, tag_value),
+        tag_ @ "cred_def_id" => precess_filed(tag_, &filter.cred_def_id.to_string(), tag_value),
         tag_ @ "issuer_did" => precess_filed(tag_, &filter.issuer_did, tag_value),
         x if is_attr_internal_tag(x, attr_value_map) => {
             check_internal_tag_revealed_value(x, tag_value, attr_value_map)
@@ -797,7 +801,8 @@ fn process_filter(
     }
 }
 
-fn precess_filed(filed: &str, filter_value: &str, tag_value: &str) -> Result<()> {
+fn precess_filed(filed: &str, filter_value: impl Into<String>, tag_value: &str) -> Result<()> {
+    let filter_value = filter_value.into();
     if filter_value == tag_value {
         Ok(())
     } else {
@@ -900,11 +905,11 @@ mod tests {
 
     fn filter() -> Filter {
         Filter {
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: SchemaId::new_unchecked(SCHEMA_ID),
             schema_name: SCHEMA_NAME.to_string(),
             schema_issuer_did: SCHEMA_ISSUER_DID.to_string(),
             schema_version: SCHEMA_VERSION.to_string(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: CredentialDefinitionId::new_unchecked(CRED_DEF_ID),
             issuer_did: ISSUER_DID.to_string(),
         }
     }
@@ -1168,18 +1173,18 @@ mod tests {
             "referent_1".to_string(),
             Identifier {
                 timestamp: Some(1234),
-                schema_id: SchemaId(String::new()),
-                cred_def_id: CredentialDefinitionId(String::new()),
-                rev_reg_id: Some(RevocationRegistryId(String::new())),
+                schema_id: SchemaId::default(),
+                cred_def_id: CredentialDefinitionId::default(),
+                rev_reg_id: Some(RevocationRegistryId::default()),
             },
         );
         res.insert(
             "referent_2".to_string(),
             Identifier {
                 timestamp: None,
-                schema_id: SchemaId(String::new()),
-                cred_def_id: CredentialDefinitionId(String::new()),
-                rev_reg_id: Some(RevocationRegistryId(String::new())),
+                schema_id: SchemaId::default(),
+                cred_def_id: CredentialDefinitionId::default(),
+                rev_reg_id: Some(RevocationRegistryId::default()),
             },
         );
         res

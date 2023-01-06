@@ -1,4 +1,5 @@
 use std::any::TypeId;
+use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
@@ -62,12 +63,6 @@ impl ObjectHandle {
     }
 }
 
-impl Default for ObjectHandle {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
 #[derive(Clone, Debug)]
 #[repr(transparent)]
 pub(crate) struct AnonCredsObject(Arc<dyn AnyAnonCredsObject>);
@@ -94,14 +89,6 @@ impl AnonCredsObject {
         self.0.type_name()
     }
 }
-
-impl PartialEq for AnonCredsObject {
-    fn eq(&self, other: &AnonCredsObject) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
-
-impl Eq for AnonCredsObject {}
 
 impl Hash for AnonCredsObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -214,7 +201,7 @@ pub(crate) struct AnonCredsObjectList(Vec<AnonCredsObject>);
 impl AnonCredsObjectList {
     pub fn load(handles: &[ObjectHandle]) -> Result<Self> {
         let loaded = handles
-            .into_iter()
+            .iter()
             .map(ObjectHandle::load)
             .collect::<Result<_>>()?;
         Ok(Self(loaded))
@@ -233,14 +220,14 @@ impl AnonCredsObjectList {
         Ok(refs)
     }
 
-    pub fn refs_map<T>(&self) -> Result<HashMap<<T as AnonCredsObjectId>::Id, &T>>
+    pub fn refs_map<'a, I, T>(&'a self, ids: &'a [I]) -> Result<HashMap<&I, &T>>
     where
-        T: AnyAnonCredsObject + AnonCredsObjectId + 'static,
+        T: AnyAnonCredsObject + 'static,
+        I: Eq + Hash,
     {
         let mut refs = HashMap::with_capacity(self.0.len());
-        for inst in self.0.iter() {
+        for (inst, id) in self.0.iter().zip(ids) {
             let inst = inst.cast_ref::<T>()?;
-            let id = inst.get_id();
             refs.insert(id, inst);
         }
         Ok(refs)

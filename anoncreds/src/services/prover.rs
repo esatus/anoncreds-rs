@@ -1,6 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
 use super::types::*;
+use crate::data_types::anoncreds::{
+    cred_def::{CredentialDefinition, CredentialDefinitionId},
+    credential::AttributeValues,
+    pres_request::{PresentationRequestPayload, RequestedAttributeInfo, RequestedPredicateInfo},
+    presentation::{
+        AttributeValue, Identifier, RequestedProof, RevealedAttributeGroupInfo,
+        RevealedAttributeInfo, SubProofReferent,
+    },
+    schema::{Schema, SchemaId},
+};
 use crate::error::Result;
 use crate::services::helpers::*;
 use crate::ursa::cl::{
@@ -8,15 +18,7 @@ use crate::ursa::cl::{
     verifier::Verifier as CryptoVerifier, CredentialPublicKey,
     RevocationRegistry as CryptoRevocationRegistry, SubProofRequest, Witness,
 };
-use crate::data_types::anoncreds::{
-    credential::AttributeValues,
-    pres_request::{PresentationRequestPayload, RequestedAttributeInfo, RequestedPredicateInfo},
-    presentation::{
-        AttributeValue, Identifier, RequestedProof, RevealedAttributeGroupInfo,
-        RevealedAttributeInfo, SubProofReferent,
-    },
-};
-use indy_utils::{Qualifiable, Validatable};
+use indy_utils::Validatable;
 
 use super::tails::TailsReader;
 
@@ -38,9 +40,6 @@ pub fn create_credential_request(
         credential_offer
     );
 
-    let cred_def = match cred_def {
-        CredentialDefinition::CredentialDefinitionV1(cd) => cd,
-    };
     let credential_pub_key = CredentialPublicKey::build_from_parts(
         &cred_def.value.primary,
         cred_def.value.revocation.as_ref(),
@@ -62,7 +61,7 @@ pub fn create_credential_request(
 
     let credential_request = CredentialRequest {
         prover_did: prover_did.clone(),
-        cred_def_id: credential_offer.cred_def_id.clone(),
+        cred_def_id: credential_offer.cred_def_id.to_owned(),
         blinded_ms,
         blinded_ms_correctness_proof,
         nonce,
@@ -93,9 +92,6 @@ pub fn process_credential(
     trace!("process_credential >>> credential: {:?}, cred_request_metadata: {:?}, master_secret: {:?}, cred_def: {:?}, rev_reg_def: {:?}",
             credential, cred_request_metadata, secret!(&master_secret), cred_def, rev_reg_def);
 
-    let cred_def = match cred_def {
-        CredentialDefinition::CredentialDefinitionV1(cd) => cd,
-    };
     let credential_pub_key = CredentialPublicKey::build_from_parts(
         &cred_def.value.primary,
         cred_def.value.revocation.as_ref(),
@@ -131,8 +127,8 @@ pub fn create_presentation(
     credentials: PresentCredentials,
     self_attested: Option<HashMap<String, String>>,
     master_secret: &MasterSecret,
-    schemas: &HashMap<SchemaId, &Schema>,
-    cred_defs: &HashMap<CredentialDefinitionId, &CredentialDefinition>,
+    schemas: &HashMap<&SchemaId, &Schema>,
+    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
 ) -> Result<Presentation> {
     trace!("create_proof >>> credentials: {:?}, pres_req: {:?}, credentials: {:?}, self_attested: {:?}, master_secret: {:?}, schemas: {:?}, cred_defs: {:?}",
             credentials, pres_req, credentials, &self_attested, secret!(&master_secret), schemas, cred_defs);
@@ -154,9 +150,10 @@ pub fn create_presentation(
     let mut proof_builder = CryptoProver::new_proof_builder()?;
     proof_builder.add_common_attribute("master_secret")?;
 
-    let mut requested_proof = RequestedProof::default();
-
-    requested_proof.self_attested_attrs = self_attested.unwrap_or_default();
+    let mut requested_proof = RequestedProof {
+        self_attested_attrs: self_attested.unwrap_or_default(),
+        ..Default::default()
+    };
 
     let mut sub_proof_index = 0;
     let non_credential_schema = build_non_credential_schema()?;
@@ -171,19 +168,14 @@ pub fn create_presentation(
         let schema = *schemas
             .get(&credential.schema_id)
             .ok_or_else(|| err_msg!("Schema not provided for ID: {}", credential.schema_id))?;
-        let schema = match schema {
-            Schema::SchemaV1(schema) => schema,
-        };
 
-        let cred_def = *cred_defs.get(&credential.cred_def_id).ok_or_else(|| {
+        let cred_def_id = CredentialDefinitionId::new(credential.cred_def_id.clone())?;
+        let cred_def = *cred_defs.get(&cred_def_id).ok_or_else(|| {
             err_msg!(
                 "Credential Definition not provided for ID: {}",
                 credential.cred_def_id
             )
         })?;
-        let cred_def = match cred_def {
-            CredentialDefinition::CredentialDefinitionV1(cd) => cd,
-        };
 
         let credential_pub_key = CredentialPublicKey::build_from_parts(
             &cred_def.value.primary,
@@ -213,14 +205,14 @@ pub fn create_presentation(
 
         let identifier = match pres_req {
             PresentationRequest::PresentationRequestV1(_) => Identifier {
-                schema_id: credential.schema_id.to_unqualified(),
-                cred_def_id: credential.cred_def_id.to_unqualified(),
-                rev_reg_id: credential.rev_reg_id.as_ref().map(|id| id.to_unqualified()),
+                schema_id: credential.schema_id.to_owned(),
+                cred_def_id: credential.cred_def_id.to_owned(),
+                rev_reg_id: credential.rev_reg_id.clone(),
                 timestamp: present.timestamp,
             },
             PresentationRequest::PresentationRequestV2(_) => Identifier {
-                schema_id: credential.schema_id.clone(),
-                cred_def_id: credential.cred_def_id.clone(),
+                schema_id: credential.schema_id.to_owned(),
+                cred_def_id: credential.cred_def_id.to_owned(),
                 rev_reg_id: credential.rev_reg_id.clone(),
                 timestamp: present.timestamp,
             },
@@ -272,12 +264,8 @@ rev_reg_delta: {:?}, rev_reg_idx: {}, timestamp: {:?}, rev_state: {:?}",
         rev_state
     );
 
-    let revoc_reg_def = match revoc_reg_def {
-        RevocationRegistryDefinition::RevocationRegistryDefinitionV1(v1) => v1,
-    };
-    let rev_reg_delta = match rev_reg_delta {
-        RevocationRegistryDelta::RevocationRegistryDeltaV1(v1) => v1,
-    };
+    let RevocationRegistryDefinition::RevocationRegistryDefinitionV1(revoc_reg_def) = revoc_reg_def;
+    let RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta) = rev_reg_delta;
 
     let witness = match rev_state {
         None => Witness::new(
@@ -377,7 +365,7 @@ fn get_credential_values_for_attribute(
 
     let res = credential_attrs
         .iter()
-        .find(|&(ref key, _)| attr_common_view(key) == attr_common_view(&requested_attr))
+        .find(|(key, _)| attr_common_view(key) == attr_common_view(requested_attr))
         .map(|(_, values)| values.clone());
 
     trace!(
@@ -406,7 +394,7 @@ fn update_requested_proof(
 
             if let Some(name) = &attribute.name {
                 let attribute_values =
-                    get_credential_values_for_attribute(&credential.values.0, &name).ok_or_else(
+                    get_credential_values_for_attribute(&credential.values.0, name).ok_or_else(
                         || err_msg!("Credential value not found for attribute {:?}", name),
                     )?;
 
@@ -422,7 +410,7 @@ fn update_requested_proof(
                 let mut value_map: HashMap<String, AttributeValue> = HashMap::new();
                 for name in names {
                     let attr_value =
-                        get_credential_values_for_attribute(&credential.values.0, &name)
+                        get_credential_values_for_attribute(&credential.values.0, name)
                             .ok_or_else(|| {
                                 err_msg!("Credential value not found for attribute {:?}", name)
                             })?;

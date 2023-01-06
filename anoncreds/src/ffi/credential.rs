@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::convert::TryInto;
 use std::os::raw::c_char;
 use std::ptr;
 
@@ -8,6 +7,7 @@ use ffi_support::{rust_string_to_c, FfiStr};
 use super::error::{catch_error, ErrorCode};
 use super::object::{AnonCredsObject, ObjectHandle};
 use super::util::{FfiList, FfiStrList};
+use crate::data_types::anoncreds::rev_reg::RevocationRegistryId;
 use crate::error::Result;
 use crate::services::{
     issuer::create_credential,
@@ -45,7 +45,7 @@ impl RevocationConfig {
             registry: self.registry.cast_ref()?,
             registry_idx: self.reg_idx,
             registry_used: &self.reg_used,
-            tails_reader: TailsFileReader::new(self.tails_path.as_str()),
+            tails_reader: TailsFileReader::new_tails_reader(self.tails_path.as_str()),
         })
     }
 }
@@ -59,6 +59,7 @@ pub extern "C" fn anoncreds_create_credential(
     attr_names: FfiStrList,
     attr_raw_values: FfiStrList,
     attr_enc_values: FfiStrList,
+    rev_reg_id: FfiStr,
     revocation: *const FfiCredRevInfo,
     cred_p: *mut ObjectHandle,
     rev_reg_p: *mut ObjectHandle,
@@ -74,13 +75,17 @@ pub extern "C" fn anoncreds_create_credential(
                 "Mismatch between length of attribute names and raw values"
             ));
         }
+        let rev_reg_id = rev_reg_id
+            .as_opt_str()
+            .map(|i| RevocationRegistryId::new(i))
+            .transpose()?;
         let enc_values = attr_enc_values.as_slice();
         let mut cred_values = MakeCredentialValues::default();
-        let mut attr_idx = 0;
-        for (name, raw) in attr_names
+        for (attr_idx, (name, raw)) in attr_names
             .as_slice()
-            .into_iter()
+            .iter()
             .zip(attr_raw_values.as_slice())
+            .enumerate()
         {
             let name = name
                 .as_opt_str()
@@ -100,7 +105,6 @@ pub extern "C" fn anoncreds_create_credential(
             } else {
                 cred_values.add_raw(name, raw)?;
             }
-            attr_idx += 1;
         }
         let revocation_config = if !revocation.is_null() {
             let revocation = unsafe { &*revocation };
@@ -137,6 +141,7 @@ pub extern "C" fn anoncreds_create_credential(
             cred_offer.load()?.cast_ref()?,
             cred_request.load()?.cast_ref()?,
             cred_values.into(),
+            rev_reg_id,
             revocation_config
                 .as_ref()
                 .map(RevocationConfig::as_ref_config)
@@ -230,7 +235,7 @@ pub extern "C" fn anoncreds_credential_get_attribute(
         let cred = handle.load()?;
         let cred = cred.cast_ref::<Credential>()?;
         let val = match name.as_opt_str().unwrap_or_default() {
-            "schema_id" => rust_string_to_c(cred.schema_id.to_string()),
+            "schema_id" => rust_string_to_c(cred.schema_id.to_owned()),
             "cred_def_id" => rust_string_to_c(cred.cred_def_id.to_string()),
             "rev_reg_id" => cred
                 .rev_reg_id

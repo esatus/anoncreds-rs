@@ -1,27 +1,22 @@
 use std::collections::HashSet;
 
 use super::tails::TailsReader;
-pub use crate::data_types::{
-    anoncreds::{
-        cred_def::{
-            CredentialDefinition, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
-            SignatureType,
-        },
-        cred_offer::CredentialOffer,
-        cred_request::{CredentialRequest, CredentialRequestMetadata},
-        credential::{AttributeValues, Credential, CredentialValues},
-        master_secret::MasterSecret,
-        pres_request::PresentationRequest,
-        presentation::Presentation,
-        rev_reg::{RevocationRegistry, RevocationRegistryDelta},
-        rev_reg_def::{
-            IssuanceType, RegistryType, RevocationRegistryDefinition,
-            RevocationRegistryDefinitionPrivate,
-        },
-        schema::{AttributeNames, Schema},
+pub use crate::data_types::anoncreds::{
+    cred_def::{CredentialDefinitionPrivate, CredentialKeyCorrectnessProof, SignatureType},
+    cred_offer::CredentialOffer,
+    cred_request::{CredentialRequest, CredentialRequestMetadata},
+    credential::{AttributeValues, Credential, CredentialValues},
+    master_secret::MasterSecret,
+    pres_request::PresentationRequest,
+    presentation::Presentation,
+    rev_reg::{RevocationRegistry, RevocationRegistryDelta},
+    rev_reg_def::{
+        IssuanceType, RegistryType, RevocationRegistryDefinition,
+        RevocationRegistryDefinitionPrivate,
     },
-    CredentialDefinitionId, RevocationRegistryId, SchemaId,
+    schema::AttributeNames,
 };
+
 pub use indy_utils::did::DidValue;
 use indy_utils::{invalid, Validatable, ValidationError};
 
@@ -29,7 +24,7 @@ use crate::error::Error;
 use crate::services::helpers::encode_credential_attribute;
 use crate::ursa::cl::{RevocationRegistry as CryptoRevocationRegistry, Witness};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CredentialDefinitionConfig {
     pub support_revocation: bool,
 }
@@ -37,14 +32,6 @@ pub struct CredentialDefinitionConfig {
 impl CredentialDefinitionConfig {
     pub fn new(support_revocation: bool) -> Self {
         Self { support_revocation }
-    }
-}
-
-impl Default for CredentialDefinitionConfig {
-    fn default() -> Self {
-        Self {
-            support_revocation: false,
-        }
     }
 }
 
@@ -83,9 +70,9 @@ impl MakeCredentialValues {
     }
 }
 
-impl Into<CredentialValues> for MakeCredentialValues {
-    fn into(self) -> CredentialValues {
-        self.0
+impl From<MakeCredentialValues> for CredentialValues {
+    fn from(m: MakeCredentialValues) -> Self {
+        m.0
     }
 }
 
@@ -188,6 +175,7 @@ impl<'a, 'p> AddCredential<'a, 'p> {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub(crate) struct RequestedAttribute<'a> {
     pub cred_id: String,
@@ -196,6 +184,7 @@ pub(crate) struct RequestedAttribute<'a> {
     pub rev_state: Option<&'a CredentialRevocationState>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub(crate) struct RequestedPredicate<'a> {
     pub cred_id: String,
