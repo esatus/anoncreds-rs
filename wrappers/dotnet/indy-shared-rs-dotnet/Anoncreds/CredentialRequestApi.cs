@@ -9,12 +9,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class CredentialRequestApi
     {
         /// <summary>
-        /// Creates a new <see cref="CredentialRequest"/> from <see cref="CredentialDefinition"/>.
+        /// Creates a new <see cref="CredentialRequest"/> and the <see cref="CredentialRequestMetadata"/> to a given <see cref="CredentialDefinition"/>.
         /// </summary>
         /// <param name="proverDid">Prover DID.</param>
         /// <param name="credentialDefinition">Credential definition.</param>
-        /// <param name="masterSecret">New master secret.</param>
         /// <param name="masterSecretId">Id of master secret.</param>
+        /// <param name="masterSecret">New master secret.</param>
         /// <param name="credentialOffer">Credential offer.</param>
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/>.</returns>
@@ -47,15 +47,15 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="CredentialRequest"/> from <see cref="CredentialDefinition"/>.
+        /// Creates a new <see cref="CredentialRequest"/> and the <see cref="CredentialRequestMetadata"/> as JSON strings to a given <see cref="CredentialDefinition"/>.
         /// </summary>
         /// <param name="proverDid">Prover DID.</param>
-        /// <param name="credentialDefinition">Credential definition.</param>
-        /// <param name="masterSecret">New master secret.</param>
+        /// <param name="credentialDefinitionJson">Credential definition as JSON string.</param>
+        /// <param name="masterSecretJson">Master secret as JSON string.</param>
         /// <param name="masterSecretId">Id of master secret.</param>
-        /// <param name="credentialOffer">Credential offer.</param>
+        /// <param name="credentialOfferJson">Credential offer as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
-        /// <returns>New <see cref="CredentialRequest"/> as JSON string and its <see cref="CredentialRequestMetadata"/> as JSON string.</returns>
+        /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/> as JSON strings.</returns>
         public static async Task<(string, string)> CreateCredentialRequestJsonAsync(
             string proverDid,
             string credentialDefinitionJson,
@@ -94,6 +94,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         #region private methods
+        /// <summary>
+        /// Creates a <see cref="CredentialRequest"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a credential request.</param>
+        /// <returns>A <see cref="CredentialRequest"/>.</returns>
         private static async Task<CredentialRequest> CreateCredentialRequestObject(IntPtr objectHandle)
         {
             string credReqJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -102,6 +107,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             requestObject.Handle = objectHandle;
             return await Task.FromResult(requestObject);
         }
+
+        /// <summary>
+        /// Creates a <see cref="CredentialRequestMetadata"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of credential request metadata.</param>
+        /// <returns>A <see cref="CredentialRequestMetadata"/>.</returns>
         private static async Task<CredentialRequestMetadata> CreateCredentialRequestMetadataObject(IntPtr objectHandle)
         {
             string credMetadataJson = await ObjectApi.ToJsonAsync(objectHandle);

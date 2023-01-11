@@ -11,7 +11,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class CredentialOfferApi
     {
         /// <summary>
-        /// Create a new <see cref="CredentialOffer"/> from <see cref="CredentialDefinition"/>.
+        /// Creates a <see cref="CredentialOffer"/> to a given <see cref="CredentialDefinition"/>.
         /// </summary>
         /// <param name="schemaId">Id of the corresponding schema.</param>
         /// <param name="credDefObject">Credential definition.</param>
@@ -37,7 +37,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Create a new <see cref="CredentialOffer"/> from <see cref="CredentialDefinition"/>.
+        /// Creates a <see cref="CredentialOffer"/> to a given handle of a <see cref="CredentialDefinition"/>.
         /// </summary>
         /// <param name="schemaId">Id of the corresponding schema.</param>
         /// <param name="credDefObjectJson">Credential definition as JSON string.</param>
@@ -68,6 +68,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         #region private methods
+        /// <summary>
+        /// Creates a <see cref="CredentialOffer"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a credential offer.</param>
+        /// <returns>A <see cref="CredentialOffer"/>.</returns>
+        /// <exception cref="ArgumentException"></exception>
         private static async Task<CredentialOffer> CreateCredentialOfferObject(IntPtr objectHandle)
         {
             string credOfferJson = await ObjectApi.ToJsonAsync(objectHandle);

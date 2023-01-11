@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;

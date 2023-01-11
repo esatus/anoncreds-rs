@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class RevocationApiTests
     {
@@ -31,10 +31,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject, RevocationRegistry revRegObject, RevocationRegistryDelta revRegDeltaObject) = await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            revRegDefObject.Should().BeOfType(typeof(RevocationRegistryDefinition));
-            revRegDefPvtObject.Should().BeOfType(typeof(RevocationRegistryDefinitionPrivate));
-            revRegObject.Should().BeOfType(typeof(RevocationRegistry));
-            revRegDeltaObject.Should().BeOfType(typeof(RevocationRegistryDelta));
+            _ = revRegDefObject.Should().BeOfType(typeof(RevocationRegistryDefinition));
+            _ = revRegDefPvtObject.Should().BeOfType(typeof(RevocationRegistryDefinitionPrivate));
+            _ = revRegObject.Should().BeOfType(typeof(RevocationRegistry));
+            _ = revRegDeltaObject.Should().BeOfType(typeof(RevocationRegistryDelta));
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryAsync() throws AnoncredsRsException when provided credential definition is invalid.")]
@@ -55,7 +55,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryAsync(issuerDid, new(), "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() returns a CredentialDefintion, CredentialDefinitionPrivate and CredentialKeyCorrectnessProof object.")]
@@ -75,10 +75,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (string revRegDefObject, string revRegDefPvtObject, string revRegObject, string revRegDeltaObject) = await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            JObject.Parse(revRegDefObject)["ver"].Should().NotBeNull();
-            JObject.Parse(revRegDefPvtObject)["value"].Should().NotBeNull();
-            JObject.Parse(revRegObject)["ver"].Should().NotBeNull();
-            JObject.Parse(revRegDeltaObject)["ver"].Should().NotBeNull();
+            _ = JObject.Parse(revRegDefObject)["ver"].Should().NotBeNull();
+            _ = JObject.Parse(revRegDefPvtObject)["value"].Should().NotBeNull();
+            _ = JObject.Parse(revRegObject)["ver"].Should().NotBeNull();
+            _ = JObject.Parse(revRegDeltaObject)["ver"].Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryJsonAsync() throws AnoncredsRsException when provided credential definition is invalid.")]
@@ -93,7 +93,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, "{}", "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -110,10 +110,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 "}";
 
             //Act
-            var expected = await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
+            RevocationRegistry expected = await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
 
             //Assert
-            expected.Should().BeOfType<RevocationRegistry>();
+            _ = expected.Should().BeOfType<RevocationRegistry>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws AnoncredsRsException when provided with an empty json string ")]
@@ -126,7 +126,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
@@ -139,7 +139,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -168,10 +168,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             "}";
 
             //Act
-            var expected = await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
+            RevocationRegistryDefinition expected = await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
             //Assert
-            expected.Should().BeOfType<RevocationRegistryDefinition>();
+            _ = expected.Should().BeOfType<RevocationRegistryDefinition>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws AnoncredsRsException when provided with empty json string.")]
@@ -184,7 +184,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationRegistryDefinitionFromJsonAsync() throws AnoncredsRsException when provided with invalid json string.")]
@@ -197,7 +197,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -220,8 +220,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, RevocationRegistry tmpRevRegObject, _) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            List<long> issuedList = new List<long> { 0 };
-            List<long> revokedList = new List<long> { 0 };
+            List<long> issuedList = new() { 0 };
+            List<long> revokedList = new() { 0 };
 
             //Act
             (RevocationRegistry revRegObject, RevocationRegistryDelta revRegDeltaObject) =
@@ -234,8 +234,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            revRegObject.Value.Should().NotBeSameAs(tmpRevRegObject.Value);
-            revRegDeltaObject.Should().NotBeNull();
+            _ = revRegObject.Value.Should().NotBeSameAs(tmpRevRegObject.Value);
+            _ = revRegDeltaObject.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws AnoncredsRsException when revocation registry is invalid.")]
@@ -256,8 +256,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, RevocationRegistry tmpRevRegObject, _) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            List<long> issuedList = new List<long>() { 0 };
-            List<long> revokedList = new List<long>() { 0 };
+            List<long> issuedList = new() { 0 };
+            List<long> revokedList = new() { 0 };
 
             //Act
             Func<Task> act = async () => await RevocationApi.UpdateRevocationRegistryAsync(
@@ -269,7 +269,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() works.")]
@@ -289,8 +289,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (string revRegDefJson, _, string tmpRevRegJson, _) =
                 await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
             RevocationRegistryDefinition revRegDefObject = await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
-            List<long> issuedList = new List<long> { 0 };
-            List<long> revokedList = new List<long> { 0 };
+            List<long> issuedList = new() { 0 };
+            List<long> revokedList = new() { 0 };
 
             //Act
             (string revRegJson, string revRegDeltaJson) =
@@ -303,8 +303,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
 
             //Assert
-            revRegJson.Should().NotBeEmpty();
-            revRegDeltaJson.Should().NotBeEmpty();
+            _ = revRegJson.Should().NotBeEmpty();
+            _ = revRegDeltaJson.Should().NotBeEmpty();
         }
 
         [Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws AnoncredsRsException when revocation registry is invalid.")]
@@ -325,8 +325,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (string revRegDefObject, _, string tmpRevRegObject, _) =
                 await RevocationApi.CreateRevocationRegistryJsonAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            List<long> issuedList = new List<long>() { 0 };
-            List<long> revokedList = new List<long>() { 0 };
+            List<long> issuedList = new() { 0 };
+            List<long> revokedList = new() { 0 };
 
             //Act
             Func<Task> act = async () => await RevocationApi.UpdateRevocationRegistryAsync(
@@ -338,7 +338,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<Exception>();
+            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
 
@@ -373,8 +373,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            actual.Value.PrevAccum.Should().NotBeNull();
-            actual.Value.Revoked.Should().HaveCount(1);
+            _ = actual.Value.PrevAccum.Should().NotBeNull();
+            _ = actual.Value.Revoked.Should().HaveCount(1);
         }
 
         [Test, TestCase(TestName = "RevokeCredential() throws AnoncredsRsException when revocation registry is invalid.")]
@@ -406,7 +406,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "RevokeCredentialAsync() works.")]
@@ -443,8 +443,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             RevocationRegistryDelta actual = JsonConvert.DeserializeObject<RevocationRegistryDelta>(deltaJson);
 
             //Assert
-            actual.Value.PrevAccum.Should().NotBeNull();
-            actual.Value.Revoked.Should().HaveCount(1);
+            _ = actual.Value.PrevAccum.Should().NotBeNull();
+            _ = actual.Value.Revoked.Should().HaveCount(1);
         }
 
         [Test, TestCase(TestName = "RevokeCredential() throws AnoncredsRsException when revocation registry is invalid.")]
@@ -476,7 +476,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                     );
 
             //Assert
-            await act.Should().ThrowAsync<Exception>();
+            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
 
@@ -499,10 +499,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, RevocationRegistry revRegObject, _) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            List<long> issuedList1 = new List<long> { 0, 2 };
-            List<long> issuedList2 = new List<long> { 0, 3 };
-            List<long> revokedList1 = new List<long> { 0, 2 };
-            List<long> revokedList2 = new List<long> { 0, 3 };
+            List<long> issuedList1 = new() { 0, 2 };
+            List<long> issuedList2 = new() { 0, 3 };
+            List<long> revokedList1 = new() { 0, 2 };
+            List<long> revokedList2 = new() { 0, 3 };
 
             (_, RevocationRegistryDelta delta1) = await RevocationApi.UpdateRevocationRegistryAsync(
                 revRegDefObject,
@@ -523,8 +523,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             RevocationRegistryDelta actual = await RevocationApi.MergeRevocationRegistryDeltasAsync(delta1, delta2);
 
             //Assert
-            actual.Value.Revoked.Should().HaveCount(1);
-            actual.Value.Revoked.Contains(2).Should().BeTrue();
+            _ = actual.Value.Revoked.Should().HaveCount(1);
+            _ = actual.Value.Revoked.Contains(2).Should().BeTrue();
         }
 
         [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws AnoncredsRsException when one delta is invalid.")]
@@ -545,10 +545,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (RevocationRegistryDefinition revRegDefObject, _, RevocationRegistry revRegObject, _) =
                 await RevocationApi.CreateRevocationRegistryAsync(issuerDid, credDef, "test_tag", RegistryType.CL_ACCUM, IssuerType.ISSUANCE_BY_DEFAULT, 99, testTailsPath);
 
-            List<long> issuedList1 = new List<long> { 0, 2 };
-            List<long> issuedList2 = new List<long> { 0, 3 };
-            List<long> revokedList1 = new List<long> { 0, 2 };
-            List<long> revokedList2 = new List<long> { 0, 3 };
+            List<long> issuedList1 = new() { 0, 2 };
+            List<long> issuedList2 = new() { 0, 3 };
+            List<long> revokedList1 = new() { 0, 2 };
+            List<long> revokedList2 = new() { 0, 3 };
 
             (_, RevocationRegistryDelta delta1) = await RevocationApi.UpdateRevocationRegistryAsync(
                 revRegDefObject,
@@ -569,7 +569,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.MergeRevocationRegistryDeltasAsync(delta1, new());
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "MergeRevocationRegistryAsync() works.")]
@@ -592,10 +592,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             RevocationRegistryDefinition revRegDefObject = await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
-            List<long> issuedList1 = new List<long> { 0, 2 };
-            List<long> issuedList2 = new List<long> { 0, 3 };
-            List<long> revokedList1 = new List<long> { 0, 2 };
-            List<long> revokedList2 = new List<long> { 0, 3 };
+            List<long> issuedList1 = new() { 0, 2 };
+            List<long> issuedList2 = new() { 0, 3 };
+            List<long> revokedList1 = new() { 0, 2 };
+            List<long> revokedList2 = new() { 0, 3 };
 
             (_, string delta1) = await RevocationApi.UpdateRevocationRegistryAsync(
                 revRegDefJson,
@@ -618,8 +618,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             RevocationRegistryDelta actual = JsonConvert.DeserializeObject<RevocationRegistryDelta>(deltaJson);
 
             //Assert
-            actual.Value.Revoked.Should().HaveCount(1);
-            actual.Value.Revoked.Contains(2).Should().BeTrue();
+            _ = actual.Value.Revoked.Should().HaveCount(1);
+            _ = actual.Value.Revoked.Contains(2).Should().BeTrue();
         }
 
         [Test, TestCase(TestName = "MergeRevocationRegistryDeltaAsync() throws AnoncredsRsException when one delta is invalid.")]
@@ -642,10 +642,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             RevocationRegistryDefinition revRegDefObject = await RevocationApi.CreateRevocationRegistryDefinitionFromJsonAsync(revRegDefJson);
 
-            List<long> issuedList1 = new List<long> { 0, 2 };
-            List<long> issuedList2 = new List<long> { 0, 3 };
-            List<long> revokedList1 = new List<long> { 0, 2 };
-            List<long> revokedList2 = new List<long> { 0, 3 };
+            List<long> issuedList1 = new() { 0, 2 };
+            List<long> issuedList2 = new() { 0, 3 };
+            List<long> revokedList1 = new() { 0, 2 };
+            List<long> revokedList2 = new() { 0, 3 };
 
             (_, string delta1) = await RevocationApi.UpdateRevocationRegistryAsync(
                 revRegDefJson,
@@ -659,7 +659,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.MergeRevocationRegistryDeltasAsync(delta1, "{}");
 
             //Assert
-            await act.Should().ThrowAsync<Exception>();
+            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
 
@@ -702,7 +702,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 init);
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() works with rev state equals null.")]
@@ -735,7 +735,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 null);
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
@@ -770,7 +770,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 revState);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() works.")]
@@ -811,7 +811,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 init);
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() works with rev state equals null.")]
@@ -844,7 +844,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 null);
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "CreateOrUpdateRevocationStateJsonAsync() throws AnoncredsRsException when revocation registry delta is invalid.")]
@@ -878,7 +878,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -903,7 +903,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             CredentialRevocationState actual = await RevocationApi.CreateRevocationStateFromJsonAsync(revStateJson);
 
             //Assert
-            actual.Should().BeOfType<CredentialRevocationState>();
+            _ = actual.Should().BeOfType<CredentialRevocationState>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws AnoncredsRsException when provided with an empty json string.")]
@@ -916,7 +916,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationStateFromJsonAsync(revStateJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateRevocationStateFromJsonAsync() throws AnoncredsRsException when provided with an invalid json string.")]
@@ -929,7 +929,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.CreateRevocationStateFromJsonAsync(revStateJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -962,7 +962,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'max_cred_num'.")]
@@ -993,7 +993,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'tails_hash'.")]
@@ -1024,7 +1024,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() works for attribute name 'tails_location'.")]
@@ -1055,7 +1055,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 );
 
             //Assert
-            actual.Should().NotBeNull();
+            _ = actual.Should().NotBeNull();
         }
 
         [Test, TestCase(TestName = "GetRevocationRegistryDefinitionAttributeAsync() throws AnoncredsRsException for invalid attribute name.")]
@@ -1084,7 +1084,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await RevocationApi.GetRevocationRegistryDefinitionAttributeAsync(revRegDefObject, attributeName);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

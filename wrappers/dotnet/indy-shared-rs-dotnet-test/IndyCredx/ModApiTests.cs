@@ -1,10 +1,10 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class ModApiTests
     {
@@ -18,7 +18,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await ModApi.SetDefaultLoggerAsync();
 
             //Assert
-            await act.Should().NotThrowAsync<Exception>();
+            _ = await act.Should().NotThrowAsync<Exception>();
         }
         #endregion
 
@@ -32,7 +32,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await ModApi.GetVersionAsync();
 
             //Assert
-            actual.Should().NotBeEmpty();
+            _ = actual.Should().NotBeEmpty();
         }
         #endregion
     }

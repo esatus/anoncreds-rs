@@ -31,7 +31,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(msObject);
         }
         /// <summary>
-        /// Creates a new <see cref="MasterSecret"/>.
+        /// Creates a new <see cref="MasterSecret"/> as JSON string.
         /// </summary>
         /// <exception cref="AnoncredsRsException">Throws when <see cref="MasterSecret"/> can't be created.</exception>
         /// <returns>New <see cref="MasterSecret"/> as JSON string.</returns>

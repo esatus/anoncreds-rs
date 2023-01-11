@@ -64,17 +64,17 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="RevocationRegistry"/> object and its corresponding informative objects.
+        /// Creates a new <see cref="RevocationRegistry"/> object and its corresponding informative objects as JSON strings.
         /// </summary>
         /// <param name="originDid">Did of issuer.</param>
-        /// <param name="credDefJson">Credential definition.</param>
+        /// <param name="credDefJson">Credential definition as JSON string.</param>
         /// <param name="tag">Tag.</param>
         /// <param name="revRegType">Type of revocation registry.</param>
         /// <param name="issuanceType">Type of issuance.</param>
         /// <param name="maxCredNumber">Maximum number of credential entries.</param>
         /// <param name="tailsDirPath">Path to tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> all as JSON.</returns>
+        /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> as JSON strings.</returns>
         public static async Task<(string, string, string, string)> CreateRevocationRegistryJsonAsync(
             string originDid,
             string credDefJson,
@@ -118,9 +118,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="RevocationRegistry"/> object from json <see cref="string"/>.
+        /// Creates a new <see cref="RevocationRegistry"/> object from a JSON string.
         /// </summary>
-        /// <param name="revRegJson">Json <see cref="string"/> representing a <see cref="RevocationRegistry"/> object.</param>
+        /// <param name="revRegJson">JSON string representing a RevocationRegistry.</param>
         /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revRegJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revRegJson"/> is empty.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/> object.</returns>
@@ -139,12 +139,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="RevocationRegistryDefinition"/> object from json <see cref="string"/>.
+        /// Creates a new <see cref="RevocationRegistryDefinition"/> object from a JSON string.
         /// </summary>
-        /// <param name="revRegDefJson">Json <see cref="string"/> representing a <see cref="RevocationRegistryDefinition"/> object.</param>
+        /// <param name="revRegDefJson">JSON string representing a RevocationRegistryDefinition.</param>
         /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revRegDefJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revRegDefJson"/> is empty.</exception>
-        /// <returns>The deserialized <see cref="RevocationRegistryDefinition"/> object that was serialized in json.</returns>
+        /// <returns>A new <see cref="RevocationRegistryDefinition"/> object.</returns>
         public static async Task<RevocationRegistryDefinition> CreateRevocationRegistryDefinitionFromJsonAsync(string revRegDefJson)
         {
             IntPtr revRegDefObjectHandle = new IntPtr();
@@ -200,15 +200,15 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Updates a provided <see cref="RevocationRegistry"/> object.
+        /// Updates a provided <see cref="RevocationRegistry"/> as JSON string.
         /// </summary>
-        /// <param name="revRegDefJson">Revocation registry definition.</param>
-        /// <param name="revRegJson">Revocation registry.</param>
+        /// <param name="revRegDefJson">Revocation registry definition as JSON string.</param>
+        /// <param name="revRegJson">Revocation registry as JSON string.</param>
         /// <param name="issued">Issued entries.</param>
         /// <param name="revoked">Revoked entries.</param>
         /// <param name="tailsPath">Path of tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/> as JSON.</returns>
+        /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/> as JSON strings.</returns>
         public static async Task<(string, string)> UpdateRevocationRegistryAsync(
             string revRegDefJson,
             string revRegJson,
@@ -245,11 +245,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Revokes a <see cref="Credential"/> on the revocation registry.
+        /// Revokes a <see cref="Credential"/> on a provided <see cref="RevocationRegistry"/>.
         /// </summary>
         /// <param name="revRegDefObject">Revocation registry definition.</param>
         /// <param name="revRegObject">Corresponding revocation registry.</param>
-        /// <param name="credRevIdx">Index of the <see cref="Credential"/> in the revocation registry.</param>
+        /// <param name="credRevIdx">Index of the credential in the revocation registry.</param>
         /// <param name="tailsPath">Path to tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> object with the refered <see cref="Credential"/> revoked.</returns>
@@ -282,14 +282,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Revokes a <see cref="Credential"/> on the revocation registry.
+        /// Revokes a <see cref="Credential"/> on a provided <see cref="RevocationRegistry"/> JSON string.
         /// </summary>
-        /// <param name="revRegDefJson">Revocation registry definition.</param>
-        /// <param name="revRegJson">Corresponding revocation registry.</param>
-        /// <param name="credRevIdx">Index of the <see cref="Credential"/> in the revocation registry.</param>
+        /// <param name="revRegDefJson">Revocation registry definition as JSON string.</param>
+        /// <param name="revRegJson">Corresponding revocation registry as JSON string.</param>
+        /// <param name="credRevIdx">Index of the credential in the revocation registry.</param>
         /// <param name="tailsPath">Path to tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> object with the refered <see cref="Credential"/> revoked.</returns>
+        /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> as JSON strings with the refered <see cref="Credential"/> revoked.</returns>
         public static async Task<(string, string)> RevokeCredentialAsync(
             string revRegDefJson,
             string revRegJson,
@@ -353,12 +353,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Merges two <see cref="RevocationRegistryDelta"/> objects into one.
+        /// Merges two <see cref="RevocationRegistryDelta"/> JSON strings into one.
         /// </summary>
-        /// <param name="revRegDeltaJson1">First delta.</param>
-        /// <param name="revRegDeltaJson2">Second delta.</param>
+        /// <param name="revRegDeltaJson1">First delta as JSON string.</param>
+        /// <param name="revRegDeltaJson2">Second delta as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
-        /// <returns>The merged <see cref="RevocationRegistryDelta"/>.</returns>
+        /// <returns>The merged <see cref="RevocationRegistryDelta"/> as JSON string.</returns>
         public static async Task<string> MergeRevocationRegistryDeltasAsync(
             string revRegDeltaJson1,
             string revRegDeltaJson2)
@@ -389,17 +389,17 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Updates the provided <see cref="CredentialRevocationState"/> or creates a new one.
         /// </summary>
-        /// <param name="revRegDefObject">The revocation registry definition.</param>
-        /// <param name="revRegDeltaObject">The revocation registry delta.</param>
+        /// <param name="revRegDef">The revocation registry definition.</param>
+        /// <param name="revRegDelta">The revocation registry delta.</param>
         /// <param name="revRegIndex">The revocation registry index.</param>
         /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
         /// <param name="revState">Revocation state to update.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
+        /// <returns>A <see cref="CredentialRevocationState"/> object.</returns>
         public static async Task<CredentialRevocationState> CreateOrUpdateRevocationStateAsync(
-            RevocationRegistryDefinition revRegDefObject,
-            RevocationRegistryDelta revRegDeltaObject,
+            RevocationRegistryDefinition revRegDef,
+            RevocationRegistryDelta revRegDelta,
             long revRegIndex,
             long timestamp,
             string tailsPath,
@@ -408,8 +408,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credRevStateObjectHandle = new IntPtr();
 
             int errorCode = NativeMethods.anoncreds_create_or_update_revocation_state(
-                revRegDefObject.Handle,
-                revRegDeltaObject.Handle,
+                revRegDef.Handle,
+                revRegDelta.Handle,
                 revRegIndex,
                 timestamp,
                 FfiStr.Create(tailsPath),
@@ -428,16 +428,16 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Updates the provided <see cref="CredentialRevocationState"/> or creates a new one.
+        /// Updates the provided <see cref="CredentialRevocationState"/> JSON string or creates a new one.
         /// </summary>
-        /// <param name="revRegDefObject">The revocation registry definition.</param>
-        /// <param name="revRegDeltaObject">The revocation registry delta.</param>
+        /// <param name="revRegDefJson">The revocation registry definition as JSON string.</param>
+        /// <param name="revRegDeltaJson">The revocation registry delta as JSON string.</param>
         /// <param name="revRegIndex">The revocation registry index.</param>
         /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
-        /// <param name="revState">Revocation state to update.</param>
+        /// <param name="revStateJson">Revocation state to update as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
+        /// <returns>A <see cref="CredentialRevocationState"/>  as JSON string.</returns>
         public static async Task<string> CreateOrUpdateRevocationStateAsync(
             string revRegDefJson,
             string revRegDeltaJson,
@@ -477,9 +477,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="CredentialRevocationState"/> object from json <see cref="string"/>.
+        /// Creates a new <see cref="CredentialRevocationState"/> object from a JSON string.
         /// </summary>
-        /// <param name="revStateJson">Json <see cref="string"/> representing a revocation object.</param>
+        /// <param name="revStateJson">JSON string representing a revocation object.</param>
         /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="revStateJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when provided <paramref name="revStateJson"/> is empty.</exception>
         /// <returns>A new <see cref="CredentialRevocationState"/> object.</returns>
@@ -553,6 +553,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(result);
         }
 
+        /// <summary>
+        /// Create a <see cref="RevocationRegistryDefinition"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a revocation registry definition.</param>
+        /// <returns>A new <see cref="RevocationRegistryDefinition"/>.</returns>
         private static async Task<RevocationRegistryDefinition> CreateRevocationRegistryDefinitionObject(IntPtr objectHandle)
         {
             string regDefJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -562,6 +567,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(regDefObject);
         }
 
+        /// <summary>
+        /// Create a <see cref="RevocationRegistryDefinitionPrivate"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a revocation registry definition private.</param>
+        /// <returns>A new <see cref="RevocationRegistryDefinition"/>.</returns>
         private static async Task<RevocationRegistryDefinitionPrivate> CreateRevocationRegistryDefinitionPrivateObject(IntPtr objectHandle)
         {
             string regDefPvtJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -571,6 +581,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(regDefPvtObject);
         }
 
+        /// <summary>
+        /// Create a <see cref="RevocationRegistry"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a revocation registry.</param>
+        /// <returns>A new <see cref="RevocationRegistry"/>.</returns>
         private static async Task<RevocationRegistry> CreateRevocationRegistryObject(IntPtr objectHandle)
         {
             string revRegJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -580,6 +595,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(revRegObject);
         }
 
+        /// <summary>
+        /// Create a <see cref="RevocationRegistryDelta"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a revocation registry delta.</param>
+        /// <returns>A new <see cref="RevocationRegistryDelta"/>.</returns>
         private static async Task<RevocationRegistryDelta> CreateRevocationRegistryDeltaObject(IntPtr objectHandle)
         {
             string revRegDeltaJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -589,6 +609,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(revRegDeltaObject);
         }
 
+        /// <summary>
+        /// Create a <see cref="CredentialRevocationState"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a credential revocation state.</param>
+        /// <returns>A new <see cref="CredentialRevocationState"/>.</returns>
         private static async Task<CredentialRevocationState> CreateCredentialRevocationStateObject(IntPtr objectHandle)
         {
             string credRevStateJson = await ObjectApi.ToJsonAsync(objectHandle);

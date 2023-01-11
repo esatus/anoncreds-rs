@@ -1,12 +1,12 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class CredentialOfferApiTests
     {
@@ -29,10 +29,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef, keyProof);
 
             //Assert
-            testObject.Should().BeOfType(typeof(CredentialOffer));
+            _ = testObject.Should().BeOfType(typeof(CredentialOffer));
         }
 
-        [Test, TestCase(TestName = "CreateCredentialOfferAsync() with json input returns CredentialOffer object.")]
+        [Test, TestCase(TestName = "CreateCredentialOfferAsync() with JSON input returns CredentialOffer object.")]
         public async Task CreateCredentialOfferJsonWorks()
         {
             //Arrange
@@ -50,7 +50,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDef, keyProof);
 
             //Assert
-            testObject.Should().NotBeNullOrEmpty();
+            _ = testObject.Should().NotBeNullOrEmpty();
         }
 
         private static IEnumerable<TestCaseData> CreateCredentialOfferCases()
@@ -99,7 +99,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef, keyProof);
 
             //Assert
-            await act.Should().ThrowAsync<Exception>();
+            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
     }

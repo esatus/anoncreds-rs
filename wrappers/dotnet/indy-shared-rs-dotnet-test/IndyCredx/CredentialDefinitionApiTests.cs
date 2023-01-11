@@ -1,12 +1,12 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class CredentialDefinitionApiTests
     {
@@ -27,9 +27,9 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
             //Assert
-            credDef.Should().BeOfType(typeof(CredentialDefinition));
-            credDefPvt.Should().BeOfType(typeof(CredentialDefinitionPrivate));
-            keyProof.Should().BeOfType(typeof(CredentialKeyCorrectnessProof));
+            _ = credDef.Should().BeOfType(typeof(CredentialDefinition));
+            _ = credDefPvt.Should().BeOfType(typeof(CredentialDefinitionPrivate));
+            _ = keyProof.Should().BeOfType(typeof(CredentialKeyCorrectnessProof));
         }
 
         private static IEnumerable<TestCaseData> CreateCredentialDefinitionCases()
@@ -58,7 +58,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, tag, signatureType, supportRevocation);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -79,9 +79,9 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
 
             //Assert
-            credDef.Should().NotBeNullOrEmpty();
-            credDefPvt.Should().NotBeNullOrEmpty();
-            keyProof.Should().NotBeNullOrEmpty();
+            _ = credDef.Should().NotBeNullOrEmpty();
+            _ = credDefPvt.Should().NotBeNullOrEmpty();
+            _ = keyProof.Should().NotBeNullOrEmpty();
         }
 
         private static IEnumerable<TestCaseData> CreateCredentialDefinitionJsonCases()
@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, tag, signatureType, supportRevocation);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -140,7 +140,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, tag);
 
             //Assert
-            actual.Should().BeEquivalentTo(expected);
+            _ = actual.Should().BeEquivalentTo(expected);
         }
 
         [Test, TestCase(TestName = "GetCredentialDefinitionAttributeAsync() throws AnoncredsRsException when requested attribute name is invalid.")]
@@ -156,10 +156,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
             //Act
-            Func<Task> act = async() => await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "blubb");
+            Func<Task> act = async () => await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "blubb");
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -205,12 +205,12 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             "}";
 
             //Act
-            var actual = await CredentialDefinitionApi.CreateCredentialDefinitionFromJsonAsync(credDefJson);
+            CredentialDefinition actual = await CredentialDefinitionApi.CreateCredentialDefinitionFromJsonAsync(credDefJson);
 
             //Assert
-            actual.Should().BeOfType<CredentialDefinition>();
-            actual.CredentialDefinitionId.Should().Be(id);
-            actual.SchemaId.Should().Be(schemaId);
+            _ = actual.Should().BeOfType<CredentialDefinition>();
+            _ = actual.CredentialDefinitionId.Should().Be(id);
+            _ = actual.SchemaId.Should().Be(schemaId);
         }
 
         [Test, TestCase(TestName = "CreateCredentialDefinitionFromJsonAsync() throws AnoncredsRsException when the provided json string is invalid.")]
@@ -223,7 +223,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionFromJsonAsync(credDefJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

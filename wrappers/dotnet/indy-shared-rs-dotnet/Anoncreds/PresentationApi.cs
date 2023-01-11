@@ -11,7 +11,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class PresentationApi
     {
         /// <summary>
-        /// Creates a new <see cref="Presentation"/> object from parameters.
+        /// Creates a new <see cref="Presentation"/> object.
         /// </summary>
         /// <param name="presentationRequest">Presentation request.</param>
         /// <param name="credentialEntries">Credential entries.</param>
@@ -61,18 +61,18 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="Presentation"/> object from parameters.
+        /// Creates a new <see cref="Presentation"/> as JSON string.
         /// </summary>
-        /// <param name="presentationRequestJson">Presentation request JSON.</param>
-        /// <param name="credentialEntryJsons">Credential entry JSONs.</param>
-        /// <param name="credentialProofJsons">Credential proof JSONs.</param>
+        /// <param name="presentationRequestJson">Presentation request as JSON string.</param>
+        /// <param name="credentialEntryJsons">Credential entry as JSON strings.</param>
+        /// <param name="credentialProofJsons">Credential proof as JSON strings.</param>
         /// <param name="selfAttestNames">Names of self attested attributes.</param>
         /// <param name="selfAttestValues">Values of self attested attributes.</param>
-        /// <param name="masterSecretJson">Master secret JSON.</param>
-        /// <param name="schemaJsons">Corresponding schema JSONs.</param>
-        /// <param name="credDefJsons">Credential definition JSONs.</param>
+        /// <param name="masterSecretJson">Master secret as JSON string.</param>
+        /// <param name="schemaJsons">Corresponding schema as JSON strings.</param>
+        /// <param name="credDefJsons">Credential definition as JSON strings.</param>
         /// <exception cref="AnoncredsRsException">Throws when any parameters are invalid.</exception>
-        /// <returns>New <see cref="Presentation"/> JSON.</returns>
+        /// <returns>New <see cref="Presentation"/> as JSON string.</returns>
         public static async Task<string> CreatePresentationAsync(
             string presentationRequestJson,
             List<string> credentialEntryJsons,
@@ -136,9 +136,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a <see cref="Presentation"/> object from json <see cref="string"/>.
+        /// Creates a <see cref="Presentation"/> object from JSON.
         /// </summary>
-        /// <param name="presentationJson">Json string of presentation object.</param>
+        /// <param name="presentationJson">JSON string of presentation object.</param>
         /// <exception cref="IndexOutOfRangeException">Throws when <paramref name="presentationJson"/> is empty.</exception>
         /// <exception cref="AnoncredsRsException">Throws if <paramref name="presentationJson"/> is an invalid json object.</exception>
         /// <returns>New <see cref="Presentation"/> object.</returns>
@@ -161,11 +161,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="presentation">Presentation to verify.</param>
         /// <param name="presentationRequest">Request to verify the <paramref name="presentation"/> object with.</param>
         /// <param name="schemas">Corresponding schemas.</param>
-        /// <param name="credentialDefinitions"></param>
-        /// <param name="revocationRegistryDefinitions"></param>
-        /// <param name="revocationRegistryEntries"></param>
+        /// <param name="credentialDefinitions">Corresponding credential definitions.</param>
+        /// <param name="revocationRegistryDefinitions">Corresponding revocation registry definitions.</param>
+        /// <param name="revocationRegistryEntries">Corresponding revocation registry entries.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>True if provided <see cref="Presentation"/> can be verified, false if not.</returns>
+        /// <returns>TRUE if provided <see cref="Presentation"/> can be verified, otherwise FALSE.</returns>
         public static async Task<bool> VerifyPresentationAsync(
             Presentation presentation,
             PresentationRequest presentationRequest,
@@ -203,14 +203,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Verifies that a presentation matches its request.
         /// </summary>
-        /// <param name="presentationJson">Presentation to verify.</param>
-        /// <param name="presentationRequestJson">Request to verify the <paramref name="presentationJson"/> object with.</param>
-        /// <param name="schemaJsons">Corresponding schemas.</param>
-        /// <param name="credentialDefinitionJsons"></param>
-        /// <param name="revocationRegistryDefinitionJsons"></param>
-        /// <param name="revocationRegistryEntryJsons"></param>
+        /// <param name="presentationJson">Presentation to verify as JSON string.</param>
+        /// <param name="presentationRequestJson">Request to verify the <paramref name="presentationJson"/> object with as JSON string.</param>
+        /// <param name="schemaJsons">Corresponding schemas as JSON strings.</param>
+        /// <param name="credentialDefinitionJsons">Corresponding credential definitions as JSON strings.</param>
+        /// <param name="revocationRegistryDefinitionJsons">Corresponding revocation registry definitions as JSON strings.</param>
+        /// <param name="revocationRegistryEntryJsons">Corresponding revocation registry entries as JSON strings.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>True if provided <see cref="Presentation"/> can be verified, false if not.</returns>
+        /// <returns>TRUE if provided <see cref="Presentation"/> can be verified, otherwise FALSE.</returns>
         public static async Task<bool> VerifyPresentationAsync(
             string presentationJson,
             string presentationRequestJson,
@@ -271,6 +271,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(Convert.ToBoolean(verify));
         }
 
+        /// <summary>
+        /// Creates a <see cref="Presentation"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a presentation.</param>
+        /// <returns>A <see cref="Presentation"/>.</returns>
         private static async Task<Presentation> CreatePresentationObject(IntPtr objectHandle)
         {
             string presentationJson = await ObjectApi.ToJsonAsync(objectHandle);

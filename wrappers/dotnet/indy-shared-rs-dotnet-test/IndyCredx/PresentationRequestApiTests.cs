@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class PresentationRequestApiTests
     {
@@ -19,7 +19,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await PresentationRequestApi.GenerateNonceAsync();
 
             //Assert
-            actual.Should().NotBeEmpty();
+            _ = actual.Should().NotBeEmpty();
         }
         #endregion
 
@@ -82,9 +82,9 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             PresentationRequest actual = await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
 
             //Assert
-            actual.Name.Should().Be("proof");
-            actual.RequestedAttributes.Count.Should().Be(1);
-            actual.RequestedPredicates.Count.Should().Be(1);
+            _ = actual.Name.Should().Be("proof");
+            _ = actual.RequestedAttributes.Count.Should().Be(1);
+            _ = actual.RequestedPredicates.Count.Should().Be(1);
         }
 
         [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when Json string is empty.")]
@@ -97,7 +97,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presReqJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when Json string is invalid.")]
@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presReqJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

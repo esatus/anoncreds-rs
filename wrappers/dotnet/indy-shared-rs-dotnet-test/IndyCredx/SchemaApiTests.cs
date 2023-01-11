@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
@@ -25,7 +25,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            testObject.Should().BeOfType(typeof(Schema));
+            _ = testObject.Should().BeOfType(typeof(Schema));
         }
 
         [Test, TestCase(TestName = "CreateSchemaAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
@@ -41,7 +41,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaAsync() works if no attribute names are provided.")]
@@ -57,7 +57,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            testObject.Should().BeOfType(typeof(Schema));
+            _ = testObject.Should().BeOfType(typeof(Schema));
         }
         #endregion
 
@@ -75,7 +75,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            testObject.Should().BeOfType(typeof(string));
+            _ = testObject.Should().BeOfType(typeof(string));
         }
 
         [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
@@ -91,7 +91,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaJsonAsync() works if no attribute names are provided.")]
@@ -107,7 +107,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
             //Assert
-            testObject.Should().BeOfType(typeof(string));
+            _ = testObject.Should().BeOfType(typeof(string));
         }
         #endregion
 
@@ -129,8 +129,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Schema actual = await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
-            actual.Should().BeOfType<Schema>();
-            actual.Id.Should().Be("55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version");
+            _ = actual.Should().BeOfType<Schema>();
+            _ = actual.Id.Should().Be("55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version");
         }
 
         [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an empty json string is provided.")]
@@ -143,7 +143,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an invalid json string is provided.")]
@@ -156,7 +156,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -170,13 +170,12 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string schemaName = "gvt";
             string schemaVersion = "1.0";
             Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
-            string schemaJson = JsonConvert.SerializeObject(testObject);
-            Console.WriteLine(schemaJson);
+
             //Act
             string schemaAttributeId = await SchemaApi.GetSchemaAttributeAsync(testObject, "id"); ////should return id string (only one supported in rust)
 
             //Assert
-            schemaAttributeId.Should().Be(testObject.Id);
+            _ = schemaAttributeId.Should().Be(testObject.Id);
         }
 
         [Test, TestCase(TestName = "GetSchemaAttributeAsync(Schema schema, string attributeName) throws Exception if an unsupported attribute name is provided.")]
@@ -193,7 +192,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
         [Test, TestCase(TestName = "GetSchemaAttributeAsync(string schemaJson, string attributeName) works for supported attribute names.")]
@@ -207,7 +206,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string expected = JsonConvert.DeserializeObject<Schema>(testObject).Id;
 
             //Assert
-            schemaAttributeId.Should().Be(expected);
+            _ = schemaAttributeId.Should().Be(expected);
         }
 
         [Test, TestCase(TestName = "GetSchemaAttributeAsync(string schemaJson, string attributeName) throws Exception if an unsupported attribute name is provided.")]
@@ -224,7 +223,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
     }

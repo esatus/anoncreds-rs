@@ -10,7 +10,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public class SchemaApi
     {
         /// <summary>
-        /// Creates a new <see cref="Schema"/> object from provided parameters.
+        /// Creates a new <see cref="Schema"/> object.
         /// </summary>
         /// <param name="originDid">Did of issuer.</param>
         /// <param name="schemaName">Schema name.</param>
@@ -42,7 +42,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="string"/> schema json from provided parameters.
+        /// Creates a new <see cref="Schema"/> as JSON string.
         /// </summary>
         /// <param name="originDid">Did of issuer.</param>
         /// <param name="schemaName">Schema name.</param>
@@ -50,8 +50,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="attrNames">Names of the schema attributes.</param>
         /// <param name="seqNo">Sequence number.</param>
         /// <exception cref="AnoncredsRsException">Throws when any parameter is invalid.</exception>
-        /// <exception cref="System.InvalidOperationException">Throws when <paramref name="attrNames"/> are empty.</exception>
-        /// <returns>A new <see cref="string"/> schema json.</returns>
+        /// <exception cref="InvalidOperationException">Throws when <paramref name="attrNames"/> are empty.</exception>
+        /// <returns>A new <see cref="Schema"/> as JSON string.</returns>
         public static async Task<string> CreateSchemaJsonAsync(
             string originDid, 
             string schemaName, 
@@ -73,9 +73,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="Schema"/> object from json <see cref="string"/>.
+        /// Creates a new <see cref="Schema"/> object from a JSON string.
         /// </summary>
-        /// <param name="schemaJson">Json <see cref="string"/> representing a <see cref="Schema"/> object.</param>
+        /// <param name="schemaJson">A <see cref="Schema"/>  as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws when provided <paramref name="schemaJson"/> is invalid.</exception>
         /// <exception cref="System.IndexOutOfRangeException">Throws when <paramref name="schemaJson"/> is empty.</exception>
         /// <returns>A new <see cref="Schema"/> object.</returns>
@@ -139,6 +139,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(result);
         }
 
+        /// <summary>
+        /// Create a <see cref="Schema"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a schema.</param>
+        /// <returns>A new <see cref="Schema"/>.</returns>
         private static async Task<Schema> CreateSchemaObjectAsync(IntPtr objectHandle)
         {
             string schemaJson = await ObjectApi.ToJsonAsync(objectHandle);

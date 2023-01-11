@@ -13,6 +13,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
     {
         /// <summary>
         /// Creates a new tuple of <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> objects.
+        /// <para>
+        /// Note: Either all of the optional parameters (<paramref name="revocationRegistryDefinition"/>, <paramref name="revocationRegistryDefinitionPrivate"/>, <paramref name="revocationRegistry"/>, 
+        /// <paramref name="regIdx"/> and <paramref name="regUsed"/>) have to be provided or none.
+        /// </para>
         /// </summary>
         /// <param name="credDefObject">Definition of the credential.</param>
         /// <param name="credDefPvtObject">Private key params of the credential.</param>
@@ -21,9 +25,13 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="attributeNames">Attribute names.</param>
         /// <param name="attributeRawValues">Raw values of the attributes.</param>
         /// <param name="attributeEncodedValues">Encoded values of the attributes.</param>
-        /// <param name="credRevInfo">Revocation configuration.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
+        /// <param name="revocationRegistryDefinition">Definition of the RevocationRegistry.</param>
+        /// <param name="revocationRegistryDefinitionPrivate">Private key params of the RevocationRegistry.</param>
+        /// <param name="revocationRegistry">RevocationRegistry</param>
+        /// <param name="regIdx">Credential revocation index.</param>
+        /// <param name="regUsed">List of revoked credential indices.</param>
         /// <returns>A new <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/>.</returns>
+        /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
         public static async Task<(Credential, RevocationRegistry, RevocationRegistryDelta)> CreateCredentialAsync(
             CredentialDefinition credDefObject,
             CredentialDefinitionPrivate credDefPvtObject,
@@ -41,7 +49,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credObjectHandle = new IntPtr();
             IntPtr revRegObjectHandle = new IntPtr();
             IntPtr revDeltaObjectHandle = new IntPtr();
-            int errorCode = 0;
+            int errorCode;
             if (revocationRegistryDefinition == null
                 && revocationRegistryDefinitionPrivate == null
                 && revocationRegistry == null
@@ -120,16 +128,20 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Creates a new tuple of <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> objects.
         /// </summary>
-        /// <param name="credDefObjectJson">Definition of the credential.</param>
-        /// <param name="credDefPvtObjectJson">Private key params of the credential.</param>
-        /// <param name="credOfferObjectJson">Credential offer.</param>
-        /// <param name="credReqObjectJson">Credential request.</param>
+        /// <param name="credDefObjectJson"><see cref="CredentialDefinition"/> as JSON string.</param>
+        /// <param name="credDefPvtObjectJson"><see cref="CredentialDefinitionPrivate"/> as JSON string.</param>
+        /// <param name="credOfferObjectJson"><see cref="CredentialOffer"/> as JSON string.</param>
+        /// <param name="credReqObjectJson"><see cref="CredentialRequest"/> as JSON string.</param>
         /// <param name="attributeNames">Attribute names.</param>
         /// <param name="attributeRawValues">Raw values of the attributes.</param>
         /// <param name="attributeEncodedValues">Encoded values of the attributes.</param>
-        /// <param name="credRevInfo">Revocation configuration.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
+        /// <param name="revocationRegistryDefinitionJson"><see cref="RevocationRegistryDefinition"/> as JSON string.</param>
+        /// <param name="revocationRegistryDefinitionPrivateJson"><see cref="RevocationRegistryDefinitionPrivate"/> as JSON string.</param>
+        /// <param name="revocationRegistryJson"><see cref="RevocationRegistry"/> as JSON string</param>
+        /// <param name="regIdx">Credential revocation index.</param>
+        /// <param name="regUsed">List of revoked credential indices.</param>
         /// <returns>A new <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/>.</returns>
+        /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
         public static async Task<(string, string, string)> CreateCredentialAsync(
             string credDefObjectJson,
             string credDefPvtObjectJson,
@@ -157,8 +169,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credObjectHandle = new IntPtr();
             IntPtr revRegObjectHandle = new IntPtr();
             IntPtr revDeltaObjectHandle = new IntPtr();
-            int errorCode = 0;
-
+            int errorCode;
             if (revocationRegistryDefinitionJson == null
                 && revocationRegistryDefinitionPrivateJson == null
                 && revocationRegistryJson == null
@@ -245,6 +256,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult((credJson, revRegJson, revDeltaJson));
         }
 
+        /// <summary>
+        /// Creates a <see cref="Credential"/> from JSON.
+        /// </summary>
+        /// <param name="credentialJson">Credential as JSON.</param>
+        /// <returns>A <see cref="Credential"/>.</returns>
         public static async Task<Credential> CreateCredentialFromJsonAsync(string credentialJson)
         {
             IntPtr credObjectHandle = new IntPtr();
@@ -301,11 +317,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Processes a given <see cref="Credential"/>.
         /// </summary>
-        /// <param name="credentialJson">Credential to be processed as JSON string.</param>
-        /// <param name="credentialRequestMetadataJson">Metadata of the credential request as JSON string.</param>
-        /// <param name="masterSecretJson">Used master secret as JSON string.</param>
-        /// <param name="credentialDefinitionJson">Credential definition of the processed credential as JSON string.</param>
-        /// <param name="revocationRegistryDefinitionJson">Revocation registry definition for the processed credential as JSON string.</param>
+        /// <param name="credentialJson"><see cref="Credential"/> to be processed as JSON string.</param>
+        /// <param name="credentialRequestMetadataJson"><see cref="CredentialRequestMetadata"/> as JSON string.</param>
+        /// <param name="masterSecretJson">Used <see cref="MasterSecret"/> as JSON string.</param>
+        /// <param name="credentialDefinitionJson"><see cref="CredentialDefinition"/> of the processed credential as JSON string.</param>
+        /// <param name="revocationRegistryDefinitionJson"><see cref="RevocationRegistryDefinition"/> for the processed credential as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
         /// <returns>A copy of the processed <see cref="Credential"/> as JSON string.</returns>
         public static async Task<string> ProcessCredentialAsync(
@@ -313,7 +329,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string credentialRequestMetadataJson,
             string masterSecretJson,
             string credentialDefinitionJson,
-            string revocationRegistryDefinition)
+            string revocationRegistryDefinitionJson)
         {
             IntPtr credObjectHandle = new IntPtr();
             IntPtr credReqMetadataObjectHandle = new IntPtr();
@@ -324,7 +340,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             _ = NativeMethods.anoncreds_credential_request_metadata_from_json(ByteBuffer.Create(credentialRequestMetadataJson), ref credReqMetadataObjectHandle);
             _ = NativeMethods.anoncreds_master_secret_from_json(ByteBuffer.Create(masterSecretJson), ref masterSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinition), ref revRegDefObjectHandle);
+            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revRegDefObjectHandle);
 
             IntPtr credentialObjectHandle = new IntPtr();
             int errorCode = NativeMethods.anoncreds_process_credential(
@@ -351,7 +367,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="rawAttributes">Attributes to be encoded.</param>
         /// <exception cref="AnoncredsRsException">Throws when <paramref name="rawAttributes"/> are invalid.</exception>
-        /// <exception cref="System.InvalidOperationException">Throws when <paramref name="rawAttributes"/> are empty.</exception>
+        /// <exception cref="InvalidOperationException">Throws when <paramref name="rawAttributes"/> are empty.</exception>
         /// <returns>Returns the given <paramref name="rawAttributes"/> as encoded attributes.</returns>
         public static async Task<List<string>> EncodeCredentialAttributesAsync(List<string> rawAttributes)
         {
@@ -368,9 +384,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Returns the value of a requested <see cref="Credential"/> attribute (Currently supported attribute names: "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index").
+        /// Returns the attribute value of a given attribute name from a given <see cref="Credential"/>. (Currently supported attribute names: "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index").
         /// </summary>
-        /// <param name="credential">The credential object from which the attribute value is requested.</param>
+        /// <param name="credential">The credential from which the attribute value is requested.</param>
         /// <param name="attributeName">The name of the attribute that is requested.</param>
         /// <exception cref="AnoncredsRsException">Throws when attribute name is invalid.</exception>
         /// <returns>The value of requested <paramref name="attributeName"/> from the provided <paramref name="credential"/>.</returns>
@@ -389,12 +405,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Returns the value of a requested <see cref="Credential"/> attribute (Currently supported attribute names: "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index").
+        /// Returns the attribute value of a given attribute name from a given <see cref="Credential"/> as JSON string. (Currently supported attribute names: "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index").
         /// </summary>
-        /// <param name="credentialJson">The credential object as JSON string from which the attribute value is requested.</param>
+        /// <param name="credentialJson">The <see cref="Credential"/> as JSON string from which the attribute value is requested.</param>
         /// <param name="attributeName">The name of the attribute that is requested.</param>
         /// <exception cref="AnoncredsRsException">Throws when attribute name is invalid.</exception>
-        /// <returns>The value of requested <paramref name="attributeName"/> from the provided <paramref name="credential"/>.</returns>
+        /// <returns>The value of requested <paramref name="attributeName"/> from the provided <paramref name="credentialJson"/>.</returns>
         public static async Task<string> GetCredentialAttributeAsync(string credentialJson, string attributeName)
         {
             IntPtr credObjectHandle = new IntPtr();
@@ -412,7 +428,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         #region private methods
-
+        /// <summary>
+        /// Returns the <see cref="Credential"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a <see cref="Credential"/>.</param>
+        /// <returns>A <see cref="Credential"/>.</returns>
         private static async Task<Credential> CreateCredentialObjectAsync(IntPtr objectHandle)
         {
             string credJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -421,6 +441,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             credObject.Handle = objectHandle;
             return await Task.FromResult(credObject);
         }
+
+        /// <summary>
+        /// Returns the <see cref="RevocationRegistry"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a <see cref="RevocationRegistry"/>.</param>
+        /// <returns>A <see cref="RevocationRegistry"/>.</returns>
         private static async Task<RevocationRegistry> CreateRevocationRegistryObjectAsync(IntPtr objectHandle)
         {
             string revRegJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -429,6 +455,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             revRegObject.Handle = objectHandle;
             return await Task.FromResult(revRegObject);
         }
+
+        /// <summary>
+        /// Returns the <see cref="RevocationRegistryDelta"/> to a given handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a RevocationRegistryDelta.</param>
+        /// <returns>A <see cref="RevocationRegistryDelta"/>.</returns>
         private static async Task<RevocationRegistryDelta> CreateRevocationRegistryDeltaObjectAsync(IntPtr objectHandle)
         {
             string revDeltaJson = await ObjectApi.ToJsonAsync(objectHandle);

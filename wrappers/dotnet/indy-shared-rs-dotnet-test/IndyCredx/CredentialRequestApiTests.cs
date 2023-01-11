@@ -1,12 +1,12 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class CredentialRequestApiTests
     {
@@ -33,10 +33,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (CredentialRequest request, CredentialRequestMetadata metaData) = await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
 
             //Assert
-            request.Should().NotBeNull();
-            request.Should().BeOfType(typeof(CredentialRequest));
-            metaData.Should().NotBeNull();
-            metaData.Should().BeOfType(typeof(CredentialRequestMetadata));
+            _ = request.Should().NotBeNull();
+            _ = request.Should().BeOfType(typeof(CredentialRequest));
+            _ = metaData.Should().NotBeNull();
+            _ = metaData.Should().BeOfType(typeof(CredentialRequestMetadata));
         }
 
         [Test, TestCase(TestName = "CreateCredentialRequestAsync() with all Arguments set returns a request and metadata.")]
@@ -52,7 +52,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
             string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
 
-            (string credDefObject, string _, string keyProofObject) =
+            (string credDefObject, _, string keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
             string schemaId = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "schema_id");
             string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObject, keyProofObject);
@@ -61,8 +61,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
 
             //Assert
-            request.Should().NotBeNullOrEmpty();
-            metaData.Should().NotBeNullOrEmpty();
+            _ = request.Should().NotBeNullOrEmpty();
+            _ = metaData.Should().NotBeNullOrEmpty();
         }
 
         private static IEnumerable<TestCaseData> CreateCredentialRequestCases()
@@ -136,7 +136,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, masterSecretId, credOfferObject);
 
             //Assert
-            await act.Should().ThrowAsync<Exception>();
+            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
     }

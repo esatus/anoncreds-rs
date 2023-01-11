@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     internal class ObjectApiTests
     {
@@ -20,7 +20,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await ObjectApi.GetTypeNameAsync(secretObject.Handle);
 
             //Assert
-            actual.Should().Be("MasterSecret");
+            _ = actual.Should().Be("MasterSecret");
 
         }
 
@@ -33,7 +33,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             Func<Task> act = async () => await ObjectApi.GetTypeNameAsync(new IntPtr());
 
             //Assert
-            await act.Should().ThrowAsync<AnoncredsRsException>();
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -48,8 +48,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             await ObjectApi.FreeObjectAsync(secretObject.Handle);
             Func<Task> actual = async () => await ObjectApi.ToJsonAsync(secretObject.Handle);
             //Assert
-            testJson.Should().NotBe("");
-            await actual.Should().ThrowAsync<Exception>();
+            _ = testJson.Should().NotBe("");
+            _ = await actual.Should().ThrowAsync<Exception>();
 
         }
         #endregion
@@ -72,7 +72,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string actual = await ObjectApi.ToJsonAsync(schemaObject.Handle);
 
             //Assert
-            actual.Should().BeEquivalentTo(expected);
+            _ = actual.Should().BeEquivalentTo(expected);
         }
         #endregion
     }

@@ -16,7 +16,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>The typename of the object.</returns>
         public static async Task<string> GetTypeNameAsync(IntPtr objectHandle)
         {
-            return await ObjectGetTypeNameAsync(objectHandle);
+            string result = "";
+            int errorCode = NativeMethods.anoncreds_object_get_type_name(objectHandle, ref result);
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+            return await Task.FromResult(result);
         }
 
         /// <summary>
@@ -41,18 +48,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return Task.FromResult(decoded);
         }
 
-        private static async Task<string> ObjectGetTypeNameAsync(IntPtr handle)
-        {
-            string result = "";
-            int errorCode = NativeMethods.anoncreds_object_get_type_name(handle, ref result);
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            return await Task.FromResult(result);
-        }
-
+        /// <summary>
+        /// Gets an object to a handle as JSON string.
+        /// </summary>
+        /// <param name="handle">The handle of an object.</param>
+        /// <returns>An object as JSON string.</returns>
         private static unsafe Task<ByteBuffer> ObjectGetJsonAsync(IntPtr handle)
         {
             ByteBuffer result = new ByteBuffer()
@@ -70,6 +70,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return Task.FromResult(result);
         }
 
+        /// <summary>
+        /// Decodes a <see cref="ByteBuffer"/>.
+        /// </summary>
+        /// <param name="byteBuffer">A byte buffer.</param>
+        /// <returns>A <see cref="ByteBuffer"/> decoded as string.</returns>
         private static unsafe Task<string> DecodeToStringAsync(ByteBuffer byteBuffer)
         {
             char[] charArray = new char[byteBuffer.len];

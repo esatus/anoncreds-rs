@@ -12,7 +12,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class PresentationRequestApi
     {
         /// <summary>
-        /// Generates a new <see cref="string"/> representation of a random nonce.
+        /// Generates a new random nonce.
         /// </summary>
         /// <exception cref="AnoncredsRsException">Throws when nonce can not be generated.</exception>
         /// <returns>New nonce.</returns>
@@ -29,9 +29,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="PresentationRequest"/> object from a provided json <see cref="string"/>.
+        /// Creates a new <see cref="PresentationRequest"/> object to a provided JSON string.
         /// </summary>
-        /// <param name="presReqJson">Json string representing a presentation request object.</param>
+        /// <param name="presReqJson">JSON string of a presentation request object.</param>
         /// <exception cref="AnoncredsRsException">Throws when <paramref name="presReqJson"/> is invalid.</exception>
         /// <exception cref="IndexOutOfRangeException">Throws when <paramref name="presReqJson"/> is empty.</exception>
         /// <returns>A new <see cref="PresentationRequest"/>.</returns>
@@ -48,6 +48,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(presReq);
         }
 
+        /// <summary>
+        /// Creates a new <see cref="PresentationRequest"/> object to a provided handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a presentation request object.</param>
+        /// <returns>A new <see cref="PresentationRequest"/>.</returns>
         private static async Task<PresentationRequest> CreatePresentationRequestObject(IntPtr objectHandle)
         {
             string presReqJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -118,6 +123,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(presentationRequestObject);
         }
 
+        /// <summary>
+        /// Creates restrictions from a <see cref="JToken"/>.
+        /// </summary>
+        /// <param name="restrictionsElement">Restrictions as JToken.</param>
+        /// <returns>A list of <see cref="AttributeFilter"/>.</returns>
         private static List<AttributeFilter> CreateAttributeFilterList(JToken restrictionsElement)
         {
             List<AttributeFilter> filterList = new List<AttributeFilter>();
@@ -145,6 +155,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return filterList;
         }
 
+        /// <summary>
+        /// Parses the <see cref="PredicateTypes"/>.
+        /// </summary>
+        /// <param name="type">The predicate type as string.</param>
+        /// <returns>The <see cref="PredicateTypes"/>.</returns>
         private static PredicateTypes ParsePredicateType(string type)
         {
             return type switch

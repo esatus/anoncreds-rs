@@ -8,7 +8,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
     public class ErrorApiTests
     {
         [Test]
-        [TestCase(TestName = "GetCurrentErrorAsync returns the json of an empty error.")]
+        [TestCase(TestName = "GetCurrentErrorAsync returns the JSON string of an empty error.")]
         public async Task GetCurrentError()
         {
             //Arrange

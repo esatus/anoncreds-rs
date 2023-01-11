@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
-using anoncreds_rs_dotnet.Anoncreds;
+﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace anoncreds_rs_dotnet_test.IndyCredx
+namespace indy_shared_rs_dotnet_test.IndyCredx
 {
     public class MasterSecretApiTests
     {
@@ -16,10 +16,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             //Arrange
 
             //Act
-            Func<Task> act = async () => { await MasterSecretApi.CreateMasterSecretAsync(); };
+            Func<Task> act = async () => { _ = await MasterSecretApi.CreateMasterSecretAsync(); };
 
             //Assert
-            await act.Should().NotThrowAsync();
+            _ = await act.Should().NotThrowAsync();
         }
 
         [Test]
@@ -32,8 +32,8 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             MasterSecret testObject = await MasterSecretApi.CreateMasterSecretAsync();
 
             //Assert
-            testObject.Should().BeOfType(typeof(MasterSecret));
-            testObject.Value.Ms.Should().NotBeNull();
+            _ = testObject.Should().BeOfType(typeof(MasterSecret));
+            _ = testObject.Value.Ms.Should().NotBeNull();
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
             //Assert
-            testObject.Should().NotBeNullOrEmpty();
+            _ = testObject.Should().NotBeNullOrEmpty();
         }
     }
 }

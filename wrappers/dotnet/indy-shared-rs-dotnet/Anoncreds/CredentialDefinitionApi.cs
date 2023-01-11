@@ -11,7 +11,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class CredentialDefinitionApi
     {
         /// <summary>
-        /// Creates a new <see cref="CredentialDefinition"/> from schema and other parameters (only signatureType "CL" supported so far).
+        /// Creates a new <see cref="CredentialDefinition"/> from <see cref="Schema"/> (only signatureType "CL" supported so far).
         /// </summary>
         /// <param name="originDid">Issuer DID.</param>
         /// <param name="schemaObject">Corresponding schema.</param>
@@ -53,7 +53,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Creates a new <see cref="CredentialDefinition"/> as JSON string from schema and other parameters (only signatureType "CL" supported so far).
+        /// Creates a new <see cref="CredentialDefinition"/> as JSON string from <see cref="Schema"/> (only signatureType "CL" supported so far).
         /// </summary>
         /// <param name="originDid">Issuer DID.</param>
         /// <param name="schemaObjectJson">Corresponding schema.</param>
@@ -122,8 +122,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="credDefObjectJson">Definition as JSON string to get the value from.</param>
         /// <param name="attributeName">Name of the attribute.</param>
-        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
-        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObject"/>.</returns>
+        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObjectJson"/> are invalid.</exception>
+        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObjectJson"/>.</returns>
         public static async Task<string> GetCredentialDefinitionAttributeAsync(string credDefObjectJson, string attributeName)
         {
             IntPtr credDefHandle = new IntPtr();
@@ -141,11 +141,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region private methods
         /// <summary>
-        /// Creates a <see cref="CredentialDefinition"/> object from json <see cref="string"/>.
+        /// Creates a <see cref="CredentialDefinition"/> object from JSON string./>.
         /// </summary>
-        /// <param name="credDefJson">Json string encoding a credential definition object.</param>
+        /// <param name="credDefJson">Credential definition as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws when <paramref name="credDefJson"/> is invalid.</exception>
-        /// <returns>The new <see cref="CredentialDefinition"/> object.</returns>
+        /// <returns>A new <see cref="CredentialDefinition"/>.</returns>
         public static async Task<CredentialDefinition> CreateCredentialDefinitionFromJsonAsync(string credDefJson)
         {
             IntPtr credDefHandle = new IntPtr();
@@ -161,6 +161,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(result);
         }
 
+        /// <summary>
+        /// Creates a <see cref="CredentialDefinition"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a credential definition.</param>
+        /// <returns>A new <see cref="CredentialDefinition"/>.</returns>
+        /// <exception cref="ArgumentException"></exception>
         private static async Task<CredentialDefinition> CreateCredentialDefinitonObject(IntPtr objectHandle)
         {
             string credDefJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -186,6 +192,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(credDefObject);
         }
 
+        /// <summary>
+        /// Creates a <see cref="CredentialDefinitionPrivate"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a CredentialDefinitionPrivate.</param>
+        /// <returns>A new <see cref="CredentialDefinitionPrivate"/>.</returns>
         private static async Task<CredentialDefinitionPrivate> CreateCredentialDefinitonPrivateObject(IntPtr objectHandle)
         {
             string credDefPvtJson = await ObjectApi.ToJsonAsync(objectHandle);
@@ -195,6 +206,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(credDefPvtObject);
         }
 
+        /// <summary>
+        /// Creates a <see cref="CredentialKeyCorrectnessProof"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a CredentialKeyCorrectnessProof.</param>
+        /// <returns>A new <see cref="CredentialKeyCorrectnessProof"/>.</returns>
+        /// <exception cref="ArgumentException"></exception>
         private static async Task<CredentialKeyCorrectnessProof> CreateCredentialKeyProofObject(IntPtr objectHandle)
         {
             string keyProofJson = await ObjectApi.ToJsonAsync(objectHandle);
