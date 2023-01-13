@@ -93,51 +93,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Returns the value of a requested attribute from a <see cref="Schema"/> (Only attribute name "id" is supported so far).
-        /// </summary>
-        /// <param name="schema">The schema from which the attribute is requested.</param>
-        /// <param name="attributeName">The name of the attribute.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="schema"/>.</returns>
-        public static async Task<string> GetSchemaAttributeAsync(Schema schema, string attributeName)
-        {
-            string result = "";
-            //note: only "id" as attributeName supported so far.
-            int errorCode = NativeMethods.anoncreds_schema_get_attribute(schema.Handle, FfiStr.Create(attributeName), ref result);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-
-            return await Task.FromResult(result);
-        }
-
-        /// <summary>
-        /// Returns the value of a requested attribute from a <see cref="Schema"/> (Only attribute name "id" is supported so far).
-        /// </summary>
-        /// <param name="schemaJson">The schema json from which the attribute is requested.</param>
-        /// <param name="attributeName">The name of the attribute.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="schema"/>.</returns>
-        public static async Task<string> GetSchemaAttributeAsync(string schemaJson, string attributeName)
-        {
-            string result = "";
-            //note: only "id" as attributeName supported so far.
-            Schema schema = await CreateSchemaFromJsonAsync(schemaJson);
-            int errorCode = NativeMethods.anoncreds_schema_get_attribute(schema.Handle, FfiStr.Create(attributeName), ref result);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-
-            return await Task.FromResult(result);
-        }
-
-        /// <summary>
         /// Create a <see cref="Schema"/> to a handle.
         /// </summary>
         /// <param name="objectHandle">Handle of a schema.</param>

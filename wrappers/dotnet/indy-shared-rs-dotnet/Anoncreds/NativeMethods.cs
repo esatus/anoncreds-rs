@@ -218,9 +218,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
         internal static extern int anoncreds_create_schema(FfiStr schemaName, FfiStr schemaVersion, FfiStr originDid, FfiStrList attrNames, ref IntPtr schemaObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_schema_get_attribute(IntPtr schemaObjectHandle, FfiStr attributeName, ref string result);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_schema_from_json(ByteBuffer schemaJson, ref IntPtr schemaObjectHandle);
 
         #endregion
