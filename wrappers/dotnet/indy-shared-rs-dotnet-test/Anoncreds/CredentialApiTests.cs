@@ -142,7 +142,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObjectJson, keyProofObjectJson);
+            string credDefId = issuerDid;
+            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
             (string credRequestObjectJson, _) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
 
@@ -177,7 +178,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObjectJson, keyProofObjectJson);
+            string credDefId = issuerDid;
+            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
             (string credRequestObjectJson, _) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
             (string revRegDefObjectJson, string revRegDefPvtObjectJson, string revRegObjectJson, _) =
@@ -214,7 +216,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObjectJson, keyProofObjectJson);
+            string credDefId = issuerDid;
+            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
 
             (string credRequestObjectJson, string metaDataObjectJson) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
@@ -321,7 +324,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObjectJson, keyProofObjectJson);
+            string credDefId = issuerDid;
+            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
 
             (string credRequestObjectJson, string metaDataObjectJson) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
@@ -446,7 +450,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObject, keyProofObject);
+            string credDefId = issuerDid;
+            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObject);
             (string credRequestObject, _) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
             (string revRegDefObject, string revRegDefPvtObject, string revRegObject, _) =
@@ -530,7 +535,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObject, keyProofObject);
+            string credDefId = issuerDid;
+            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObject);
 
             (string credRequestObject, string metaDataObject) =
                 await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);

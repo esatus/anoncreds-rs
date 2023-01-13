@@ -59,12 +59,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ToJsonWorks()
         {
             string expected = "{" +
-               "\"ver\":\"1.0\"," +
-               "\"id\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\"," +
                "\"name\":\"schema name\"," +
                "\"version\":\"schema version\"," +
                "\"attrNames\":[\"attr\"]," +
-               "\"seqNo\":15" +
+               "\"issuerId\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\"" +
                "}";
             Schema schemaObject = await SchemaApi.CreateSchemaFromJsonAsync(expected);
 

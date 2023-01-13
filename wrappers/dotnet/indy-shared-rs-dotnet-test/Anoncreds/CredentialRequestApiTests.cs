@@ -40,7 +40,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             _ = metaData.Should().BeOfType(typeof(CredentialRequestMetadata));
         }
 
-        [Test, TestCase(TestName = "CreateCredentialRequestAsync() with all Arguments set returns a request and metadata.")]
+        [Test, TestCase(TestName = "CreateCredentialRequestJsonAsync() with all Arguments set returns a request and metadata.")]
         public async Task CreateCredentialRequestJsonAsyncWorks()
         {
             //Arrange
@@ -57,7 +57,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = issuerDid;
-            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefObject, keyProofObject);
+            string credDefId = issuerDid;
+            string credOfferObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObject);
 
             //Act
             (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
