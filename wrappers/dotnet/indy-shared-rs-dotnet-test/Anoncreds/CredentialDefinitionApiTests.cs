@@ -114,55 +114,6 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         }
         #endregion
 
-        #region Tests for GetCredentialDefinitionAttributeAsync
-        private static IEnumerable<TestCaseData> GetCredentialDefinitionAttributeCases()
-        {
-            yield return new TestCaseData("schema_id", "NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0")
-                .SetName("GetCredentialDefinitionAttribute() returns correct schema_id.");
-            yield return new TestCaseData("id", "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag")
-                .SetName("GetCredentialDefinitionAttribute() returns correct id.");
-        }
-
-        [Test, TestCaseSource(nameof(GetCredentialDefinitionAttributeCases))]
-        public async Task GetCredentialDefinitionAttributeAsyncWorks(string tag, string expected)
-        {
-            //Arrange
-            List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-
-            (CredentialDefinition credDefObject, _, _) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            //Act
-            string actual = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, tag);
-
-            //Assert
-            _ = actual.Should().BeEquivalentTo(expected);
-        }
-
-        [Test, TestCase(TestName = "GetCredentialDefinitionAttributeAsync() throws AnoncredsRsException when requested attribute name is invalid.")]
-        public async Task GetCredentialDefinitionAttributeAsyncThrowsException()
-        {
-            //Arrange
-            List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, _, _) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            //Act
-            Func<Task> act = async () => await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "blubb");
-
-            //Assert
-            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
-        }
-        #endregion
-
         #region Tests for CreateCredentialDefinitionFromJsonAsync
         [Test, TestCase(TestName = "CreateCredentialDefinitionFromJsonAsync() creates a definition object from valid json string.")]
         public async Task CreateCredentialDefinitionFromJsonAsyncWorks()

@@ -25,7 +25,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             //Act
-            string schemaId = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDef, "schema_id");
+            string schemaId = schemaObject.IssuerId;
             CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef, keyProof);
 
             //Assert
@@ -46,7 +46,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             //Act
-            string schemaId = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDef, "schema_id");
+            string schemaId = issuerDid;
             string testObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDef, keyProof);
 
             //Assert
@@ -82,7 +82,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             if (hasSchemaId)
             {
                 (CredentialDefinition tmpCredDef, CredentialDefinitionPrivate tmpCredDefPrivate, CredentialKeyCorrectnessProof tmpKeyProof) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag",issuerDid , SignatureType.CL, true);
-                schemaId = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(tmpCredDef, "schema_id");
+                schemaId = schemaObject.IssuerId;
             }
             if (hasCredDef)
             {

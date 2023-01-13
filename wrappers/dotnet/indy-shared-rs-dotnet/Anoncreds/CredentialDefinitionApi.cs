@@ -104,47 +104,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult((credDefObjectJson, credDefPvtObjectJson, keyProofObjectJson));
         }
 
-        /// <summary>
-        /// Returns the value of a <see cref="CredentialDefinition"/> attribute (only the attribute names "id" and "schema_id" are supported so far).
-        /// </summary>
-        /// <param name="credDefObject">Definition to get the value from.</param>
-        /// <param name="attributeName">Name of the attribute.</param>
-        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObject"/> are invalid.</exception>
-        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObject"/>.</returns>
-        public static async Task<string> GetCredentialDefinitionAttributeAsync(CredentialDefinition credDefObject, string attributeName)
-        {
-            string result = "";
-            int errorCode = NativeMethods.anoncreds_credential_definition_get_attribute(credDefObject.Handle, FfiStr.Create(attributeName), ref result);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            return await Task.FromResult(result);
-        }
-        /// <summary>
-        /// Returns the value of a <see cref="CredentialDefinition"/> attribute (only the attribute names "id" and "schema_id" are supported so far).
-        /// </summary>
-        /// <param name="credDefObjectJson">Definition as JSON string to get the value from.</param>
-        /// <param name="attributeName">Name of the attribute.</param>
-        /// <exception cref="AnoncredsRsException">Throws if <paramref name="attributeName"/> or <paramref name="credDefObjectJson"/> are invalid.</exception>
-        /// <returns>The value of the requested <paramref name="attributeName"/> from the provided <paramref name="credDefObjectJson"/>.</returns>
-        public static async Task<string> GetCredentialDefinitionAttributeAsync(string credDefObjectJson, string attributeName)
-        {
-            IntPtr credDefHandle = new IntPtr();
-            _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefObjectJson), ref credDefHandle);
-            string result = "";
-            int errorCode = NativeMethods.anoncreds_credential_definition_get_attribute(credDefHandle, FfiStr.Create(attributeName), ref result);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            return await Task.FromResult(result);
-        }
-
         #region private methods
         /// <summary>
         /// Creates a <see cref="CredentialDefinition"/> object from JSON string./>.
