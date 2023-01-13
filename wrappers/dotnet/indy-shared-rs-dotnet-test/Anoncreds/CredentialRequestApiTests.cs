@@ -28,7 +28,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject, keyProofObject);
+            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
 
             //Act
             (CredentialRequest request, CredentialRequestMetadata metaData) = await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
@@ -131,7 +131,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 (CredentialDefinition tmpCredDef, _, CredentialKeyCorrectnessProof keyProofObject) =
                    await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
                 string schemaId = schemaObject.IssuerId;
-                credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, tmpCredDef, keyProofObject);
+                credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, tmpCredDef.CredentialDefinitionId, keyProofObject);
             }
 
             //Act

@@ -43,7 +43,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region CredentialOffer 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_credential_offer(FfiStr schemaId, IntPtr credDefObjectHandle, IntPtr keyProofObjectHandle, ref IntPtr credOfferHandle);
+        internal static extern int anoncreds_create_credential_offer(FfiStr schemaId, FfiStr credDefId, IntPtr keyProofObjectHandle, ref IntPtr credOfferHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_credential_offer_from_json(ByteBuffer credOfferJson, ref IntPtr credOfferObjectHandle);

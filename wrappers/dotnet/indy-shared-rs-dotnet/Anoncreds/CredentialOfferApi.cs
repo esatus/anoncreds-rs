@@ -20,11 +20,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>A new <see cref="CredentialOffer"/>.</returns>
         public static async Task<CredentialOffer> CreateCredentialOfferAsync(
             string schemaId,
-            CredentialDefinition credDefObject,
+            string credDefId,
             CredentialKeyCorrectnessProof keyProofObject)
         {
             IntPtr credOfferObjectHandle = new IntPtr();
-            int errorCode = NativeMethods.anoncreds_create_credential_offer(FfiStr.Create(schemaId), credDefObject.Handle, keyProofObject.Handle, ref credOfferObjectHandle);
+            int errorCode = NativeMethods.anoncreds_create_credential_offer(FfiStr.Create(schemaId), FfiStr.Create(credDefId), keyProofObject.Handle, ref credOfferObjectHandle);
 
             if (errorCode != 0)
             {
@@ -46,16 +46,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>A new <see cref="CredentialOffer"/> as JSON string.</returns>
         public static async Task<string> CreateCredentialOfferJsonAsync(
             string schemaId,
-            string credDefObjectJson,
+            string credDefId,
             string keyProofObjectJson)
         {
-            IntPtr credDefObjectHandle = new IntPtr();
             IntPtr keyProofObjecthandle = new IntPtr();
-            _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefObjectJson), ref credDefObjectHandle);
             _ = NativeMethods.anoncreds_key_correctness_proof_from_json(ByteBuffer.Create(keyProofObjectJson), ref keyProofObjecthandle);
 
             IntPtr credOfferObjectHandle = new IntPtr();
-            int errorCode = NativeMethods.anoncreds_create_credential_offer(FfiStr.Create(schemaId), credDefObjectHandle, keyProofObjecthandle, ref credOfferObjectHandle);
+            int errorCode = NativeMethods.anoncreds_create_credential_offer(FfiStr.Create(schemaId), FfiStr.Create(credDefId), keyProofObjecthandle, ref credOfferObjectHandle);
 
             if (errorCode != 0)
             {
