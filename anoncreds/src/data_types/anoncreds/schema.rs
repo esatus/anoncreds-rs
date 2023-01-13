@@ -4,6 +4,8 @@ use crate::impl_anoncreds_object_identifier;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
+use super::issuer_id::IssuerId;
+
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 
 impl_anoncreds_object_identifier!(SchemaId);
@@ -13,8 +15,8 @@ impl_anoncreds_object_identifier!(SchemaId);
 pub struct Schema {
     pub name: String,
     pub version: String,
-    #[serde(rename = "attrNames")]
     pub attr_names: AttributeNames,
+    pub issuer_id: IssuerId,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -50,6 +52,7 @@ impl From<AttributeNames> for HashSet<String> {
 
 impl Validatable for Schema {
     fn validate(&self) -> Result<(), ValidationError> {
+        self.issuer_id.validate()?;
         self.attr_names.validate()?;
         Ok(())
     }
@@ -78,40 +81,52 @@ mod test_schema_validation {
     use super::*;
 
     #[test]
-    fn test_valid_schema() {
+    fn test_schema_valid() {
         let schema_json = json!({
             "name": "gvt",
             "version": "1.0",
             "attrNames": ["aaa", "bbb", "ccc"],
-        })
-        .to_string();
+            "issuerId": "mock:uri"
+        });
 
-        let schema: Schema = serde_json::from_str(&schema_json).unwrap();
+        let schema: Schema = serde_json::from_value(schema_json).unwrap();
         assert_eq!(schema.name, "gvt");
         assert_eq!(schema.version, "1.0");
     }
 
     #[test]
-    fn test_invalid_name_schema() {
+    fn test_schema_invalid_missing_properties() {
         let schema_json = json!({
-            "name": "gvt1",
-            "version": "1.0",
-            "attrNames": ["aaa", "bbb", "ccc"],
-        })
-        .to_string();
+            "name": "gvt",
+        });
 
-        serde_json::from_str::<Schema>(&schema_json).unwrap();
+        let schema = serde_json::from_value::<Schema>(schema_json);
+        assert!(schema.is_err());
     }
 
     #[test]
-    fn test_invalid_version_schema() {
+    fn test_schema_invalid_issuer_id() {
         let schema_json = json!({
             "name": "gvt",
-            "version": "1.1",
+            "version": "1.0",
             "attrNames": ["aaa", "bbb", "ccc"],
-        })
-        .to_string();
+            "issuerId": "bob"
+        });
 
-        serde_json::from_str::<Schema>(&schema_json).unwrap();
+        let schema: Schema = serde_json::from_value(schema_json).unwrap();
+        assert!(schema.validate().is_err());
+    }
+
+    #[test]
+    fn test_schema_invalid_attr_names() {
+        let schema_json = json!({
+            "name": "gvt1",
+            "version": "1.0",
+            "attrNames": [],
+            "issuerId": "mock:uri"
+        });
+
+        let schema: Schema = serde_json::from_value(schema_json).unwrap();
+        assert!(schema.validate().is_err());
     }
 }

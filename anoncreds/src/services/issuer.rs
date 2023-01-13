@@ -1,10 +1,13 @@
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use std::collections::{BTreeSet, HashSet};
 use std::iter::FromIterator;
 
-use indy_utils::ValidationError;
+use indy_utils::{Validatable, ValidationError};
 
 use super::types::*;
 use crate::data_types::anoncreds::cred_def::CredentialDefinitionId;
+use crate::data_types::anoncreds::issuer_id::IssuerId;
 use crate::data_types::anoncreds::rev_reg::RevocationRegistryId;
 use crate::data_types::anoncreds::schema::SchemaId;
 use crate::data_types::anoncreds::{
@@ -26,29 +29,39 @@ use crate::ursa::cl::{
 
 use super::tails::{TailsFileReader, TailsReader, TailsWriter};
 
-pub fn create_schema(
+pub fn create_schema<II>(
     schema_name: &str,
     schema_version: &str,
+    issuer_id: II,
     attr_names: AttributeNames,
-) -> Result<Schema> {
+) -> Result<Schema>
+where
+    II: TryInto<IssuerId, Error = ValidationError>,
+{
     trace!(
-        "create_schema >>> schema_name: {:?}, schema_version: {:?}, attr_names: {:?}",
+        "create_schema >>> schema_name: {}, schema_version: {}, attr_names: {:?}",
         schema_name,
         schema_version,
-        attr_names
+        attr_names,
     );
+    let issuer_id = issuer_id.try_into()?;
 
     let schema = Schema {
         name: schema_name.to_string(),
         version: schema_version.to_string(),
+        issuer_id,
         attr_names,
     };
+
+    schema.validate()?;
+
     Ok(schema)
 }
 
-pub fn create_credential_definition<SI>(
+pub fn create_credential_definition<SI, II>(
     schema_id: SI,
     schema: &Schema,
+    issuer_id: II,
     tag: &str,
     signature_type: SignatureType,
     config: CredentialDefinitionConfig,
@@ -59,12 +72,14 @@ pub fn create_credential_definition<SI>(
 )>
 where
     SI: TryInto<SchemaId, Error = ValidationError>,
+    II: TryInto<IssuerId, Error = ValidationError>,
 {
     trace!(
         "create_credential_definition >>> schema: {:?}, config: {:?}",
         schema,
         config
     );
+    let issuer_id = issuer_id.try_into()?;
     let schema_id = schema_id.try_into()?;
 
     let credential_schema = build_credential_schema(&schema.attr_names.0)?;
@@ -80,6 +95,7 @@ where
     let cred_def = CredentialDefinition {
         schema_id,
         signature_type,
+        issuer_id,
         tag: tag.to_owned(),
         value: CredentialDefinitionData {
             primary: credential_public_key.get_primary_key()?.try_clone()?,
@@ -267,6 +283,9 @@ pub fn create_credential(
         "Error fetching public key from credential definition"
     ))?;
     let credential_values = build_credential_values(&cred_values.0, None)?;
+    let rand_str = String::from_utf8(thread_rng().sample_iter(&Alphanumeric).take(22).collect())
+        .map_err(|_| err_msg!("Unable to instantiate random string for prover did"))?;
+    let prover_did = cred_request.prover_did.as_ref().unwrap_or(&rand_str);
 
     let (credential_signature, signature_correctness_proof, rev_reg, rev_reg_delta, witness) =
         match revocation_config {
@@ -277,9 +296,10 @@ pub fn create_credential(
                 let mut rev_reg = match revocation.registry {
                     RevocationRegistry::RevocationRegistryV1(v1) => v1.value.clone(),
                 };
+
                 let (credential_signature, signature_correctness_proof, delta) =
                     CryptoIssuer::sign_credential_with_revoc(
-                        &cred_request.prover_did.0,
+                        prover_did,
                         &cred_request.blinded_ms,
                         &cred_request.blinded_ms_correctness_proof,
                         cred_offer.nonce.as_native(),
@@ -326,7 +346,7 @@ pub fn create_credential(
             }
             None => {
                 let (signature, correctness_proof) = CryptoIssuer::sign_credential(
-                    &cred_request.prover_did.0,
+                    prover_did,
                     &cred_request.blinded_ms,
                     &cred_request.blinded_ms_correctness_proof,
                     cred_offer.nonce.as_native(),
