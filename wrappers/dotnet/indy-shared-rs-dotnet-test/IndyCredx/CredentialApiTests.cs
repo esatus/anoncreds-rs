@@ -26,7 +26,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -62,7 +62,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -101,7 +101,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -136,7 +136,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
 
@@ -171,7 +171,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
 
@@ -208,7 +208,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
 
@@ -274,7 +274,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -315,7 +315,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
 
@@ -356,7 +356,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
             MasterSecret masterSecretObject2 = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -396,7 +396,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testTailsPathForRevocation = null;
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -440,7 +440,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testTailsPathForRevocation = null;
             string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObject, string credDefPvtObject, string keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -484,7 +484,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testTailsPathForRevocation = null;
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 
@@ -524,7 +524,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string testTailsPathForRevocation = null;
             string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
-            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (string credDefObject, string credDefPvtObject, string keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
 

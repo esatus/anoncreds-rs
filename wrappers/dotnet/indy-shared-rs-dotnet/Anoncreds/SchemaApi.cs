@@ -24,12 +24,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string originDid, 
             string schemaName, 
             string schemaVersion, 
-            List<string> attrNames, 
-            long seqNo = -1 //default None 
+            List<string> attrNames 
             )
         {
             IntPtr schemaObjectHandle = new IntPtr();
-            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(originDid), FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStrList.Create(attrNames), seqNo, ref schemaObjectHandle);
+            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStr.Create(originDid), FfiStrList.Create(attrNames), ref schemaObjectHandle);
 
             if (errorCode != 0)
             {
@@ -56,12 +55,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string originDid, 
             string schemaName, 
             string schemaVersion, 
-            List<string> attrNames, 
-            long seqNo = -1 //default None
+            List<string> attrNames
             )
         {
             IntPtr schemaObjectHandle = new IntPtr();
-            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(originDid), FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStrList.Create(attrNames), seqNo, ref schemaObjectHandle);
+            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStr.Create(originDid), FfiStrList.Create(attrNames), ref schemaObjectHandle);
 
             if (errorCode != 0)
             {

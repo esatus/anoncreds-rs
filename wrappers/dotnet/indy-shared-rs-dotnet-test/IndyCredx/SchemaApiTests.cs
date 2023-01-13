@@ -12,102 +12,152 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
     internal class SchemaApiTests
     {
         #region Tests for CreateSchemaAsync
-        [Test, TestCase(TestName = "CreateSchemaAsync() creates a valid schema object.")]
-        public async Task CreateSchemaWorks()
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaWorks()
+        {
+            yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e")
+                .SetName("CreateSchemaAsync() creates a valid schema object with legacy issuerId.");
+            yield return new TestCaseData("did:uri:new")
+                .SetName("CreateSchemaAsync() creates a valid schema object with uri issuerId.");
+            yield return new TestCaseData("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+                .SetName("CreateSchemaAsync() creates a valid schema object with another uri issuerId.");
+        }
+
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaWorks))]
+        public async Task CreateSchemaWorks(string issuerId)
         {
             //Arrange
             List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
             _ = testObject.Should().BeOfType(typeof(Schema));
         }
 
-        [Test, TestCase(TestName = "CreateSchemaAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
-        public async Task CreateSchemaThrowsExceptionForMissingIssuerDid()
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaInvalidIssuerId()
+        {
+            yield return new TestCaseData("")
+                .SetName("CreateSchemaAsync() throws a AnoncredsRsException if no issuerId is provided.");
+            yield return new TestCaseData(":::")
+                .SetName("CreateSchemaAsync() throws a AnoncredsRsException if invalid issuerId is provided.");
+            yield return new TestCaseData("IIIIIIIIIIIIIIIIIIIIII")
+                .SetName("CreateSchemaAsync() throws a AnoncredsRsException if another invalid issuerId is provided.");
+        }
+
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaInvalidIssuerId))]
+        public async Task CreateSchemaThrowsExceptionForInvalidIssuerId(string issuerId)
         {
             //Arrange
             List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaAsync() works if no attribute names are provided.")]
-        public async Task CreateSchemaWorksWithMissingAttributeNames()
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaInvalidAttributeNames()
+        {
+            List<string> attrNamesEmpty = new() { };
+
+            yield return new TestCaseData(attrNamesEmpty)
+                .SetName("CreateSchemaAsync() throws a AnoncredsRsException if no attribute names are provided.");
+        }
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaInvalidAttributeNames))]
+        public async Task CreateSchemaThrowsExceptionForInvalidAttributeNames(List<string> attrNames)
         {
             //Arrange
-            List<string> attrNames = new() { };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string issuerId = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Func<Task> act = async () => await SchemaApi.CreateSchemaAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
-            _ = testObject.Should().BeOfType(typeof(Schema));
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
-        #region Tests for CreateSchemaAsync
-        [Test, TestCase(TestName = "CreateSchemaJsonAsync() creates a valid schema object.")]
-        public async Task CreateSchemaJsonAsyncWorks()
+        #region Tests for CreateSchemaJsonAsync
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaJsonWorks()
+        {
+            yield return new TestCaseData("NcYxiDXkpYi6ov5FcYDi1e")
+                .SetName("CreateSchemaJsonAsync() creates a valid schema object with legacy issuerId.");
+            yield return new TestCaseData("did:uri:new")
+                .SetName("CreateSchemaJsonAsync() creates a valid schema object with uri issuerId.");
+            yield return new TestCaseData("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+                .SetName("CreateSchemaJsonAsync() creates a valid schema object with another uri issuerId.");
+        }
+
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaJsonWorks))]
+        public async Task CreateSchemaJsonWorks(string issuerId)
         {
             //Arrange
             List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
             _ = testObject.Should().BeOfType(typeof(string));
+            _ = testObject.Should().NotBeNullOrEmpty();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaJsonAsync() throws a AnoncredsRsException if no issuerDid is provided.")]
-        public async Task CreateSchemaJsonAsyncThrowsExceptionForMissingIssuerDid()
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaJsonInvalidIssuerId()
+        {
+            yield return new TestCaseData("")
+                .SetName("CreateSchemaJsonAsync() throws a AnoncredsRsException if no issuerId is provided.");
+            yield return new TestCaseData(":::")
+                .SetName("CreateSchemaJsonAsync() throws a AnoncredsRsException if invalid issuerId is provided.");
+            yield return new TestCaseData("IIIIIIIIIIIIIIIIIIIIII")
+                .SetName("CreateSchemaJsonAsync() throws a AnoncredsRsException if another invalid issuerId is provided.");
+        }
+
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaJsonInvalidIssuerId))]
+        public async Task CreateSchemaJsonThrowsExceptionForInvalidIssuerId(string issuerId)
         {
             //Arrange
             List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
 
-        [Test, TestCase(TestName = "CreateSchemaJsonAsync() works if no attribute names are provided.")]
-        public async Task CreateSchemaJsonAsyncWorksWIthMissingAttributeNames()
+
+        private static IEnumerable<TestCaseData> CreateCasesCreateSchemaJsonInvalidAttributeNames()
+        {
+            List<string> attrNamesEmpty = new() { };
+
+            yield return new TestCaseData(attrNamesEmpty)
+                .SetName("CreateSchemaJsonAsync() throws a AnoncredsRsException if no attribute names are provided.");
+        }
+        [Test, TestCaseSource(nameof(CreateCasesCreateSchemaJsonInvalidAttributeNames))]
+        public async Task CreateSchemaJsonThrowsExceptionForInvalidAttributeNames(List<string> attrNames)
         {
             //Arrange
-            List<string> attrNames = new() { };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string issuerId = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
 
             //Act
-            string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Func<Task> act = async () => await SchemaApi.CreateSchemaJsonAsync(issuerId, schemaName, schemaVersion, attrNames);
 
             //Assert
-            _ = testObject.Should().BeOfType(typeof(string));
+            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         }
         #endregion
 
@@ -117,12 +167,10 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
         {
             //Arrange
             string schemaJson = "{" +
-               "\"ver\":\"1.0\"," +
-               "\"id\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\"," +
                "\"name\":\"schema name\"," +
                "\"version\":\"schema version\"," +
                "\"attrNames\":[\"attr\"]," +
-               "\"seqNo\":15" +
+               "\"issuerId\":\"NcYxiDXkpYi6ov5FcYDi1e\"" +
                "}";
 
             //Act
@@ -130,7 +178,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
 
             //Assert
             _ = actual.Should().BeOfType<Schema>();
-            _ = actual.Id.Should().Be("55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version");
+            _ = actual.IssuerId.Should().Be("NcYxiDXkpYi6ov5FcYDi1e");
         }
 
         [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an empty json string is provided.")]
@@ -169,7 +217,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
-            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             //Act
             string schemaAttributeId = await SchemaApi.GetSchemaAttributeAsync(testObject, "id"); ////should return id string (only one supported in rust)
@@ -186,7 +234,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
-            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             //Act
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust
@@ -199,7 +247,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
         public async Task GetSchemaAttributeAsyncWorksWithSchemaJson()
         {
             //Arrange
-            string testObject = "{\"id\":\"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0\",\"name\":\"gvt\",\"version\":\"1.0\",\"ver\":\"1.0\",\"attrNames\":[\"age\",\"gender\",\"sex\"],\"seqNo\":0}";
+            string testObject = "{\"issuerId\":\"NcYxiDXkpYi6ov5FcYDi1e\",\"name\":\"gvt\",\"version\":\"1.0\",\"attrNames\":[\"age\",\"gender\",\"sex\"]}";
 
             //Act
             string schemaAttributeId = await SchemaApi.GetSchemaAttributeAsync(testObject, "id");
@@ -217,7 +265,7 @@ namespace anoncreds_rs_dotnet_test.IndyCredx
             string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
-            Schema testObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string testObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             //Act
             Func<Task> act = async () => await SchemaApi.GetSchemaAttributeAsync(testObject, "version"); //should return "" -> not supported in rust

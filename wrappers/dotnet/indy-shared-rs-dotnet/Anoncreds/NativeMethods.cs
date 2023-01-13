@@ -215,7 +215,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region Schema
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int anoncreds_create_schema(FfiStr originDid, FfiStr schemaName, FfiStr schemaVersion, FfiStrList attrNames, long seqNo, ref IntPtr schemaObjectHandle);
+        internal static extern int anoncreds_create_schema(FfiStr schemaName, FfiStr schemaVersion, FfiStr originDid, FfiStrList attrNames, ref IntPtr schemaObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_schema_get_attribute(IntPtr schemaObjectHandle, FfiStr attributeName, ref string result);

@@ -22,7 +22,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             string schemaVersion = "1.0";
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             (CredentialDefinition credDefObject, _, CredentialKeyCorrectnessProof keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
@@ -50,7 +50,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
             string schemaVersion = "1.0";
 
             string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
-            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             (string credDefObject, _, string keyProofObject) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
@@ -103,7 +103,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                 proverDid = "VsKV7grR1BUE29mG2Fm2kX";
                 string schemaName = "gvt";
                 string schemaVersion = "1.0";
-                Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+                Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
                 (CredentialDefinition tmpCredDef, _, _) =
                 await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
                 credDefObject = tmpCredDef;
@@ -125,7 +125,7 @@ namespace indy_shared_rs_dotnet_test.IndyCredx
                 List<string> attrNames = new() { "gender", "age", "sex" };
                 string schemaName = "gvt";
                 string schemaVersion = "1.0";
-                Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames, 0);
+                Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
                 (CredentialDefinition tmpCredDef, _, CredentialKeyCorrectnessProof keyProofObject) =
                    await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
                 string schemaId = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(tmpCredDef, "schema_id");
