@@ -8,7 +8,8 @@ namespace anoncreds_rs_dotnet.Models
         public IntPtr Handle { get; set; }
         public string JsonString { get; set; }
 
-        [JsonProperty("id")]
+        // TODO : IssuerId oder so lassen? sieht auch bei Schema classe
+        [JsonProperty("issuerId")]
         public string CredentialDefinitionId { get; set; }
 
         [JsonProperty("schemaId")]

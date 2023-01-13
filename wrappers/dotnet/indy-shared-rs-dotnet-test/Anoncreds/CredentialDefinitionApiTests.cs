@@ -24,7 +24,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Act
             (CredentialDefinition credDef, CredentialDefinitionPrivate credDefPvt, CredentialKeyCorrectnessProof keyProof) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             //Assert
             _ = credDef.Should().BeOfType(typeof(CredentialDefinition));
@@ -55,7 +55,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             Schema schemaObject = await SchemaApi.CreateSchemaAsync(schemaIssuerDid, schemaName, schemaVersion, attrNames);
 
             //Act
-            Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, tag, signatureType, supportRevocation);
+            Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, tag, issuerDid, signatureType, supportRevocation);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
@@ -76,7 +76,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Act
             (string credDef, string credDefPvt, string keyProof) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", SignatureType.CL, true);
+                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
 
             //Assert
             _ = credDef.Should().NotBeNullOrEmpty();
@@ -107,7 +107,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(schemaIssuerDid, schemaName, schemaVersion, attrNames);
 
             //Act
-            Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, tag, signatureType, supportRevocation);
+            Func<Task> act = async () => await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, tag, issuerDid, signatureType, supportRevocation);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
@@ -134,7 +134,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
 
             (CredentialDefinition credDefObject, _, _) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             //Act
             string actual = await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, tag);
@@ -153,7 +153,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string schemaVersion = "1.0";
             Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, _, _) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(issuerDid, schemaObject, "tag", SignatureType.CL, true);
+                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
 
             //Act
             Func<Task> act = async () => await CredentialDefinitionApi.GetCredentialDefinitionAttributeAsync(credDefObject, "blubb");
@@ -168,10 +168,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialDefinitionFromJsonAsyncWorks()
         {
             //Arrange
-            string id = "NcYxiDXkpYi6ov5FcYDi1e:3:CL: NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
+            string id = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
             string schemaId = "NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
             string credDefJson = "{\"ver\":\"1.0\"," +
-                $"\"id\":\"{id}\"," +
+                $"\"issuerId\":\"{id}\"," +
                 $"\"schemaId\":\"{schemaId}\"," +
                 "\"type\":\"CL\"," +
                 "\"tag\":\"tag\"," +

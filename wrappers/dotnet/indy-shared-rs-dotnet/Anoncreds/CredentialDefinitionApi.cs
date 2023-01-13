@@ -13,17 +13,19 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Creates a new <see cref="CredentialDefinition"/> from <see cref="Schema"/> (only signatureType "CL" supported so far).
         /// </summary>
-        /// <param name="originDid">Issuer DID.</param>
+        /// <param name="schemaId">Schema ID.</param>
         /// <param name="schemaObject">Corresponding schema.</param>
         /// <param name="tag">Tag name.</param>
+        /// <param name="issuerId">Issuer ID.</param>
         /// <param name="signatureType">Type of the sginature.</param>
         /// <param name="supportRevocation">Flag if revocation is supported or not.</param>
         /// <exception cref="AnoncredsRsException">Throws if any provided parameters are invalid.</exception>
         /// <returns>The new <see cref="CredentialDefinition"/>, <see cref="CredentialDefinitionPrivate"/> and <see cref="CredentialKeyCorrectnessProof"/>.</returns>
         public static async Task<(CredentialDefinition, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof)> CreateCredentialDefinitionAsync(
-            string originDid,
+            string schemaId,
             Schema schemaObject,
             string tag,
+            string issuerId,
             SignatureType signatureType,
             bool supportRevocation)
         {
@@ -31,9 +33,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credDefPvtHandle = new IntPtr();
             IntPtr keyProofHandle = new IntPtr();
             int errorCode = NativeMethods.anoncreds_create_credential_definition(
-                FfiStr.Create(originDid),
+                FfiStr.Create(schemaId),
                 schemaObject.Handle,
                 FfiStr.Create(tag),
+                FfiStr.Create(issuerId),
                 FfiStr.Create(signatureType.ToString()),
                 Convert.ToByte(supportRevocation),
                 ref credDefHandle,
@@ -55,17 +58,19 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Creates a new <see cref="CredentialDefinition"/> as JSON string from <see cref="Schema"/> (only signatureType "CL" supported so far).
         /// </summary>
-        /// <param name="originDid">Issuer DID.</param>
+        /// <param name="schemaId">Schema ID.</param>
         /// <param name="schemaObjectJson">Corresponding schema.</param>
         /// <param name="tag">Tag name.</param>
+        /// <param name="issuerId">Issuer ID.</param>
         /// <param name="signatureType">Type of the sginature.</param>
         /// <param name="supportRevocation">Flag if revocation is supported or not.</param>
         /// <exception cref="AnoncredsRsException">Throws if any provided parameters are invalid.</exception>
         /// <returns>The new <see cref="CredentialDefinition"/> as JSON string, <see cref="CredentialDefinitionPrivate"/> as JSON string and <see cref="CredentialKeyCorrectnessProof"/> as JSON String.</returns>
         public static async Task<(string, string, string)> CreateCredentialDefinitionJsonAsync(
-            string originDid,
+            string schemaId,
             string schemaObjectJson,
             string tag,
+            string issuerId,
             SignatureType signatureType,
             bool supportRevocation)
         {
@@ -76,9 +81,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
             _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaObjectJson), ref schemaObjectHandle);
 
             int errorCode = NativeMethods.anoncreds_create_credential_definition(
-                FfiStr.Create(originDid),
+                FfiStr.Create(schemaId),
                 schemaObjectHandle,
                 FfiStr.Create(tag),
+                FfiStr.Create(issuerId),
                 FfiStr.Create(signatureType.ToString()),
                 Convert.ToByte(supportRevocation),
                 ref credDefHandle,

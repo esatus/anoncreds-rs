@@ -29,8 +29,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region CredentialDefinition
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_credential_definition(FfiStr originDid, IntPtr schemaObjectHandle, FfiStr tag, FfiStr signatureType, byte supportRevocation,
-                                                                         ref IntPtr credDefObjectHandle, ref IntPtr credDefPvtObjectHandle, ref IntPtr keyProofObjectHandle);
+        internal static extern int anoncreds_create_credential_definition(FfiStr schemaId, IntPtr schemaObjectHandle, FfiStr tag, FfiStr issuerId, FfiStr signatureType, byte supportRevocation, ref IntPtr credDefObjectHandle, ref IntPtr credDefPvtObjectHandle, ref IntPtr keyProofObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_credential_definition_get_attribute(IntPtr credDefObjectHandle, FfiStr attributeName, ref string result);
