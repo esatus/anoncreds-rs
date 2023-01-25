@@ -1,181 +1,271 @@
-name: 'Build Packages'
+name: 'Anoncreds'
 
-'on':
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   release:
     types: [created]
   workflow_dispatch:
     inputs:
-      publish:
-        description: 'Publish packages'
+      publish-binaries:
+        description: 'Publish Binaries to Release (will create a release if no release exits for branch or tag)'
         required: true
-        default: 'false'
+        default: false
+        type: boolean
+      publish-wrappers:
+        description: 'Publish Wrappers to Registries'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
-  build-manylinux:
-    name: Build Library (Manylinux)
+  lint:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo resources
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo check
+        run: cargo check
+
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+
+  
+
+  check:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            lib: libanoncreds.so
-            container: andrewwhitehead/manylinux2014-base
+        os: [macos-latest, windows-latest, ubuntu-latest]
 
-    container: ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo resources
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
-      - name: Build library
+      - name: Test Linux and macOS
+        if: "runner.os != 'Windows'"
+        run: cargo test --package anoncreds --features vendored
+
+      - name: Test Windows
+        if: "runner.os == 'Windows'"
         env:
-          BUILD_FEATURES: vendored
-          BUILD_TARGET: ${{ matrix.target }}
-        run: sh ./build.sh
+          OPENSSL_STATIC: 1
+        run: cargo test --package anoncreds --features vendored
 
-      - name: Upload library artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: library-${{ runner.os }}
-          path: target/release/${{ matrix.lib }}
+  build-release:
+    name: Build Library
 
-  build-other:
-    name: Build Library (MacOS/Win)
     env:
+      # This is required for fetching the openssl dependency from git more consistently
       CARGO_NET_GIT_FETCH_WITH_CLI: true
 
     strategy:
       matrix:
         include:
-          - os: macos-11
+          - os: ubuntu-latest
+            arch: linux-x86_64
+            target: x86_64-unknown-linux-gnu
+            lib: libanoncreds.so
+          - os: macos-latest
+            arch: macos-x86_64
             lib: libanoncreds.dylib
-            target: apple-darwin
-            toolchain: beta # beta required for Darwin build
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            arch: darwin-aarch64
+            target: aarch64-apple-darwin
+            lib: libanoncreds.dylib
           - os: windows-latest
+            arch: windows-x86_64
+            target: x86_64-pc-windows-msvc
             lib: anoncreds.dll
-            toolchain: stable
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
+          targets: ${{ matrix.target }}
 
       - name: Cache cargo resources
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
-      # pre-build so that openssl dependency is cached, otherwise it will complain:
-      # "This perl implementation doesn't produce Windows like paths"
-      - if: "runner.os == 'Windows'"
-        name: Pre-build (Windows)
-        uses: actions-rs/cargo@v1
+      - name: Build library for Windows
+        if: "runner.os == 'Windows'"
         env:
           OPENSSL_STATIC: 1
-        with:
-          command: build
-          args: --release --manifest-path anoncreds/Cargo.toml --features vendored
+        run: cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
 
-      - name: Build library
-        env:
-          BUILD_FEATURES: vendored
-          BUILD_TARGET: ${{ matrix.target }}
-          BUILD_TOOLCHAIN: ${{ matrix.toolchain }}
-          OPENSSL_STATIC: 1
-        run: sh ./build.sh
+      - name: Build library for macOS and Linux
+        if: "runner.os != 'Windows'"
+        run: cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
 
       - name: Upload library artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: library-${{ runner.os }}
-          path: target/release/${{ matrix.lib }}
+          name: library-${{ matrix.arch }}
+          path: target/${{ matrix.target }}/release/${{ matrix.lib }}
 
-  build-py:
-    name: Build Python
-    needs: [build-manylinux, build-other]
+      - name: Create library artifacts directory
+        if: |
+          github.event_name == 'release' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-binaries == 'true')
+        run: |
+          mkdir release-artifacts
+          cp target/${{ matrix.target }}/release/${{ matrix.lib }} release-artifacts/
 
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-11, windows-latest]
-        python-version: [3.6]
-        include:
-          - os: ubuntu-latest
-            plat-name: manylinux2014_x86_64
-          - os: macos-11
-            plat-name: macosx_10_9_universal2 # macosx_10_9_x86_64
-          - os: windows-latest
-            plat-name: win_amd64
+      - uses: a7ul/tar-action@v1.1.2
+        if: |
+          github.event_name == 'release' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-binaries == 'true')
+        with:
+          command: c
+          cwd: release-artifacts
+          files: .
+          outPath: 'library-${{ matrix.arch }}.tar.gz'
 
-    runs-on: ${{ matrix.os }}
+      - name: Add library artifacts to release
+        if: |
+          github.event_name == 'release' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-binaries == 'true')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: library-${{ matrix.arch }}.tar.gz
+          asset_name: 'library-${{ matrix.arch }}.tar.gz'
+
+  build-javascript:
+    name: Build and Test JavaScript wrapper
+    needs: [build-release]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wrappers/javascript
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Set up Node.JS 16.x
+        uses: actions/setup-node@v3
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine auditwheel
+          node-version: 16.x
 
       - name: Fetch library artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
-          name: library-${{ runner.os }}
-          path: wrappers/python/indy_credx/
+          name: library-linux-x86_64
 
-      - name: Build python package
-        run: |
-          python setup.py bdist_wheel --python-tag=py3 --plat-name=${{ matrix.plat-name }}
-        working-directory: wrappers/python
+      - name: Install dependencies
+        run: yarn install
 
-      - name: Test python package
-        shell: sh
-        run: |
-          cd wrappers/python
-          pip install --upgrade pip
-          pip install dist/*
-          python -m demo.test
+      - name: Build JavaScript Wrapper
+        run: yarn build
 
-      - if: "runner.os == 'Linux'"
-        name: Auditwheel
-        run: auditwheel show wrappers/python/dist/*
+      - name: Lint JavaScript Wrapper
+        run: yarn lint
 
-      - name: Upload python package
-        uses: actions/upload-artifact@v2
-        with:
-          name: python-${{ runner.os }}
-          path: wrappers/python/dist/*
+      - name: Format Check JavaScript Wrapper
+        run: yarn check-format
 
-      - if: |
-          (github.event_name == 'release' ||
-            (github.event_name == 'workflow_dispatch' &&
-             github.event.inputs.publish == 'true'))
-        name: Publish python package
+      - name: Type Check JavaScript Wrapper
+        run: yarn check-types
+
+      - name: Test JavaScript Wrapper
         env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload --skip-existing wrappers/python/dist/*
+          # binary is downloaded to root of repository
+          LIB_ANONCREDS_PATH: ../../
+        run: yarn test
+
+            # build-py:
+            #   name: Build Python
+            #   needs: [build-release]
+
+            #   strategy:
+            #     matrix:
+            #       include:
+            #         - os: ubuntu-latest
+            #           library: library-linux-x86_64
+            #           plat-name: manylinux2014_x86_64
+            #         - os: windows-latest
+            #           library: library-windows-x86_64
+            #           plat-name: win_amd64
+            #         - os: macos-latest
+            #           library: library-macos-x86_64
+            #           plat-name: win_amd64
+
+            #   runs-on: ${{ matrix.os }}
+
+            #   steps:
+            #     - name: Checkout
+            #       uses: actions/checkout@v2
+
+            #     - name: Set up Python 3.8
+            #       uses: actions/setup-python@v2
+            #       with:
+            #         python-version: 3.8
+
+            #     - name: Install dependencies
+            #       run: |
+            #         python -m pip install --upgrade pip
+            #         pip install setuptools wheel twine auditwheel
+            #     - name: Fetch library artifacts
+            #       uses: actions/download-artifact@v2
+            #       with:
+            #         name: ${{matrix.library}}
+            #         path: wrappers/python/indy_credx/
+
+            #     - name: Build python package
+            #       run: |
+            #         python setup.py bdist_wheel --python-tag=py3 --plat-name=${{ matrix.plat-name }}
+            #       working-directory: wrappers/python
+
+            #     - name: Test python package
+            #       shell: sh
+            #       run: |
+            #         cd wrappers/python
+            #         pip install --upgrade pip
+            #         pip install dist/*
+            #         python -m demo.test
+            #     - if: "runner.os == 'Linux'"
+            #       name: Auditwheel
+            #       run: auditwheel show wrappers/python/dist/*
+
+            #     - name: Upload python package
+            #       uses: actions/upload-artifact@v2
+            #       with:
+            #         name: python-${{ runner.os }}
+            #         path: wrappers/python/dist/*
+
+            #     - if: |
+            #         (github.event_name == 'release' ||
+            #           (github.event_name == 'workflow_dispatch' &&
+            #            github.event.inputs.publish == 'true'))
+            #       name: Publish python package
+            #       env:
+            #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+            #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+            #       run: |
+            #         twine upload --skip-existing wrappers/python/dist/*
 
   build-android-libraries:
     name: Build Android Libraries
@@ -272,7 +362,6 @@ jobs:
       (github.event_name == 'release' ||
       (github.event_name == 'workflow_dispatch' &&
        github.event.inputs.publish == 'true'))
-
     steps:
       - uses: actions/checkout@v2
       - name: Fetch static libraries
