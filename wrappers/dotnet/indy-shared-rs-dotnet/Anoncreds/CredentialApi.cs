@@ -12,10 +12,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
     public static class CredentialApi
     {
         /// <summary>
-        /// Creates a new tuple of <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> objects.
+        /// Creates the <see cref="Credential"/> object.
         /// <para>
-        /// Note: Either all of the optional parameters (<paramref name="revocationRegistryDefinition"/>, <paramref name="revocationRegistryDefinitionPrivate"/>, <paramref name="revocationRegistry"/>, 
-        /// <paramref name="regIdx"/> and <paramref name="regUsed"/>) have to be provided or none.
+        /// Note: Either all of the optional parameters (<paramref name="revocationRegistryDefinition"/>, <paramref name="revocationRegistryDefinitionPrivate"/>, 
+        /// <paramref name="regIdx"/>) have to be provided or none.
         /// </para>
         /// </summary>
         /// <param name="credDefObject">Definition of the credential.</param>
@@ -25,14 +25,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="attributeNames">Attribute names.</param>
         /// <param name="attributeRawValues">Raw values of the attributes.</param>
         /// <param name="attributeEncodedValues">Encoded values of the attributes.</param>
+        /// <param name="revStatusListObject">The revocation status list.</param>
+        /// <param name="revocationRegistryId">revocation registry id. Default null.</param>
         /// <param name="revocationRegistryDefinition">Definition of the RevocationRegistry.</param>
         /// <param name="revocationRegistryDefinitionPrivate">Private key params of the RevocationRegistry.</param>
-        /// <param name="revocationRegistry">RevocationRegistry</param>
         /// <param name="regIdx">Credential revocation index.</param>
-        /// <param name="regUsed">List of revoked credential indices.</param>
-        /// <returns>A new <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/>.</returns>
+        /// <returns>A new <see cref="Credential"/>.</returns>
         /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
-        public static async Task<(Credential, RevocationRegistry, RevocationRegistryDelta)> CreateCredentialAsync(
+        public static async Task<Credential> CreateCredentialAsync(
             CredentialDefinition credDefObject,
             CredentialDefinitionPrivate credDefPvtObject,
             CredentialOffer credOfferObject,
@@ -40,21 +40,18 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> attributeNames,
             List<string> attributeRawValues,
             List<string> attributeEncodedValues,
+            RevocationStatusList revStatusListObject,
+            string revocationRegistryId = null,
             RevocationRegistryDefinition revocationRegistryDefinition = null,
             RevocationRegistryDefinitionPrivate revocationRegistryDefinitionPrivate = null,
-            RevocationRegistry revocationRegistry = null,
-            long regIdx = -1,
-            List<long> regUsed = null)
+            long regIdx = -1)
         {
             IntPtr credObjectHandle = new IntPtr();
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revDeltaObjectHandle = new IntPtr();
+
             int errorCode;
             if (revocationRegistryDefinition == null
                 && revocationRegistryDefinitionPrivate == null
-                && revocationRegistry == null
-                && regIdx == -1
-                && regUsed == null)
+                && regIdx == -1)
             {
                 errorCode = NativeMethods.anoncreds_create_credential(
                 credDefObject.Handle,
@@ -64,24 +61,21 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeNames),
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
+                FfiStr.Create(revocationRegistryId),
+                revStatusListObject.Handle,
                 new IntPtr(),
-                ref credObjectHandle,
-                ref revRegObjectHandle,
-                ref revDeltaObjectHandle);
+                ref credObjectHandle);
             }
             else if (revocationRegistryDefinition != null
                 && revocationRegistryDefinitionPrivate != null
-                && revocationRegistry != null
                 && regIdx != -1)
             {
                 CredentialRevocationConfig credRevInfo = new CredentialRevocationConfig()
                 {
                     RevRegDefObjectHandle = revocationRegistryDefinition.Handle,
                     RevRegDefPvtObjectHandle = revocationRegistryDefinitionPrivate.Handle,
-                    RevRegObjectHandle = revocationRegistry.Handle,
                     TailsPath = revocationRegistryDefinition.Value.TailsLocation,
                     RegIdx = regIdx,
-                    RegUsed = regUsed
                 };
 
                 errorCode = NativeMethods.anoncreds_create_credential(
@@ -92,10 +86,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeNames),
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
+                FfiStr.Create(revocationRegistryId),
+                revStatusListObject.Handle,
                 FfiCredRevInfo.Create(credRevInfo),
-                ref credObjectHandle,
-                ref revRegObjectHandle,
-                ref revDeltaObjectHandle);
+                ref credObjectHandle);
             }
             else
             {
@@ -110,23 +104,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             Credential credObject = await CreateCredentialObjectAsync(credObjectHandle);
 
-            RevocationRegistry revRegObject = null;
-            if (!revRegObjectHandle.Equals(new IntPtr()))
-            {
-                revRegObject = await CreateRevocationRegistryObjectAsync(revRegObjectHandle);
-            }
-
-            RevocationRegistryDelta revDeltaObject = null;
-            if (!revDeltaObjectHandle.Equals(new IntPtr()))
-            {
-                revDeltaObject = await CreateRevocationRegistryDeltaObjectAsync(revDeltaObjectHandle);
-            }
-
-            return await Task.FromResult((credObject, revRegObject, revDeltaObject));
+            return await Task.FromResult(credObject);
         }
 
         /// <summary>
-        /// Creates a new tuple of <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> objects.
+        /// Creates the <see cref="Credential"/> objects.
         /// </summary>
         /// <param name="credDefObjectJson"><see cref="CredentialDefinition"/> as JSON string.</param>
         /// <param name="credDefPvtObjectJson"><see cref="CredentialDefinitionPrivate"/> as JSON string.</param>
@@ -135,14 +117,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="attributeNames">Attribute names.</param>
         /// <param name="attributeRawValues">Raw values of the attributes.</param>
         /// <param name="attributeEncodedValues">Encoded values of the attributes.</param>
+        /// <param name="revocationRegistryDefinitionJson">Definition of the RevocationRegistry as JSON string.</param>
+        /// <param name="revocationRegistryId">revocation registry id. Default null.</param>
         /// <param name="revocationRegistryDefinitionJson"><see cref="RevocationRegistryDefinition"/> as JSON string.</param>
         /// <param name="revocationRegistryDefinitionPrivateJson"><see cref="RevocationRegistryDefinitionPrivate"/> as JSON string.</param>
-        /// <param name="revocationRegistryJson"><see cref="RevocationRegistry"/> as JSON string</param>
         /// <param name="regIdx">Credential revocation index.</param>
-        /// <param name="regUsed">List of revoked credential indices.</param>
         /// <returns>A new <see cref="Credential"/>, <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/>.</returns>
         /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
-        public static async Task<(string, string, string)> CreateCredentialAsync(
+        public static async Task<string> CreateCredentialAsync(
             string credDefObjectJson,
             string credDefPvtObjectJson,
             string credOfferObjectJson,
@@ -150,31 +132,30 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> attributeNames,
             List<string> attributeRawValues,
             List<string> attributeEncodedValues,
+            string revStatusListObjectJson,
+            string revocationRegistryId = null,
             string revocationRegistryDefinitionJson = null,
             string revocationRegistryDefinitionPrivateJson = null,
-            string revocationRegistryJson = null,
-            long regIdx = -1,
-            List<long> regUsed = null)
+            long regIdx = -1)
         {
             IntPtr credDefObjectHandle = new IntPtr();
             IntPtr credDefPvtObjectHandle = new IntPtr();
             IntPtr credOfferObjectHandle = new IntPtr();
             IntPtr credReqObjectHandle = new IntPtr();
+            IntPtr revStatusListObjectHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefObjectJson), ref credDefObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_private_from_json(ByteBuffer.Create(credDefPvtObjectJson), ref credDefPvtObjectHandle);
             _ = NativeMethods.anoncreds_credential_offer_from_json(ByteBuffer.Create(credOfferObjectJson), ref credOfferObjectHandle);
             _ = NativeMethods.anoncreds_credential_request_from_json(ByteBuffer.Create(credReqObjectJson), ref credReqObjectHandle);
+            _ = NativeMethods.anoncreds_credential_request_from_json(ByteBuffer.Create(revStatusListObjectJson), ref revStatusListObjectHandle);
 
             IntPtr credObjectHandle = new IntPtr();
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revDeltaObjectHandle = new IntPtr();
+
             int errorCode;
             if (revocationRegistryDefinitionJson == null
                 && revocationRegistryDefinitionPrivateJson == null
-                && revocationRegistryJson == null
-                && regIdx == -1
-                && regUsed == null)
+                && regIdx == -1)
             {
                 errorCode = NativeMethods.anoncreds_create_credential(
                 credDefObjectHandle,
@@ -184,23 +165,20 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeNames),
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
+                FfiStr.Create(revocationRegistryId),
+                revStatusListObjectHandle,
                 new IntPtr(),
-                ref credObjectHandle,
-                ref revRegObjectHandle,
-                ref revDeltaObjectHandle);
+                ref credObjectHandle);
             }
             else if (revocationRegistryDefinitionJson != null
                 && revocationRegistryDefinitionPrivateJson != null
-                && revocationRegistryJson != null
                 && regIdx != -1)
             {
                 IntPtr revocationRegistryDefinitionHandle = new IntPtr();
                 IntPtr revocationRegistryDefinitionPrivateJsonHandle = new IntPtr();
-                IntPtr revocationRegistryJsonHandle = new IntPtr();
 
                 _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revocationRegistryDefinitionHandle);
                 _ = NativeMethods.anoncreds_revocation_registry_definition_private_from_json(ByteBuffer.Create(revocationRegistryDefinitionPrivateJson), ref revocationRegistryDefinitionPrivateJsonHandle);
-                _ = NativeMethods.anoncreds_revocation_registry_from_json(ByteBuffer.Create(revocationRegistryJson), ref revocationRegistryJsonHandle);
 
                 string x = JObject.Parse(revocationRegistryDefinitionJson)["value"].ToString();
                 string tailsLocation = JObject.Parse(x)["tailsLocation"].ToString();
@@ -209,10 +187,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 {
                     RevRegDefObjectHandle = revocationRegistryDefinitionHandle,
                     RevRegDefPvtObjectHandle = revocationRegistryDefinitionPrivateJsonHandle,
-                    RevRegObjectHandle = revocationRegistryJsonHandle,
                     TailsPath = tailsLocation,
-                    RegIdx = regIdx,
-                    RegUsed = regUsed
+                    RegIdx = regIdx
                 };
 
                 errorCode = NativeMethods.anoncreds_create_credential(
@@ -223,10 +199,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeNames),
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
+                FfiStr.Create(revocationRegistryId),
+                revStatusListObjectHandle,
                 FfiCredRevInfo.Create(credRevInfo),
-                ref credObjectHandle,
-                ref revRegObjectHandle,
-                ref revDeltaObjectHandle);
+                ref credObjectHandle);
             }
             else
             {
@@ -241,19 +217,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             string credJson = await ObjectApi.ToJsonAsync(credObjectHandle);
 
-            string revRegJson = null;
-            if (!revRegObjectHandle.Equals(new IntPtr()))
-            {
-                revRegJson = await ObjectApi.ToJsonAsync(revRegObjectHandle);
-            }
-
-            string revDeltaJson = null;
-            if (!revDeltaObjectHandle.Equals(new IntPtr()))
-            {
-                revDeltaJson = await ObjectApi.ToJsonAsync(revDeltaObjectHandle);
-            }
-
-            return await Task.FromResult((credJson, revRegJson, revDeltaJson));
+            return await Task.FromResult(credJson);
         }
 
         /// <summary>

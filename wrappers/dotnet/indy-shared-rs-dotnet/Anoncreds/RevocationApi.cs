@@ -1,6 +1,4 @@
-﻿using anoncreds_rs_dotnet.Anoncreds;
-using anoncreds_rs_dotnet.Models;
-using anoncreds_rs_dotnet;
+﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -11,44 +9,112 @@ namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class RevocationApi
     {
+        public static async Task<RevocationStatusList> CreateRevocationStatusListAsync(
+            string revRegDefId,
+            RevocationRegistryDefinition revRegDefObject,
+            long timestamp,
+            IssuerType issuanceType//byte issuanceByDefault
+            )
+        {
+            IntPtr revStatusListObjectHandle = new IntPtr();
+
+            int errorCode = NativeMethods.anoncreds_create_revocation_status_list(
+                FfiStr.Create(revRegDefId),
+                revRegDefObject.Handle,
+                timestamp,
+                issuanceType.Equals(IssuerType.ISSUANCE_BY_DEFAULT) ? Convert.ToByte(true) : Convert.ToByte(false),
+                ref revStatusListObjectHandle);
+
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+
+            RevocationStatusList revStatusListObject = await CreateRevocationStatusListObject(revStatusListObjectHandle);
+            return await Task.FromResult(revStatusListObject);
+        }
+
+        public static async Task<RevocationStatusList> UpdateRevocationStatusListAsync(
+            long timestamp,
+            List<long> issued, //i32
+            List<long> revoked,
+            RevocationRegistryDefinition revRegDefObject,
+            RevocationStatusList currentRevStatusListObject
+            )
+        {
+            IntPtr newRevStatusListObjectHandle = new IntPtr();
+
+            int errorCode = NativeMethods.anoncreds_update_revocation_status_list(
+                timestamp,
+                FfiLongList.Create(issued),
+                FfiLongList.Create(revoked),
+                revRegDefObject.Handle,
+                currentRevStatusListObject.Handle,
+                ref newRevStatusListObjectHandle);
+
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+
+            RevocationStatusList newRevStatusListObject = await CreateRevocationStatusListObject(newRevStatusListObjectHandle);
+            return await Task.FromResult(newRevStatusListObject);
+        }
+        public static async Task<RevocationStatusList> UpdateRevocationStatusListTimestampOnlyAsync(
+            long timestamp,
+            RevocationStatusList currentRevStatusListObject)
+        {
+            IntPtr newRevStatusListObjectHandle = new IntPtr();
+
+            int errorCode = NativeMethods.anoncreds_update_revocation_status_list_timestamp_only(
+                timestamp,
+                currentRevStatusListObject.Handle,
+                ref newRevStatusListObjectHandle);
+
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+
+            RevocationStatusList newRevStatusListObject = await CreateRevocationStatusListObject(newRevStatusListObjectHandle);
+            return await Task.FromResult(newRevStatusListObject);
+        }
+
         /// <summary>
-        /// Creates a new <see cref="RevocationRegistry"/> object and its corresponding informative objects.
+        /// Creates a new <see cref="RevocationRegistryDefinition"/> object and its corresponding informative objects.
         /// </summary>
         /// <param name="originDid">Did of issuer.</param>
         /// <param name="credDefObject">Credential definition.</param>
         /// <param name="tag">Tag.</param>
         /// <param name="revRegType">Type of revocation registry.</param>
-        /// <param name="issuanceType">Type of issuance.</param>
         /// <param name="maxCredNumber">Maximum number of credential entries.</param>
         /// <param name="tailsDirPath">Path to tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> objects.</returns>
-        public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationRegistry, RevocationRegistryDelta)> CreateRevocationRegistryAsync(
+        /// <returns>New <see cref="RevocationRegistryDefinition"/> and <see cref="RevocationRegistryDefinitionPrivate"/> objects.</returns>
+        public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate)> CreateRevocationRegistryDefinitionAsync(
             string originDid,
             CredentialDefinition credDefObject,
             string tag,
             RegistryType revRegType,
-            IssuerType issuanceType,
             long maxCredNumber,
             string tailsDirPath)
         {
             IntPtr regDefObjectHandle = new IntPtr();
             IntPtr regDefPvtObjectHandle = new IntPtr();
-            IntPtr regEntryObjectHandle = new IntPtr();
-            IntPtr regInitDeltaObjectHandle = new IntPtr();
 
-            int errorCode = NativeMethods.anoncreds_create_revocation_registry(
-                FfiStr.Create(originDid),
+            int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObject.Handle,
+                FfiStr.Create(credDefObject.CredentialDefinitionId),
+                FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),
-                FfiStr.Create(issuanceType.ToString()),
                 maxCredNumber,
                 FfiStr.Create(tailsDirPath),
                 ref regDefObjectHandle,
-                ref regDefPvtObjectHandle,
-                ref regEntryObjectHandle,
-                ref regInitDeltaObjectHandle);
+                ref regDefPvtObjectHandle);
 
             if (errorCode != 0)
             {
@@ -57,52 +123,47 @@ namespace anoncreds_rs_dotnet.Anoncreds
             }
             RevocationRegistryDefinition regDefObject = await CreateRevocationRegistryDefinitionObject(regDefObjectHandle);
             RevocationRegistryDefinitionPrivate regDefPvtObject = await CreateRevocationRegistryDefinitionPrivateObject(regDefPvtObjectHandle);
-            RevocationRegistry revRegObject = await CreateRevocationRegistryObject(regEntryObjectHandle);
-            RevocationRegistryDelta regInitDeltaObject = await CreateRevocationRegistryDeltaObject(regInitDeltaObjectHandle);
 
-            return await Task.FromResult((regDefObject, regDefPvtObject, revRegObject, regInitDeltaObject));
+            return await Task.FromResult((regDefObject, regDefPvtObject));
         }
 
         /// <summary>
-        /// Creates a new <see cref="RevocationRegistry"/> object and its corresponding informative objects as JSON strings.
+        /// Creates a new <see cref="RevocationRegistryDefinition"/> object and its corresponding informative objects as JSON strings.
         /// </summary>
         /// <param name="originDid">Did of issuer.</param>
         /// <param name="credDefJson">Credential definition as JSON string.</param>
         /// <param name="tag">Tag.</param>
         /// <param name="revRegType">Type of revocation registry.</param>
-        /// <param name="issuanceType">Type of issuance.</param>
         /// <param name="maxCredNumber">Maximum number of credential entries.</param>
         /// <param name="tailsDirPath">Path to tails file.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/>, its <see cref="RevocationRegistryDefinition"/>, <see cref="RevocationRegistryDefinitionPrivate"/> and <see cref="RevocationRegistryDelta"/> as JSON strings.</returns>
-        public static async Task<(string, string, string, string)> CreateRevocationRegistryJsonAsync(
+        /// <returns>New <see cref="RevocationRegistryDefinition"/> and <see cref="RevocationRegistryDefinitionPrivate"/> as JSON strings.</returns>
+        public static async Task<(string, string)> CreateRevocationRegistryDefinitionJsonAsync(
             string originDid,
             string credDefJson,
             string tag,
             RegistryType revRegType,
-            IssuerType issuanceType,
             long maxCredNumber,
             string tailsDirPath)
         {
             IntPtr regDefObjectHandle = new IntPtr();
             IntPtr regDefPvtObjectHandle = new IntPtr();
-            IntPtr regEntryObjectHandle = new IntPtr();
-            IntPtr regInitDeltaObjectHandle = new IntPtr();
             IntPtr credDefObjectHandle = new IntPtr();
-            _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefJson), ref credDefObjectHandle);
 
-            int errorCode = NativeMethods.anoncreds_create_revocation_registry(
-                FfiStr.Create(originDid),
+            _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefJson), ref credDefObjectHandle);
+            CredentialDefinition credDefObject = 
+                JsonConvert.DeserializeObject<CredentialDefinition>(credDefJson, Settings.JsonSettings);
+
+            int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObjectHandle,
+                FfiStr.Create(credDefObject.CredentialDefinitionId),
+                FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),
-                FfiStr.Create(issuanceType.ToString()),
                 maxCredNumber,
                 FfiStr.Create(tailsDirPath),
                 ref regDefObjectHandle,
-                ref regDefPvtObjectHandle,
-                ref regEntryObjectHandle,
-                ref regInitDeltaObjectHandle);
+                ref regDefPvtObjectHandle);
 
             if (errorCode != 0)
             {
@@ -111,10 +172,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             }
             string regDefJson = await ObjectApi.ToJsonAsync(regDefObjectHandle);
             string regDefPvtJson = await ObjectApi.ToJsonAsync(regDefPvtObjectHandle);
-            string revRegJson = await ObjectApi.ToJsonAsync(regEntryObjectHandle);
-            string regInitDeltaJson = await ObjectApi.ToJsonAsync(regInitDeltaObjectHandle);
 
-            return await Task.FromResult((regDefJson, regDefPvtJson, revRegJson, regInitDeltaJson));
+            return await Task.FromResult((regDefJson, regDefPvtJson));
         }
 
         /// <summary>
@@ -160,260 +219,33 @@ namespace anoncreds_rs_dotnet.Anoncreds
         }
 
         /// <summary>
-        /// Updates a provided <see cref="RevocationRegistry"/> object.
-        /// </summary>
-        /// <param name="revRegDefObject">Revocation registry definition.</param>
-        /// <param name="revRegObject">Revocation registry.</param>
-        /// <param name="issued">Issued entries.</param>
-        /// <param name="revoked">Revoked entries.</param>
-        /// <param name="tailsPath">Path of tails file.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/>.</returns>
-        public static async Task<(RevocationRegistry, RevocationRegistryDelta)> UpdateRevocationRegistryAsync(
-            RevocationRegistryDefinition revRegDefObject,
-            RevocationRegistry revRegObject,
-            List<long> issued,
-            List<long> revoked,
-            string tailsPath)
-        {
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revRegDeltaObjectHandle = new IntPtr();
-
-            int errorCode = NativeMethods.anoncreds_update_revocation_registry(
-                revRegDefObject.Handle,
-                revRegObject.Handle,
-                FfiLongList.Create(issued),
-                FfiLongList.Create(revoked),
-                FfiStr.Create(tailsPath),
-                ref revRegObjectHandle,
-                ref revRegDeltaObjectHandle);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            RevocationRegistry revRegObjectUpdated = await CreateRevocationRegistryObject(revRegObjectHandle);
-            RevocationRegistryDelta revRegDeltaObject = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandle);
-
-            return await Task.FromResult((revRegObjectUpdated, revRegDeltaObject));
-        }
-
-        /// <summary>
-        /// Updates a provided <see cref="RevocationRegistry"/> as JSON string.
-        /// </summary>
-        /// <param name="revRegDefJson">Revocation registry definition as JSON string.</param>
-        /// <param name="revRegJson">Revocation registry as JSON string.</param>
-        /// <param name="issued">Issued entries.</param>
-        /// <param name="revoked">Revoked entries.</param>
-        /// <param name="tailsPath">Path of tails file.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>An updated <see cref="RevocationRegistry"/> and its <see cref="RevocationRegistryDelta"/> as JSON strings.</returns>
-        public static async Task<(string, string)> UpdateRevocationRegistryAsync(
-            string revRegDefJson,
-            string revRegJson,
-            List<long> issued,
-            List<long> revoked,
-            string tailsPath)
-        {
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revRegDeltaObjectHandle = new IntPtr();
-            IntPtr revocationRegistryDefinitionHandle = new IntPtr();
-            IntPtr revocationRegistryHandle = new IntPtr();
-
-            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revocationRegistryDefinitionHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_from_json(ByteBuffer.Create(revRegJson), ref revocationRegistryHandle);
-
-            int errorCode = NativeMethods.anoncreds_update_revocation_registry(
-                revocationRegistryDefinitionHandle,
-                revocationRegistryHandle,
-                FfiLongList.Create(issued),
-                FfiLongList.Create(revoked),
-                FfiStr.Create(tailsPath),
-                ref revRegObjectHandle,
-                ref revRegDeltaObjectHandle);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            string revRegUpdatedJson = await ObjectApi.ToJsonAsync(revRegObjectHandle);
-            string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandle);
-
-            return await Task.FromResult((revRegUpdatedJson, revRegDeltaJson));
-        }
-
-        /// <summary>
-        /// Revokes a <see cref="Credential"/> on a provided <see cref="RevocationRegistry"/>.
-        /// </summary>
-        /// <param name="revRegDefObject">Revocation registry definition.</param>
-        /// <param name="revRegObject">Corresponding revocation registry.</param>
-        /// <param name="credRevIdx">Index of the credential in the revocation registry.</param>
-        /// <param name="tailsPath">Path to tails file.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> object with the refered <see cref="Credential"/> revoked.</returns>
-        public static async Task<(RevocationRegistry, RevocationRegistryDelta)> RevokeCredentialAsync(
-            RevocationRegistryDefinition revRegDefObject,
-            RevocationRegistry revRegObject,
-            long credRevIdx,
-            string tailsPath)
-        {
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revRegDeltaObjectHandle = new IntPtr();
-
-            int errorCode = NativeMethods.anoncreds_revoke_credential(
-                revRegDefObject.Handle,
-                revRegObject.Handle,
-                credRevIdx,
-                FfiStr.Create(tailsPath),
-                ref revRegObjectHandle,
-                ref revRegDeltaObjectHandle);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            RevocationRegistry revRegObjectUpdated = await CreateRevocationRegistryObject(revRegObjectHandle);
-            RevocationRegistryDelta revRegDeltaObject = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandle);
-
-            return await Task.FromResult((revRegObjectUpdated, revRegDeltaObject));
-        }
-
-        /// <summary>
-        /// Revokes a <see cref="Credential"/> on a provided <see cref="RevocationRegistry"/> JSON string.
-        /// </summary>
-        /// <param name="revRegDefJson">Revocation registry definition as JSON string.</param>
-        /// <param name="revRegJson">Corresponding revocation registry as JSON string.</param>
-        /// <param name="credRevIdx">Index of the credential in the revocation registry.</param>
-        /// <param name="tailsPath">Path to tails file.</param>
-        /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
-        /// <returns>A new <see cref="RevocationRegistry"/> and <see cref="RevocationRegistryDelta"/> as JSON strings with the refered <see cref="Credential"/> revoked.</returns>
-        public static async Task<(string, string)> RevokeCredentialAsync(
-            string revRegDefJson,
-            string revRegJson,
-            long credRevIdx,
-            string tailsPath)
-        {
-            IntPtr revRegObjectHandle = new IntPtr();
-            IntPtr revRegDeltaObjectHandle = new IntPtr();
-            IntPtr revocationRegistryDefinitionHandle = new IntPtr();
-            IntPtr revocationRegistryHandle = new IntPtr();
-
-            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revocationRegistryDefinitionHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_from_json(ByteBuffer.Create(revRegJson), ref revocationRegistryHandle);
-
-            int errorCode = NativeMethods.anoncreds_revoke_credential(
-                revocationRegistryDefinitionHandle,
-                revocationRegistryHandle,
-                credRevIdx,
-                FfiStr.Create(tailsPath),
-                ref revRegObjectHandle,
-                ref revRegDeltaObjectHandle);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-            string revRegUpdatedJson = await ObjectApi.ToJsonAsync(revRegObjectHandle);
-            string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandle);
-
-            return await Task.FromResult((revRegUpdatedJson, revRegDeltaJson));
-        }
-
-        /// <summary>
-        /// Merges two <see cref="RevocationRegistryDelta"/> objects into one.
-        /// </summary>
-        /// <param name="revRegDeltaObject1">First delta.</param>
-        /// <param name="revRegDeltaObject2">Second delta.</param>
-        /// <exception cref="AnoncredsRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
-        /// <returns>The merged <see cref="RevocationRegistryDelta"/>.</returns>
-        public static async Task<RevocationRegistryDelta> MergeRevocationRegistryDeltasAsync(
-            RevocationRegistryDelta revRegDeltaObject1,
-            RevocationRegistryDelta revRegDeltaObject2)
-        {
-            IntPtr revRegDeltaObjectHandleNew = new IntPtr();
-
-            int errorCode = NativeMethods.anoncreds_merge_revocation_registry_deltas(
-                revRegDeltaObject1.Handle,
-                revRegDeltaObject2.Handle,
-                ref revRegDeltaObjectHandleNew);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-
-            RevocationRegistryDelta revRegDeltaObjectNew = await CreateRevocationRegistryDeltaObject(revRegDeltaObjectHandleNew);
-
-            return await Task.FromResult(revRegDeltaObjectNew);
-        }
-
-        /// <summary>
-        /// Merges two <see cref="RevocationRegistryDelta"/> JSON strings into one.
-        /// </summary>
-        /// <param name="revRegDeltaJson1">First delta as JSON string.</param>
-        /// <param name="revRegDeltaJson2">Second delta as JSON string.</param>
-        /// <exception cref="AnoncredsRsException">Throws if <paramref name="revRegDeltaObject1"/> or <paramref name="revRegDeltaObject2"/> are invalid.</exception>
-        /// <returns>The merged <see cref="RevocationRegistryDelta"/> as JSON string.</returns>
-        public static async Task<string> MergeRevocationRegistryDeltasAsync(
-            string revRegDeltaJson1,
-            string revRegDeltaJson2)
-        {
-            IntPtr revRegDeltaObjectHandleNew = new IntPtr();
-            IntPtr revRegDeltaInputHandle1 = new IntPtr();
-            IntPtr revRegDeltaInputHandle2 = new IntPtr();
-
-            _ = NativeMethods.anoncreds_revocation_registry_delta_from_json(ByteBuffer.Create(revRegDeltaJson1), ref revRegDeltaInputHandle1);
-            _ = NativeMethods.anoncreds_revocation_registry_delta_from_json(ByteBuffer.Create(revRegDeltaJson2), ref revRegDeltaInputHandle2);
-
-            int errorCode = NativeMethods.anoncreds_merge_revocation_registry_deltas(
-                revRegDeltaInputHandle1,
-                revRegDeltaInputHandle2,
-                ref revRegDeltaObjectHandleNew);
-
-            if (errorCode != 0)
-            {
-                string error = await ErrorApi.GetCurrentErrorAsync();
-                throw AnoncredsRsException.FromSdkError(error);
-            }
-
-            string revRegDeltaJson = await ObjectApi.ToJsonAsync(revRegDeltaObjectHandleNew);
-
-            return await Task.FromResult(revRegDeltaJson);
-        }
-
-        /// <summary>
         /// Updates the provided <see cref="CredentialRevocationState"/> or creates a new one.
         /// </summary>
         /// <param name="revRegDef">The revocation registry definition.</param>
-        /// <param name="revRegDelta">The revocation registry delta.</param>
+        /// <param name="newRevStatusList">The new revocation status list.</param>
         /// <param name="revRegIndex">The revocation registry index.</param>
-        /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
-        /// <param name="revState">Revocation state to update.</param>
+        /// <param name="revState">Revocation state to update. Default null.</param>
+        /// <param name="oldRevStatusList">The old revocation status list. Default null.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A <see cref="CredentialRevocationState"/> object.</returns>
         public static async Task<CredentialRevocationState> CreateOrUpdateRevocationStateAsync(
             RevocationRegistryDefinition revRegDef,
-            RevocationRegistryDelta revRegDelta,
+            RevocationStatusList newRevStatusList,
             long revRegIndex,
-            long timestamp,
             string tailsPath,
-            CredentialRevocationState revState = null)
+            CredentialRevocationState revState = null,
+            RevocationStatusList oldRevStatusList = null)
         {
             IntPtr credRevStateObjectHandle = new IntPtr();
 
             int errorCode = NativeMethods.anoncreds_create_or_update_revocation_state(
                 revRegDef.Handle,
-                revRegDelta.Handle,
+                newRevStatusList.Handle,
                 revRegIndex,
-                timestamp,
                 FfiStr.Create(tailsPath),
                 revState == null ? new IntPtr() : revState.Handle,
+                oldRevStatusList == null ? new IntPtr() : oldRevStatusList.Handle,
                 ref credRevStateObjectHandle);
 
             if (errorCode != 0)
@@ -431,38 +263,41 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// Updates the provided <see cref="CredentialRevocationState"/> JSON string or creates a new one.
         /// </summary>
         /// <param name="revRegDefJson">The revocation registry definition as JSON string.</param>
-        /// <param name="revRegDeltaJson">The revocation registry delta as JSON string.</param>
+        /// <param name="newRevStatusListJson">The new revocation status list as JSON string.</param>
         /// <param name="revRegIndex">The revocation registry index.</param>
-        /// <param name="timestamp">Unix timestamp.</param>
         /// <param name="tailsPath">Path to the tails file.</param>
-        /// <param name="revStateJson">Revocation state to update as JSON string.</param>
+        /// <param name="revStateJson">Revocation state to update as JSON string. Default null.</param>
+        /// <param name="oldRevStatusListJson">The old revocation status list as JSON string. Default null.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>A <see cref="CredentialRevocationState"/>  as JSON string.</returns>
         public static async Task<string> CreateOrUpdateRevocationStateAsync(
             string revRegDefJson,
-            string revRegDeltaJson,
+            string newRevStatusListJson,
             long revRegIndex,
-            long timestamp,
             string tailsPath,
-            string revStateJson = null)
+            string revStateJson = null,
+            string oldRevStatusListJson = null)
         {
             IntPtr credRevStateObjectHandle = new IntPtr();
             IntPtr revRegDefHandle = new IntPtr();
-            IntPtr revRegDeltaHandle = new IntPtr();
+            IntPtr newRevStatusListHandle = new IntPtr();
             IntPtr revStateHandle = new IntPtr();
+            IntPtr oldRevStatusListHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_delta_from_json(ByteBuffer.Create(revRegDeltaJson), ref revRegDeltaHandle);
+            _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(newRevStatusListJson), ref newRevStatusListHandle);
             if (revStateJson != null)
                 _ = NativeMethods.anoncreds_revocation_state_from_json(ByteBuffer.Create(revStateJson), ref revStateHandle);
+            if (oldRevStatusListJson != null)
+                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(oldRevStatusListJson), ref oldRevStatusListHandle);
 
             int errorCode = NativeMethods.anoncreds_create_or_update_revocation_state(
                 revRegDefHandle,
-                revRegDeltaHandle,
+                newRevStatusListHandle,
                 revRegIndex,
-                timestamp,
                 FfiStr.Create(tailsPath),
                 revStateHandle,
+                oldRevStatusListHandle,
                 ref credRevStateObjectHandle);
 
             if (errorCode != 0)
@@ -551,6 +386,20 @@ namespace anoncreds_rs_dotnet.Anoncreds
             }
 
             return await Task.FromResult(result);
+        }
+
+        /// <summary>
+        /// Create a <see cref="RevocationStatusList"/> to a handle.
+        /// </summary>
+        /// <param name="objectHandle">Handle of a revocation registry definition.</param>
+        /// <returns>A new <see cref="RevocationStatusList"/>.</returns>
+        private static async Task<RevocationStatusList> CreateRevocationStatusListObject(IntPtr objectHandle)
+        {
+            string revStatusListJson = await ObjectApi.ToJsonAsync(objectHandle);
+            RevocationStatusList revStatusListObject = JsonConvert.DeserializeObject<RevocationStatusList>(revStatusListJson, Settings.JsonSettings);
+            revStatusListObject.JsonString = revStatusListJson;
+            revStatusListObject.Handle = objectHandle;
+            return await Task.FromResult(revStatusListObject);
         }
 
         /// <summary>

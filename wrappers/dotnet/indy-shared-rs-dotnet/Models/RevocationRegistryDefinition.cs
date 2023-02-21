@@ -9,11 +9,8 @@ namespace anoncreds_rs_dotnet.Models
 
         public string JsonString { get; set; } 
 
-        [JsonProperty("ver")]
-        public string Ver { get; set; }
-
-        [JsonProperty("id")]
-        public string RevocationRegistryId { get; set; }
+        [JsonProperty("IssuerId")]
+        public string IssuerId { get; set; }
 
         [JsonProperty("credDefId")]
         public string CredentialDefinitionId { get; set; }

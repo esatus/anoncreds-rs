@@ -107,9 +107,7 @@ namespace anoncreds_rs_dotnet.Models
         {
             public IntPtr regDefObjectHandle;
             public IntPtr regDefPvtObjectHandle;
-            public IntPtr registryObjectHandle;
-            public IntPtr regIdx; //long
-            public FfiLongList regUsed;
+            public IntPtr regIdx;
             public FfiStr tailsPath;
 
             internal static FfiCredRevInfo Create(Models.CredentialRevocationConfig entry)
@@ -118,9 +116,7 @@ namespace anoncreds_rs_dotnet.Models
 
                 result.regDefObjectHandle = entry.RevRegDefObjectHandle;
                 result.regDefPvtObjectHandle = entry.RevRegDefPvtObjectHandle;
-                result.registryObjectHandle = entry.RevRegObjectHandle;
                 result.regIdx = (IntPtr)entry.RegIdx;
-                result.regUsed = FfiLongList.Create(entry.RegUsed);
                 result.tailsPath = FfiStr.Create(entry.TailsPath);
 
                 return result;

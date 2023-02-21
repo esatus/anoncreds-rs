@@ -36,8 +36,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr presentationObjectHandle = new IntPtr();
             List<IntPtr> schemaHandles = (from schema in schemas
                                         select schema.Handle).ToList();
+            List<string> schemaIds = (from schema in schemas
+                                          select schema.IssuerId).ToList();
             List<IntPtr> credDefHandles = (from credDef in credDefs
                                          select credDef.Handle).ToList();
+            List<string> credDefIds = (from credDef in credDefs
+                                           select credDef.CredentialDefinitionId).ToList();
 
             int errorCode = NativeMethods.anoncreds_create_presentation(
                 presentationRequest.Handle,
@@ -47,7 +51,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(selfAttestValues),
                 masterSecret.Handle,
                 FfiUIntList.Create(schemaHandles),
+                FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
+                FfiStrList.Create(credDefIds),
                 ref presentationObjectHandle);
 
             if (errorCode != 0)
@@ -90,6 +96,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr masterSecretHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
+            List<string> schemaIds = new List<string>();
+            List<string> credDefIds = new List<string>();
 
             foreach (string credentialEntryJson in credentialEntryJsons)
             {
@@ -106,12 +114,18 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 IntPtr newSchemaHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaJson), ref newSchemaHandle);
                 schemaHandles.Add(newSchemaHandle);
+
+                Schema newSchema = JsonConvert.DeserializeObject<Schema>(schemaJson,Settings.JsonSettings);
+                schemaIds.Add(newSchema.IssuerId);
             }
             foreach (string credDefJson in credDefJsons)
             {
                 IntPtr newCredDefHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefJson), ref newCredDefHandle);
                 credDefHandles.Add(newCredDefHandle);
+
+                CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credDefJson, Settings.JsonSettings);
+                credDefIds.Add(newCredDef.CredentialDefinitionId);
             }
             
             int errorCode = NativeMethods.anoncreds_create_presentation(
@@ -122,7 +136,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(selfAttestValues),
                 masterSecretHandle,
                 FfiUIntList.Create(schemaHandles),
+                FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
+                FfiStrList.Create(credDefIds),
                 ref presentationObjectHandle);
 
             if (errorCode != 0)
@@ -177,17 +193,28 @@ namespace anoncreds_rs_dotnet.Anoncreds
             byte verify = 0;
             List<IntPtr> schemaHandles =
                 (from schema in schemas select schema.Handle).ToList();
+            List<string> schemaIds =
+                (from schema in schemas select schema.IssuerId).ToList();
+
             List<IntPtr> credDefHandles =
                 (from credDef in credentialDefinitions select credDef.Handle).ToList();
+            List<string> credDefIds =
+                (from credDef in credentialDefinitions select credDef.CredentialDefinitionId).ToList();
+
             List<IntPtr> revRegDefHandles =
                 (from revRegDef in revocationRegistryDefinitions select revRegDef.Handle).ToList();
+            List<string> revRegDefIds =
+               (from revRegDef in revocationRegistryDefinitions select revRegDef.IssuerId).ToList();
 
             int errorCode = NativeMethods.anoncreds_verify_presentation(
                 presentation.Handle,
                 presentationRequest.Handle,
                 FfiUIntList.Create(schemaHandles),
+                FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
+                FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
+                FfiStrList.Create(revRegDefIds),
                 FfiRevocationEntryList.Create(revocationRegistryEntries),
                 ref verify);
 
@@ -224,8 +251,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr presentationHandle = new IntPtr();
             IntPtr presentationRequestHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
+            List<string> schemaIds = new List<string>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
+            List<string> credDefIds = new List<string>();
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
+            List<string> revRegDefIds = new List<string>();
             List<RevocationRegistryEntry> revocationRegistryEntries = new List<RevocationRegistryEntry>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);
@@ -235,18 +265,27 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 IntPtr newSchemaHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaJson), ref newSchemaHandle);
                 schemaHandles.Add(newSchemaHandle);
+
+                Schema newSchema = JsonConvert.DeserializeObject<Schema>(schemaJson, Settings.JsonSettings);
+                schemaIds.Add(newSchema.IssuerId);
             }
             foreach (string credentialDefinitionJson in credentialDefinitionJsons)
             {
                 IntPtr newCredentialDefinitionHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref newCredentialDefinitionHandle);
                 credDefHandles.Add(newCredentialDefinitionHandle);
+
+                CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credentialDefinitionJson, Settings.JsonSettings);
+                credDefIds.Add(newCredDef.CredentialDefinitionId);
             }
             foreach (string revocationRegistryDefinitionJson in revocationRegistryDefinitionJsons)
             {
                 IntPtr newRevocationRegistryDefinitionHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref newRevocationRegistryDefinitionHandle);
                 revRegDefHandles.Add(newRevocationRegistryDefinitionHandle);
+
+                RevocationRegistryDefinition newRevRegDef = JsonConvert.DeserializeObject<RevocationRegistryDefinition>(revocationRegistryDefinitionJson, Settings.JsonSettings);
+                revRegDefIds.Add(newRevRegDef.IssuerId);
             }
             foreach (string revocationRegistryEntryJson in revocationRegistryEntryJsons)
             {
@@ -257,8 +296,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 presentationHandle,
                 presentationRequestHandle,
                 FfiUIntList.Create(schemaHandles),
+                FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
+                FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
+                FfiStrList.Create(revRegDefIds),
                 FfiRevocationEntryList.Create(revocationRegistryEntries),
                 ref verify);
 

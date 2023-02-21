@@ -70,10 +70,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiStrList attrNames,
             FfiStrList attrRawValues,
             FfiStrList attrEncValues,
+            FfiStr revRegId,
+            IntPtr revStatusListObjectHandle,
             FfiCredRevInfo revocation,
-            ref IntPtr credObjectHandle,
-            ref IntPtr revRegObjectHandle,
-            ref IntPtr revDeltaObjectHandle);
+            ref IntPtr credObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_create_credential(
@@ -84,16 +84,22 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiStrList attrNames,
             FfiStrList attrRawValues,
             FfiStrList attrEncValues,
+            FfiStr revRegId,
+            IntPtr revStatusListObjectHandle,
             IntPtr revocation,
-            ref IntPtr credObjectHandle,
-            ref IntPtr revRegObjectHandle,
-            ref IntPtr revDeltaObjectHandle);
+            ref IntPtr credObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_encode_credential_attributes(FfiStrList attrRawValues, ref string result);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_process_credential(IntPtr credObjectHandle, IntPtr credReqObjectHandle, IntPtr masterSecretObjectHandle, IntPtr credDefObjectHandle, IntPtr revRegDefObjectHandle, ref IntPtr resultObjectHandle);
+        internal static extern int anoncreds_process_credential(
+            IntPtr credObjectHandle, 
+            IntPtr credReqObjectHandle, 
+            IntPtr masterSecretObjectHandle, 
+            IntPtr credDefObjectHandle, 
+            IntPtr revRegDefObjectHandle, 
+            ref IntPtr newCredObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_credential_from_json(ByteBuffer credJson, ref IntPtr credObjectHandle);
@@ -120,65 +126,71 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiStrList selfAttestValues,
             IntPtr masterSecret,
             FfiUIntList schemas,
+            FfiStrList schemaIds,
             FfiUIntList credDefs,
+            FfiStrList credDefIds,
             ref IntPtr presentationObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_presentation_from_json(ByteBuffer presentationJson, ref IntPtr presentationObjectHandle);
+        internal static extern int anoncreds_presentation_from_json(
+            ByteBuffer presentationJson, 
+            ref IntPtr presentationObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_verify_presentation(
             IntPtr presObjectHandle,
             IntPtr presReqObjectHandle,
             FfiUIntList schemaObjectHandles,
+            FfiStrList schemaIds,
             FfiUIntList credDefObjectHandles,
+            FfiStrList credDefIds,
             FfiUIntList revRegDefObjectHandles,
+            FfiStrList revRegDefIds,
             FfiRevocationEntryList revRegEntries,
             ref byte verifyResult);
         #endregion
 
         #region Revocation
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_revocation_registry(
-            FfiStr originDid,
-            IntPtr credDefObjectHandle,
-            FfiStr tag,
-            FfiStr revRegType,
-            FfiStr issuanceType,
-            long maxCredNumber,
-            FfiStr tailsDirPath,
-            ref IntPtr regDefObjectHandle,
-            ref IntPtr regDefPvtObjectHandle,
-            ref IntPtr regEntryObjectHandle,
-            ref IntPtr regInitDeltaObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revocation_registry_from_json(ByteBuffer revRegJson, ref IntPtr revRegObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revocation_registry_definition_from_json(ByteBuffer revRegJson, ref IntPtr revRegObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revocation_registry_definition_private_from_json(ByteBuffer revRegDefPvtJson, ref IntPtr revRegDefPvtObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_update_revocation_registry(
+        internal static extern int anoncreds_create_revocation_status_list(
+            FfiStr revRegDefId,
             IntPtr revRegDefObjectHandle,
-            IntPtr revRegObjectHandle,
+            long timestamp,
+            byte issuanceByDefault,
+            ref IntPtr revStatusListObjectHandle);
+        
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_update_revocation_status_list(
+            long timestamp,
             FfiLongList issued,
             FfiLongList revoked,
-            FfiStr tailsPath,
-            ref IntPtr revRegUpdatedObjectHandle,
-            ref IntPtr revRegDeltaObjectHandle);
+            IntPtr revRegDefObjectHandle,
+            IntPtr currentRevStatusListObjectHandle,
+            ref IntPtr newRevStatusListObjectHandle);
+        
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+         internal static extern int anoncreds_update_revocation_status_list_timestamp_only(
+            long timestamp,
+            IntPtr currentRevStatusListObjectHandle,
+            ref IntPtr newRevStatusListObjectHandle);
+
+        
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_create_revocation_registry_def(
+            IntPtr credDefObjectHandle,
+            FfiStr credDefId,
+            FfiStr originDid,
+            FfiStr tag,
+            FfiStr revRegType,
+            long maxCredNumber,
+            FfiStr tailsDirPath,
+            ref IntPtr revRegDefObjectHandle,
+            ref IntPtr revRegDefPvtObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revoke_credential(
-            IntPtr revRegDefObjectHandle,
-            IntPtr revRegObjectHandle,
-            long credRevIdx,
-            FfiStr tailsPath,
-            ref IntPtr revRegUpdatedObjectHandle,
-            ref IntPtr revRegDeltaObjectHandle);
+        internal static extern int anoncreds_revocation_registry_definition_from_json(
+            ByteBuffer revRegJson, 
+            ref IntPtr revRegObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_revocation_registry_definition_get_attribute(
@@ -187,26 +199,35 @@ namespace anoncreds_rs_dotnet.Anoncreds
             ref string result);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_merge_revocation_registry_deltas(
-            IntPtr revRegDelta1ObjectHandle,
-            IntPtr revRegDelta2ObjectHandle,
-            ref IntPtr revRegDeltaNewObjectHandle);
+        internal static extern int anoncreds_revocation_registry_definition_private_from_json(
+            ByteBuffer revRegDefPvtJson, 
+            ref IntPtr revRegDefPvtObjectHandle);
+
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_revocation_registry_from_json(
+            ByteBuffer revRegJson, 
+            ref IntPtr revRegObjectHandle);
+
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_revocation_registry_delta_from_json(ByteBuffer credentialRevocationRegistryDeltaJson, ref IntPtr credentialRevocationRegistryDeltaObjectHandle);
+
+        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern int anoncreds_revocation_list_from_json(
+            ByteBuffer revocationStatusListJson, 
+            ref IntPtr revocationStatusListObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_create_or_update_revocation_state(
             IntPtr revRegDefObjectHandle,
-            IntPtr revRegDeltaObjectHandle,
+            IntPtr revStatusListObjectHandle,
             long revRegIndex,
-            long timestamp,
             FfiStr tailsPath,
-            IntPtr revStateObjectHandle,
-            ref IntPtr revStateNewObjectHandle);
+            IntPtr currentRevStateObjectHandle,
+            IntPtr oldRevStatusListObjectHandle,
+            ref IntPtr newRevStateObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_revocation_state_from_json(ByteBuffer credentialRevocationStateJson, ref IntPtr credentialRevocationStateObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revocation_registry_delta_from_json(ByteBuffer credentialRevocationRegistryDeltaJson, ref IntPtr credentialRevocationRegistryDeltaObjectHandle);
         #endregion
 
         #region Schema
@@ -215,7 +236,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_schema_from_json(ByteBuffer schemaJson, ref IntPtr schemaObjectHandle);
-
         #endregion
 
         #region ObjectHandle
