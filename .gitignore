@@ -1,6 +1,8 @@
 .vscode
 target
+out
 Cargo.lock
 /.vs
 .DS_Store
 .tmp
+*.tgz
