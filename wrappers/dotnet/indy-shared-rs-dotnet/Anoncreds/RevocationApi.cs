@@ -35,6 +35,35 @@ namespace anoncreds_rs_dotnet.Anoncreds
             return await Task.FromResult(revStatusListObject);
         }
 
+        public static async Task<string> CreateRevocationStatusListJsonAsync(
+            string revRegDefId,
+            string revRegDefJson,
+            long timestamp,
+            IssuerType issuanceType//byte issuanceByDefault
+            )
+        {
+            IntPtr revStatusListObjectHandle = new IntPtr();
+            IntPtr revRegDefObjectHandle = new IntPtr();
+
+            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefObjectHandle);
+
+            int errorCode = NativeMethods.anoncreds_create_revocation_status_list(
+                FfiStr.Create(revRegDefId),
+                revRegDefObjectHandle,
+                timestamp,
+                issuanceType.Equals(IssuerType.ISSUANCE_BY_DEFAULT) ? Convert.ToByte(true) : Convert.ToByte(false),
+                ref revStatusListObjectHandle);
+
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+
+            string revStatusListJson = await ObjectApi.ToJsonAsync(revStatusListObjectHandle);
+            return await Task.FromResult(revStatusListJson);
+        }
+
         public static async Task<RevocationStatusList> UpdateRevocationStatusListAsync(
             long timestamp,
             List<long> issued, //i32

@@ -215,7 +215,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
                 FfiStrList.Create(revRegDefIds),
-                FfiRevocationEntryList.Create(revocationRegistryEntries),
+                FfiUIntList.Create(revocationRegistryEntries.Select(x => x.Entry).ToList()),
                 ref verify);
 
             if (errorCode != 0)
@@ -256,7 +256,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> credDefIds = new List<string>();
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
             List<string> revRegDefIds = new List<string>();
-            List<RevocationRegistryEntry> revocationRegistryEntries = new List<RevocationRegistryEntry>();
+            List<IntPtr> revocationRegistryHandles = new List<IntPtr>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);
             _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
@@ -289,7 +289,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             }
             foreach (string revocationRegistryEntryJson in revocationRegistryEntryJsons)
             {
-                revocationRegistryEntries.Add(JsonConvert.DeserializeObject<RevocationRegistryEntry>(revocationRegistryEntryJson));
+                revocationRegistryHandles.Add(JsonConvert.DeserializeObject<RevocationRegistryEntry>(revocationRegistryEntryJson).Entry);
             }
 
             int errorCode = NativeMethods.anoncreds_verify_presentation(
@@ -301,7 +301,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
                 FfiStrList.Create(revRegDefIds),
-                FfiRevocationEntryList.Create(revocationRegistryEntries),
+                FfiUIntList.Create(revocationRegistryHandles),
                 ref verify);
 
             if (errorCode != 0)

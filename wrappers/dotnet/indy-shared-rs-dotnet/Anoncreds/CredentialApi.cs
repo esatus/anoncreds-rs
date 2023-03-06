@@ -40,7 +40,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> attributeNames,
             List<string> attributeRawValues,
             List<string> attributeEncodedValues,
-            RevocationStatusList revStatusListObject,
+            RevocationStatusList revStatusListObject = null,
             string revocationRegistryId = null,
             RevocationRegistryDefinition revocationRegistryDefinition = null,
             RevocationRegistryDefinitionPrivate revocationRegistryDefinitionPrivate = null,
@@ -49,7 +49,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credObjectHandle = new IntPtr();
 
             int errorCode;
-            if (revocationRegistryDefinition == null
+            if (revStatusListObject == null 
+                && revocationRegistryDefinition == null
                 && revocationRegistryDefinitionPrivate == null
                 && regIdx == -1)
             {
@@ -62,11 +63,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
                 FfiStr.Create(revocationRegistryId),
-                revStatusListObject.Handle,
+                new IntPtr(),
                 new IntPtr(),
                 ref credObjectHandle);
             }
-            else if (revocationRegistryDefinition != null
+            else if (revStatusListObject != null
+                && revocationRegistryDefinition != null
                 && revocationRegistryDefinitionPrivate != null
                 && regIdx != -1)
             {
@@ -132,7 +134,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> attributeNames,
             List<string> attributeRawValues,
             List<string> attributeEncodedValues,
-            string revStatusListObjectJson,
+            string revStatusListObjectJson = null,
             string revocationRegistryId = null,
             string revocationRegistryDefinitionJson = null,
             string revocationRegistryDefinitionPrivateJson = null,
@@ -142,18 +144,17 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr credDefPvtObjectHandle = new IntPtr();
             IntPtr credOfferObjectHandle = new IntPtr();
             IntPtr credReqObjectHandle = new IntPtr();
-            IntPtr revStatusListObjectHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefObjectJson), ref credDefObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_private_from_json(ByteBuffer.Create(credDefPvtObjectJson), ref credDefPvtObjectHandle);
             _ = NativeMethods.anoncreds_credential_offer_from_json(ByteBuffer.Create(credOfferObjectJson), ref credOfferObjectHandle);
             _ = NativeMethods.anoncreds_credential_request_from_json(ByteBuffer.Create(credReqObjectJson), ref credReqObjectHandle);
-            _ = NativeMethods.anoncreds_credential_request_from_json(ByteBuffer.Create(revStatusListObjectJson), ref revStatusListObjectHandle);
 
             IntPtr credObjectHandle = new IntPtr();
 
             int errorCode;
-            if (revocationRegistryDefinitionJson == null
+            if (revStatusListObjectJson == null
+                && revocationRegistryDefinitionJson == null
                 && revocationRegistryDefinitionPrivateJson == null
                 && regIdx == -1)
             {
@@ -166,19 +167,22 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(attributeRawValues),
                 FfiStrList.Create(attributeEncodedValues),
                 FfiStr.Create(revocationRegistryId),
-                revStatusListObjectHandle,
+                new IntPtr(),
                 new IntPtr(),
                 ref credObjectHandle);
             }
-            else if (revocationRegistryDefinitionJson != null
+            else if (revStatusListObjectJson != null
+                && revocationRegistryDefinitionJson != null
                 && revocationRegistryDefinitionPrivateJson != null
                 && regIdx != -1)
             {
                 IntPtr revocationRegistryDefinitionHandle = new IntPtr();
-                IntPtr revocationRegistryDefinitionPrivateJsonHandle = new IntPtr();
+                IntPtr revocationRegistryDefinitionPrivateHandle = new IntPtr();
+                IntPtr revStatusListObjectHandle = new IntPtr();
 
                 _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revocationRegistryDefinitionHandle);
-                _ = NativeMethods.anoncreds_revocation_registry_definition_private_from_json(ByteBuffer.Create(revocationRegistryDefinitionPrivateJson), ref revocationRegistryDefinitionPrivateJsonHandle);
+                _ = NativeMethods.anoncreds_revocation_registry_definition_private_from_json(ByteBuffer.Create(revocationRegistryDefinitionPrivateJson), ref revocationRegistryDefinitionPrivateHandle);
+                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(revStatusListObjectJson), ref revStatusListObjectHandle);
 
                 string x = JObject.Parse(revocationRegistryDefinitionJson)["value"].ToString();
                 string tailsLocation = JObject.Parse(x)["tailsLocation"].ToString();
@@ -186,7 +190,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 CredentialRevocationConfig credRevInfo = new CredentialRevocationConfig()
                 {
                     RevRegDefObjectHandle = revocationRegistryDefinitionHandle,
-                    RevRegDefPvtObjectHandle = revocationRegistryDefinitionPrivateJsonHandle,
+                    RevRegDefPvtObjectHandle = revocationRegistryDefinitionPrivateHandle,
                     TailsPath = tailsLocation,
                     RegIdx = regIdx
                 };
@@ -256,15 +260,16 @@ namespace anoncreds_rs_dotnet.Anoncreds
             CredentialRequestMetadata credentialRequestMetadata,
             MasterSecret masterSecret,
             CredentialDefinition credentialDefinition,
-            RevocationRegistryDefinition revocationRegistryDefinition)
+            RevocationRegistryDefinition revocationRegistryDefinition = null)
         {
             IntPtr credentialObjectHandle = new IntPtr();
+            IntPtr revRegDefHandle = revocationRegistryDefinition != null ? revocationRegistryDefinition.Handle : new IntPtr();
             int errorCode = NativeMethods.anoncreds_process_credential(
                 credential.Handle,
                 credentialRequestMetadata.Handle,
                 masterSecret.Handle,
                 credentialDefinition.Handle,
-                revocationRegistryDefinition.Handle,
+                revRegDefHandle,
                 ref credentialObjectHandle);
 
             if (errorCode != 0)
@@ -293,7 +298,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string credentialRequestMetadataJson,
             string masterSecretJson,
             string credentialDefinitionJson,
-            string revocationRegistryDefinitionJson)
+            string revocationRegistryDefinitionJson = null)
         {
             IntPtr credObjectHandle = new IntPtr();
             IntPtr credReqMetadataObjectHandle = new IntPtr();
@@ -304,7 +309,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
             _ = NativeMethods.anoncreds_credential_request_metadata_from_json(ByteBuffer.Create(credentialRequestMetadataJson), ref credReqMetadataObjectHandle);
             _ = NativeMethods.anoncreds_master_secret_from_json(ByteBuffer.Create(masterSecretJson), ref masterSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
-            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revRegDefObjectHandle);
+            if(revocationRegistryDefinitionJson != null)
+            {
+                _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revRegDefObjectHandle);
+            }
 
             IntPtr credentialObjectHandle = new IntPtr();
             int errorCode = NativeMethods.anoncreds_process_credential(

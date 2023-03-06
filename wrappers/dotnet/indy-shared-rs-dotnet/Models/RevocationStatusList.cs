@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace anoncreds_rs_dotnet.Models
 {
@@ -14,7 +16,7 @@ namespace anoncreds_rs_dotnet.Models
         public string RevocationRegistryDefinitionId { get; set; }
 
         [JsonProperty("revocationList")]
-        public HashSet<(byte ,uint)> RevocationList { get; set; }
+        public List<bool> RevocationList { get; set; }
 
         [JsonProperty("registry")]
         public RevocationRegistry RevocationRegistry { get; set; }

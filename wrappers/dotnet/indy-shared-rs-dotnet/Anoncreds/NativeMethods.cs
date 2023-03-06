@@ -146,7 +146,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiStrList credDefIds,
             FfiUIntList revRegDefObjectHandles,
             FfiStrList revRegDefIds,
-            FfiRevocationEntryList revRegEntries,
+            FfiUIntList revStatusObjectHandles,
             ref byte verifyResult);
         #endregion
 
@@ -232,7 +232,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region Schema
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int anoncreds_create_schema(FfiStr schemaName, FfiStr schemaVersion, FfiStr originDid, FfiStrList attrNames, ref IntPtr schemaObjectHandle);
+        internal static extern int anoncreds_create_schema(FfiStr schemaName, FfiStr schemaVersion, FfiStr issuerId, FfiStrList attrNames, ref IntPtr schemaObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_schema_from_json(ByteBuffer schemaJson, ref IntPtr schemaObjectHandle);
