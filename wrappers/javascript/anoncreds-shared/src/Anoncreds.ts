@@ -16,6 +16,12 @@ export type NativeCredentialProve = {
   reveal: boolean
 }
 
+export type NativeNonRevokedIntervalOverride = {
+  revocationRegistryDefinitionId: string
+  requestedFromTimestamp: number
+  overrideRevocationStatusListTimestamp: number
+}
+
 export type NativeRevocationEntry = {
   revocationRegistryDefinitionEntryIndex: number
   entry: ObjectHandle
@@ -33,6 +39,7 @@ export interface Anoncreds {
   version(): string
 
   getCurrentError(): string
+  setDefaultLogger(): void
 
   generateNonce(): string
 
@@ -45,7 +52,11 @@ export interface Anoncreds {
     issuerId: string
     signatureType: string
     supportRevocation: boolean
-  }): { credentialDefinition: ObjectHandle; credentialDefinitionPrivate: ObjectHandle; keyProof: ObjectHandle }
+  }): {
+    credentialDefinition: ObjectHandle
+    credentialDefinitionPrivate: ObjectHandle
+    keyCorrectnessProof: ObjectHandle
+  }
 
   createCredential(options: {
     credentialDefinition: ObjectHandle
@@ -72,10 +83,11 @@ export interface Anoncreds {
   createCredentialOffer(options: {
     schemaId: string
     credentialDefinitionId: string
-    keyProof: ObjectHandle
+    keyCorrectnessProof: ObjectHandle
   }): ObjectHandle
 
   createCredentialRequest(options: {
+    entropy?: string
     proverDid?: string
     credentialDefinition: ObjectHandle
     masterSecret: ObjectHandle
@@ -105,6 +117,7 @@ export interface Anoncreds {
     revocationRegistryDefinitions?: ObjectHandle[]
     revocationRegistryDefinitionIds?: string[]
     revocationStatusLists?: ObjectHandle[]
+    nonRevokedIntervalOverride?: NativeNonRevokedIntervalOverride[]
   }): boolean
 
   createRevocationRegistryDefinition(options: {
@@ -132,6 +145,7 @@ export interface Anoncreds {
   createRevocationStatusList(options: {
     revocationRegistryDefinitionId: string
     revocationRegistryDefinition: ObjectHandle
+    issuerId: string
     timestamp?: number
     issuanceByDefault: boolean
   }): ObjectHandle

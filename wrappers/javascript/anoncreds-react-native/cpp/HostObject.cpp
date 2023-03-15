@@ -2,7 +2,10 @@
 #include <algorithm>
 #include <vector>
 
-AnoncredsTurboModuleHostObject::AnoncredsTurboModuleHostObject(jsi::Runtime &rt) { return; }
+AnoncredsTurboModuleHostObject::AnoncredsTurboModuleHostObject(
+    jsi::Runtime &rt) {
+  return;
+}
 
 FunctionMap AnoncredsTurboModuleHostObject::functionMapping(jsi::Runtime &rt) {
   FunctionMap fMap;
@@ -46,11 +49,44 @@ FunctionMap AnoncredsTurboModuleHostObject::functionMapping(jsi::Runtime &rt) {
                               &anoncreds::updateRevocationStatusList));
   fMap.insert(std::make_tuple("objectFree", &anoncreds::objectFree));
 
+  fMap.insert(std::make_tuple("credentialDefinitionFromJson",
+                                &anoncreds::credentialDefinitionFromJson));
+  fMap.insert(std::make_tuple("revocationRegistryDefinitionFromJson",
+                                &anoncreds::revocationRegistryDefinitionFromJson));
+  fMap.insert(std::make_tuple("presentationFromJson",
+                                &anoncreds::presentationFromJson));
+  fMap.insert(std::make_tuple("presentationRequestFromJson",
+                                &anoncreds::presentationRequestFromJson));
+  fMap.insert(std::make_tuple("credentialOfferFromJson",
+                                &anoncreds::credentialOfferFromJson));
+  fMap.insert(std::make_tuple("schemaFromJson",
+                                &anoncreds::schemaFromJson));
+  fMap.insert(std::make_tuple("masterSecretFromJson",
+                                &anoncreds::masterSecretFromJson));
+  fMap.insert(std::make_tuple("credentialRequestFromJson",
+                                &anoncreds::credentialRequestFromJson));
+  fMap.insert(std::make_tuple("credentialRequestMetadataFromJson",
+                                &anoncreds::credentialRequestMetadataFromJson));
+  fMap.insert(std::make_tuple("credentialFromJson",
+                                &anoncreds::credentialFromJson));
+  fMap.insert(std::make_tuple("revocationRegistryDefinitionPrivateFromJson",
+                                &anoncreds::revocationRegistryDefinitionPrivateFromJson));
+  fMap.insert(std::make_tuple("revocationRegistryDeltaFromJson",
+                                &anoncreds::revocationRegistryDeltaFromJson));
+  fMap.insert(std::make_tuple("revocationStateFromJson",
+                                &anoncreds::revocationStateFromJson));
+  fMap.insert(std::make_tuple("credentialDefinitionFromJson",
+                                &anoncreds::credentialDefinitionFromJson));
+  fMap.insert(std::make_tuple("credentialDefinitionPrivateFromJson",
+                                &anoncreds::credentialDefinitionPrivateFromJson));
+  fMap.insert(std::make_tuple("keyCorrectnessProofFromJson",
+                                &anoncreds::keyCorrectnessProofFromJson));
+
   return fMap;
 }
 
-jsi::Function AnoncredsTurboModuleHostObject::call(jsi::Runtime &rt, const char *name,
-                                          Cb cb) {
+jsi::Function AnoncredsTurboModuleHostObject::call(jsi::Runtime &rt,
+                                                   const char *name, Cb cb) {
   return jsi::Function::createFromHostFunction(
       rt, jsi::PropNameID::forAscii(rt, name), 1,
       [this, cb](jsi::Runtime &rt, const jsi::Value &thisValue,
@@ -72,8 +108,9 @@ AnoncredsTurboModuleHostObject::getPropertyNames(jsi::Runtime &rt) {
   return result;
 }
 
-jsi::Value AnoncredsTurboModuleHostObject::get(jsi::Runtime &rt,
-                                      const jsi::PropNameID &propNameId) {
+jsi::Value
+AnoncredsTurboModuleHostObject::get(jsi::Runtime &rt,
+                                    const jsi::PropNameID &propNameId) {
   auto propName = propNameId.utf8(rt);
   auto fMap = AnoncredsTurboModuleHostObject::functionMapping(rt);
   for (FunctionMap::iterator it = fMap.begin(); it != fMap.end(); ++it) {

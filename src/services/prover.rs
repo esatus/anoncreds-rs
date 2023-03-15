@@ -34,6 +34,7 @@ pub fn create_master_secret() -> Result<MasterSecret> {
 }
 
 pub fn create_credential_request(
+    entropy: Option<&str>,
     prover_did: Option<&str>,
     cred_def: &CredentialDefinition,
     master_secret: &MasterSecret,
@@ -41,25 +42,19 @@ pub fn create_credential_request(
     credential_offer: &CredentialOffer,
 ) -> Result<(CredentialRequest, CredentialRequestMetadata)> {
     trace!(
-        "create_credential_request >>> cred_def: {:?}, master_secret: {:?}, credential_offer: {:?}",
+        "create_credential_request >>> entropy {:?}, prover_did {:?}, cred_def: {:?}, master_secret: {:?}, credential_offer: {:?}",
+        entropy,
+        prover_did,
         cred_def,
         secret!(&master_secret),
         credential_offer
     );
 
-    // Here we check whether the identifiers inside the cred_def (schema_id, and issuer_id)
-    // are legacy or new. If they are new, it is not allowed to supply a `prover_did` and a
-    // random string will be chosen for you.
-    if !(cred_def.schema_id.is_legacy() || cred_def.issuer_id.is_legacy()) && prover_did.is_some() {
-        return Err(err_msg!(
-            "Prover did must not be supplied when using new identifiers"
-        ));
-    }
-
     let credential_pub_key = CredentialPublicKey::build_from_parts(
         &cred_def.value.primary,
         cred_def.value.revocation.as_ref(),
     )?;
+
     let mut credential_values_builder = CryptoIssuer::new_credential_values_builder()?;
     credential_values_builder.add_value_hidden("master_secret", &master_secret.value.value()?)?;
     let cred_values = credential_values_builder.finalize()?;
@@ -75,13 +70,14 @@ pub fn create_credential_request(
             credential_offer.nonce.as_native(),
         )?;
 
-    let credential_request = CredentialRequest {
-        prover_did: prover_did.map(|d| d.to_owned()),
-        cred_def_id: credential_offer.cred_def_id.to_owned(),
+    let credential_request = CredentialRequest::new(
+        entropy,
+        prover_did,
+        credential_offer.cred_def_id.to_owned(),
         blinded_ms,
         blinded_ms_correctness_proof,
         nonce,
-    };
+    )?;
 
     let credential_request_metadata = CredentialRequestMetadata {
         master_secret_blinding_data,
@@ -203,6 +199,52 @@ pub fn create_presentation(
         )?;
         let sub_proof_request = build_sub_proof_request(&req_attrs, &req_predicates)?;
 
+        update_requested_proof(
+            req_attrs,
+            req_predicates,
+            pres_req_val,
+            credential,
+            sub_proof_index,
+            &mut requested_proof,
+        )?;
+
+        // Checks conditions to add revocation proof
+        let (rev_reg, witness) = if pres_req_val.non_revoked.is_some() {
+            // Global revocation request
+            (
+                present.rev_state.as_ref().map(|r_info| &r_info.rev_reg),
+                present.rev_state.as_ref().map(|r_info| &r_info.witness),
+            )
+        } else {
+            // There exists at least 1 local revocation request
+            let ((_, nonrevoked_attr), (_, nonrevoked_preds)) = (
+                get_revealed_attributes_for_credential(
+                    sub_proof_index as usize,
+                    &requested_proof,
+                    pres_req_val,
+                )?,
+                get_predicates_for_credential(
+                    sub_proof_index as usize,
+                    &requested_proof,
+                    pres_req_val,
+                )?,
+            );
+            if nonrevoked_attr.is_some() || nonrevoked_preds.is_some() {
+                (
+                    present.rev_state.as_ref().map(|r_info| &r_info.rev_reg),
+                    present.rev_state.as_ref().map(|r_info| &r_info.witness),
+                )
+            } else {
+                // Neither global nor local is required
+                (None, None)
+            }
+        };
+
+        // if `present.rev_state` is available,
+        // then it will create an init_proof that contains NRP.
+        //
+        // Therefore, this will have to be part of the finalised `aggregated_proof`.
+        // Regardless if nonrevoke_interval is requested by the verifier
         proof_builder.add_sub_proof_request(
             &sub_proof_request,
             &credential_schema,
@@ -210,8 +252,8 @@ pub fn create_presentation(
             &credential.signature,
             &credential_values,
             &credential_pub_key,
-            present.rev_state.as_ref().map(|r_info| &r_info.rev_reg),
-            present.rev_state.as_ref().map(|r_info| &r_info.witness),
+            rev_reg,
+            witness,
         )?;
 
         let identifier = match pres_req {
@@ -230,15 +272,6 @@ pub fn create_presentation(
         };
 
         identifiers.push(identifier);
-
-        update_requested_proof(
-            req_attrs,
-            req_predicates,
-            pres_req_val,
-            credential,
-            sub_proof_index,
-            &mut requested_proof,
-        )?;
 
         sub_proof_index += 1;
     }
@@ -261,9 +294,9 @@ pub fn create_or_update_revocation_state_with_witness(
     revocation_status_list: &RevocationStatusList,
     timestamp: u64,
 ) -> Result<CredentialRevocationState> {
-    let rev_reg = <&RevocationStatusList as Into<Option<CryptoRevocationRegistry>>>::into(
+    let rev_reg = <&RevocationStatusList as TryInto<Option<CryptoRevocationRegistry>>>::try_into(
         revocation_status_list,
-    )
+    )?
     .ok_or_else(|| err_msg!(Unexpected, "Revocation Status List must have accum value"))?;
 
     Ok(CredentialRevocationState {
@@ -293,7 +326,7 @@ pub fn create_or_update_revocation_state(
         old_rev_status_list,
     );
 
-    let rev_reg: Option<ursa::cl::RevocationRegistry> = rev_status_list.into();
+    let rev_reg: Option<ursa::cl::RevocationRegistry> = rev_status_list.try_into()?;
     let rev_reg = rev_reg.ok_or_else(|| {
         err_msg!("revocation registry is required to create or update the revocation state")
     })?;
@@ -317,7 +350,7 @@ pub fn create_or_update_revocation_state(
             &mut revoked,
         );
 
-        let source_rev_reg: Option<ursa::cl::RevocationRegistry> = source_rev_list.into();
+        let source_rev_reg: Option<ursa::cl::RevocationRegistry> = source_rev_list.try_into()?;
 
         let rev_reg_delta = RevocationRegistryDelta::from_parts(
             source_rev_reg.as_ref(),
@@ -785,11 +818,9 @@ mod tests {
         const ISSUER_ID: &str = "mock:uri";
         const CRED_DEF_ID: &str = "mock:uri";
 
-        const PROVER_DID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-
-        const LEGACY_SCHEMA_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-        const LEGACY_ISSUER_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-        const LEGACY_CRED_DEF_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
+        const LEGACY_DID_IDENTIFIER: &str = "DXoTtQJNtXtiwWaZAK3rB1";
+        const LEGACY_SCHEMA_IDENTIFIER: &str = "DXoTtQJNtXtiwWaZAK3rB1:2:example:1.0";
+        const LEGACY_CRED_DEF_IDENTIFIER: &str = "DXoTtQJNtXtiwWaZAK3rB1:3:CL:98153:default";
 
         fn _master_secret() -> MasterSecret {
             MasterSecret::new().expect("Error creating prover master secret")
@@ -820,15 +851,21 @@ mod tests {
         }
 
         fn _legacy_schema() -> Schema {
-            create_schema("test", "1.0", LEGACY_ISSUER_ID, ["a", "b", "c"][..].into()).unwrap()
+            create_schema(
+                "test",
+                "1.0",
+                LEGACY_DID_IDENTIFIER,
+                ["a", "b", "c"][..].into(),
+            )
+            .unwrap()
         }
 
         fn _legacy_cred_def_and_key_correctness_proof(
         ) -> (CredentialDefinition, CredentialKeyCorrectnessProof) {
             let (cred_def, _, key_correctness_proof) = create_credential_definition(
-                LEGACY_SCHEMA_ID,
+                LEGACY_SCHEMA_IDENTIFIER,
                 &_legacy_schema(),
-                LEGACY_ISSUER_ID,
+                LEGACY_DID_IDENTIFIER,
                 "tag",
                 SignatureType::CL,
                 CredentialDefinitionConfig {
@@ -842,8 +879,12 @@ mod tests {
         fn _legacy_cred_offer(
             key_correctness_proof: CredentialKeyCorrectnessProof,
         ) -> CredentialOffer {
-            create_credential_offer(LEGACY_SCHEMA_ID, LEGACY_CRED_DEF_ID, &key_correctness_proof)
-                .unwrap()
+            create_credential_offer(
+                LEGACY_SCHEMA_IDENTIFIER,
+                LEGACY_CRED_DEF_IDENTIFIER,
+                &key_correctness_proof,
+            )
+            .unwrap()
         }
 
         #[test]
@@ -851,8 +892,14 @@ mod tests {
             let (cred_def, key_correctness_proof) = _cred_def_and_key_correctness_proof();
             let master_secret = _master_secret();
             let cred_offer = _cred_offer(key_correctness_proof);
-            let resp =
-                create_credential_request(None, &cred_def, &master_secret, "default", &cred_offer);
+            let resp = create_credential_request(
+                Some("entropy"),
+                None,
+                &cred_def,
+                &master_secret,
+                "default",
+                &cred_offer,
+            );
             assert!(resp.is_ok())
         }
 
@@ -862,7 +909,8 @@ mod tests {
             let master_secret = _master_secret();
             let cred_offer = _legacy_cred_offer(key_correctness_proof);
             let resp = create_credential_request(
-                Some(PROVER_DID),
+                Some("entropy"),
+                None,
                 &cred_def,
                 &master_secret,
                 "default",
@@ -876,8 +924,14 @@ mod tests {
             let (cred_def, key_correctness_proof) = _legacy_cred_def_and_key_correctness_proof();
             let master_secret = _master_secret();
             let cred_offer = _legacy_cred_offer(key_correctness_proof);
-            let resp =
-                create_credential_request(None, &cred_def, &master_secret, "default", &cred_offer);
+            let resp = create_credential_request(
+                Some("entropy"),
+                None,
+                &cred_def,
+                &master_secret,
+                "default",
+                &cred_offer,
+            );
             assert!(resp.is_ok())
         }
 
@@ -887,13 +941,14 @@ mod tests {
             let master_secret = _master_secret();
             let cred_offer = _cred_offer(key_correctness_proof);
             let resp = create_credential_request(
-                Some(PROVER_DID),
+                Some("entropy"),
+                None,
                 &cred_def,
                 &master_secret,
                 "default",
                 &cred_offer,
             );
-            assert!(resp.is_err())
+            assert!(resp.is_ok())
         }
 
         #[test]
@@ -902,13 +957,14 @@ mod tests {
             let master_secret = _master_secret();
             let cred_offer = _legacy_cred_offer(key_correctness_proof);
             let resp = create_credential_request(
-                Some(PROVER_DID),
+                Some("entropy"),
+                None,
                 &cred_def,
                 &master_secret,
                 "default",
                 &cred_offer,
             );
-            assert!(resp.is_err())
+            assert!(resp.is_ok())
         }
     }
 }

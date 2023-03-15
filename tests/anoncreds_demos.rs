@@ -22,8 +22,7 @@ use anoncreds::{
 
 use serde_json::json;
 
-use self::utils::anoncreds::ProverWallet;
-
+use utils::*;
 mod utils;
 
 pub static SCHEMA_ID: &str = "mock:uri";
@@ -68,6 +67,7 @@ fn anoncreds_works_for_single_issuer_single_prover() {
 
     // Prover creates a Credential Request
     let (cred_request, cred_request_metadata) = prover::create_credential_request(
+        Some("entropy"),
         None,
         &cred_def_pub,
         &prover_wallet.master_secret,
@@ -220,6 +220,7 @@ fn anoncreds_works_for_single_issuer_single_prover() {
         &cred_defs,
         None,
         None,
+        None,
     )
     .expect("Error verifying presentation");
     assert!(valid);
@@ -283,6 +284,7 @@ fn anoncreds_with_revocation_works_for_single_issuer_single_prover() {
     let revocation_status_list = issuer::create_revocation_status_list(
         REV_REG_DEF_ID,
         &rev_reg_def_pub,
+        ISSUER_ID,
         Some(time_create_rev_status_list),
         true,
     )
@@ -294,6 +296,7 @@ fn anoncreds_with_revocation_works_for_single_issuer_single_prover() {
 
     // Prover creates a Credential Request
     let (cred_request, cred_request_metadata) = prover::create_credential_request(
+        Some("entropy"),
         None,
         &cred_def_pub,
         &prover_wallet.master_secret,
@@ -432,6 +435,7 @@ fn anoncreds_with_revocation_works_for_single_issuer_single_prover() {
         &cred_defs,
         Some(&rev_reg_def_map),
         Some(rev_status_list.clone()),
+        None,
     )
     .expect("Error verifying presentation");
     assert!(valid);
@@ -477,6 +481,7 @@ fn anoncreds_with_revocation_works_for_single_issuer_single_prover() {
         &cred_defs,
         Some(&rev_reg_def_map),
         Some(rev_status_list),
+        None,
     )
     .expect("Error verifying presentation");
     assert!(!valid);
