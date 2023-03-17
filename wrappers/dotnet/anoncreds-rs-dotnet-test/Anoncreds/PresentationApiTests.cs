@@ -71,24 +71,23 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             List<string> attrNames = new() { "name", "age", "sex" };
             List<string> attrNamesRaw = new() { "Alex", "20", "male" };
             List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+            string mockUri = "mock:uri";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
+            string mockEntropy = "";
             string testTailsPathForRevocation = null;
 
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+            Schema schemaObject = await SchemaApi.CreateSchemaAsync(mockUri, schemaName, schemaVersion, attrNames);
             (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(mockUri, schemaObject, "tag", mockUri, SignatureType.CL, true);
 
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
+            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(mockUri, mockUri, keyProofObject);
             (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+                await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
 
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
@@ -157,768 +156,768 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             _ = actual.Should().BeOfType(typeof(Presentation));
         }
 
-        [Test, TestCase(TestName = "CreatePresentationAsync() with invalid presentation request handle throws.")]
-        public async Task CreatePresentationAsyncOfSelfAttestProofThrows()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string presReqJson = "{" +
-                "\"name\": \"proof\"," +
-                "\"version\": \"1.0\", " +
-                $"\"nonce\": \"{nonce}\"," +
-                "\"requested_attributes\": " +
-                "{" +
-                    "\"reft\": " +
-                    "{" +
-                        "\"name\":\"attr\"," +
-                        "\"value\":\"myValue\"," +
-                        "\"names\": [], " +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}" +
-                    "}" +
-                "}," +
-                "\"revealed_attrs_groups\": {}," +
-                "\"requested_predicates\": " +
-                "{" +
-                    "\"light\": " +
-                    "{" +
-                        "\"name\":\"pred\"," +
-                        "\"p_type\":\">=\"," +
-                        "\"p_value\":18," +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}," +
-                        "\"restrictions\":" +
-                        "[" +
-                            "{\"schema_name\": \"blubb\"," +
-                            "\"schema_version\": \"1.0\"}," +
-                            "{\"cred_def_id\": \"blubb2\"," +
-                            "\"schema_version\": \"2.0\"}," +
-                            "{\"not_an_attribute\": \"should Fail\"}" +
-                        "]" +
-                    "}" +
-                "}," +
-                "\"non_revoked\": " +
-                "{ " +
-                    $"\"from\": {timestamp}," +
-                    $"\"to\": {timestamp}" +
-                "}," +
-                "\"ver\": \"1.0\"" +
-                "}";
-            PresentationRequest presReqObject = await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
-            presReqObject.Handle = new IntPtr();
-
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string testTailsPathForRevocation = null;
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
-
-            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<CredentialEntry> credentialEntries = new()
-            {
-                CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState)
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<CredentialProof> credentialProofs = new()
-            {
-                new CredentialProof
-                {
-                    EntryIndex = 1,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "testReferent",
-                    Reveal = Convert.ToByte(true)
-                }
-            };
-
-            List<string> selfAttestNames = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            MasterSecret masterSecret = await MasterSecretApi.CreateMasterSecretAsync();
-
-            List<Schema> schemas = new()
-            {
-                schemaObject
-            };
-
-            List<CredentialDefinition> credentialDefinitions = new()
-            {
-                credDefObject
-            };
-
-            //Act
-            Func<Task<Presentation>> func = async () => await PresentationApi.CreatePresentationAsync(
-                presReqObject,
-                credentialEntries,
-                credentialProofs,
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = await func.Should().ThrowAsync<Exception>();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with only self attest.")]
-        public async Task CreatePresentationJsonAsyncOfSelfAttestProof()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            string presReqJson =
-                "{" +
-                    "\"name\": \"proof\"," +
-                    "\"version\": \"1.0\", " +
-                    $"\"nonce\": \"{nonce}\"," +
-                    "\"requested_attributes\": " +
-                        "{" +
-                            "\"ref1\": " +
-                            "{" +
-                            "\"name\":\"name\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                            "}" +
-                        "}" +
-                    "}," +
-                    "\"requested_predicates\": " +
-                    "{" +
-                    "}," +
-                    "\"ver\": \"1.0\"" +
-                "}";
-
-            List<string> selfAttestNames = new()
-            {
-                "name"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            //Act
-            string actual = await PresentationApi.CreatePresentationAsync(
-                presReqJson,
-                new List<string>(),
-                new List<string>(),
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                new List<string>(),
-                new List<string>()
-                );
-
-            //Assert
-            _ = actual.Should().NotBeNullOrEmpty();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with only non self attest.")]
-        public async Task CreatePresentationJsonAsyncForNonSelfAttest()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string presReqJson =
-                "{" +
-                    "\"name\": \"proof\"," +
-                    "\"version\": \"1.0\", " +
-                    $"\"nonce\": \"{nonce}\"," +
-                    "\"requested_attributes\": " +
-                    "{" +
-                        "\"ref1\": " +
-                        "{" +
-                            "\"name\":\"age\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                                $"\"from\": {timestamp}, " +
-                                $"\"to\": {timestamp}" +
-                            "}," +
-                            "\"restrictions\":" +
-                            "[" +
-                                "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
-                            "]" +
-                        "}" +
-                    "}," +
-                    "\"requested_predicates\": " +
-                    "{" +
-                    "}," +
-                    "\"ver\": \"1.0\"" +
-                "}";
-
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string testTailsPathForRevocation = null;
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<string> credentialEntries = new()
-            {
-               JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<string> credentialProofs = new()
-            {
-                JsonConvert.SerializeObject(new CredentialProof
-                {
-                    EntryIndex = 0,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "ref1",
-                    Reveal = Convert.ToByte(true)
-                })
-            };
-
-            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            List<string> schemas = new()
-            {
-                schemaObject.JsonString
-            };
-
-            List<string> credentialDefinitions = new()
-            {
-                credDefObject.JsonString
-            };
-
-            //Act
-            string actual = await PresentationApi.CreatePresentationAsync(
-                presReqJson,
-                credentialEntries,
-                credentialProofs,
-                null,
-                null,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = actual.Should().NotBeNullOrEmpty();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with self attest and non self attest.")]
-        public async Task CreatePresentationJsonAsyncForAnyProof()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string presReqJson =
-                "{" +
-                    "\"name\": \"proof\"," +
-                    "\"version\": \"1.0\", " +
-                    $"\"nonce\": \"{nonce}\"," +
-                    "\"requested_attributes\": " +
-                    "{" +
-                        "\"ref1\": " +
-                        "{" +
-                            "\"name\":\"name\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                            "}" +
-                        "}," +
-                        "\"ref2\": " +
-                        "{" +
-                            "\"name\":\"age\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                                $"\"from\": {timestamp}, " +
-                                $"\"to\": {timestamp}" +
-                            "}," +
-                            "\"restrictions\":" +
-                            "[" +
-                                "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
-                            "]" +
-                        "}" +
-                    "}," +
-                    "\"requested_predicates\": " +
-                    "{" +
-                    "}," +
-                    "\"ver\": \"1.0\"" +
-                "}";
-
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string testTailsPathForRevocation = null;
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<string> credentialEntries = new()
-            {
-               JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<string> credentialProofs = new()
-            {
-                JsonConvert.SerializeObject(new CredentialProof
-                {
-                    EntryIndex = 0,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "ref2",
-                    Reveal = Convert.ToByte(true)
-                })
-            };
-
-            List<string> selfAttestNames = new()
-            {
-                "name"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            List<string> schemas = new()
-            {
-                schemaObject.JsonString
-            };
-
-            List<string> credentialDefinitions = new()
-            {
-                credDefObject.JsonString
-            };
-
-            //Act
-            string actual = await PresentationApi.CreatePresentationAsync(
-                presReqJson,
-                credentialEntries,
-                credentialProofs,
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = actual.Should().NotBeNullOrEmpty();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with self attest and non self attest with CredentialEntry input as Jsons.")]
-        public async Task CreatePresentationJsonAsyncForAnyProofCredEntryAsJson()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string presReqJson =
-                "{" +
-                    "\"name\": \"proof\"," +
-                    "\"version\": \"1.0\", " +
-                    $"\"nonce\": \"{nonce}\"," +
-                    "\"requested_attributes\": " +
-                    "{" +
-                        "\"ref1\": " +
-                        "{" +
-                            "\"name\":\"name\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                            "}" +
-                        "}," +
-                        "\"ref2\": " +
-                        "{" +
-                            "\"name\":\"age\"," +
-                            "\"names\": [], " +
-                            "\"non_revoked\":" +
-                            "{ " +
-                                $"\"from\": {timestamp}, " +
-                                $"\"to\": {timestamp}" +
-                            "}," +
-                            "\"restrictions\":" +
-                            "[" +
-                                "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
-                            "]" +
-                        "}" +
-                    "}," +
-                    "\"requested_predicates\": " +
-                    "{" +
-                    "}," +
-                    "\"ver\": \"1.0\"" +
-                "}";
-
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string testTailsPathForRevocation = null;
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<string> credentialEntries = new()
-            {
-               JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntryJson(credObject.JsonString, timestamp, credRevRegState.JsonString))
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<string> credentialProofs = new()
-            {
-                JsonConvert.SerializeObject(new CredentialProof
-                {
-                    EntryIndex = 0,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "ref2",
-                    Reveal = Convert.ToByte(true)
-                })
-            };
-
-            List<string> selfAttestNames = new()
-            {
-                "name"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            List<string> schemas = new()
-            {
-                schemaObject.JsonString
-            };
-
-            List<string> credentialDefinitions = new()
-            {
-                credDefObject.JsonString
-            };
-
-            //Act
-            string actual = await PresentationApi.CreatePresentationAsync(
-                presReqJson,
-                credentialEntries,
-                credentialProofs,
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = actual.Should().NotBeNullOrEmpty();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationAsync() with JSON input and invalid presentation request handle throws.")]
-        public async Task CreatePresentationJsonAsyncOfSelfAttestProofThrows()
-        {
-            //Arrange
-            string nonce = await PresentationRequestApi.GenerateNonceAsync();
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string presReqJson = "{" +
-                "\"name\": \"proof\"," +
-                "\"version\": \"1.0\", " +
-                $"\"nonce\": \"{nonce}\"," +
-                "\"requested_attributes\": " +
-                "{" +
-                    "\"reft\": " +
-                    "{" +
-                        "\"name\":\"attr\"," +
-                        "\"value\":\"myValue\"," +
-                        "\"names\": [], " +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}" +
-                    "}" +
-                "}," +
-                "\"revealed_attrs_groups\": {}," +
-                "\"requested_predicates\": " +
-                "{" +
-                    "\"light\": " +
-                    "{" +
-                        "\"name\":\"pred\"," +
-                        "\"p_type\":\">=\"," +
-                        "\"p_value\":18," +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}," +
-                        "\"restrictions\":" +
-                        "[" +
-                            "{\"schema_name\": \"blubb\"," +
-                            "\"schema_version\": \"1.0\"}," +
-                            "{\"cred_def_id\": \"blubb2\"," +
-                            "\"schema_version\": \"2.0\"}," +
-                            "{\"not_an_attribute\": \"should Fail\"}" +
-                        "]" +
-                    "}" +
-                "}," +
-                "\"non_revoked\": " +
-                "{ " +
-                    $"\"from\": {timestamp}," +
-                    $"\"to\": {timestamp}" +
-                "}," +
-                "\"ver\": \"1.0\"" +
-                "}";
-
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string testTailsPathForRevocation = null;
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.CredentialDefinitionId, keyProofObject);
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<string> credentialEntries = new()
-            {
-               JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<string> credentialProofs = new()
-            {
-                JsonConvert.SerializeObject(new CredentialProof
-                {
-                    EntryIndex = 1,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "testReferent",
-                    Reveal = Convert.ToByte(true)
-                })
-            };
-
-            List<string> selfAttestNames = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSelfAttestName1"
-            };
-
-            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            List<string> schemas = new()
-            {
-                "{}"
-            };
-
-            List<string> credentialDefinitions = new()
-            {
-                credDefObject.JsonString
-            };
-
-            //Act
-            Func<Task<string>> func = async () => await PresentationApi.CreatePresentationAsync(
-                presReqJson,
-                credentialEntries,
-                credentialProofs,
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = await func.Should().ThrowAsync<Exception>();
-        }
-        #endregion
-
-        #region Tests for CreatePresentationFromJsonAsync
-        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() works.")]
-        public async Task CreatePresentationFromJsonAsyncWorks()
-        {
-            //Arrange
-            string presentationJson = "{\"proof\":{\"proofs\":[{\"primary_proof\":{\"eq_proof\":{\"revealed_attrs\":{\"attr\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"},\"a_prime\":\"22787947532665702942166390265565099820863799587030609859364101947347429956006178433736182956558680217451360098070400415842618416586813209500267111752188923151298858777205206383545858632930505476551131457277377652820989619031780149993288820195069310942122913730689119829340750366182236664539501596260514894650983980623701649527364749330998285260704338497630597378327025502438431858516849741910716399356638178657965616831942802640713754838111099765928053264003133303245178307245238269379969657844386541201731429479010183162613731023271140443137949920801708151362109823177071910561747744940225633896803721317669782358421\",\"e\":\"69124141745661451232422071833447747082810057151848226659717004723245660321643866206894483809434372484419787675271515845575181681885576485\",\"v\":\"502483187879133716417096480006386205327995711270888126778869121855278753425593998422963838651347769608503283807649516512880075823986911920658063448216074566307723181816414360454851464182162626545924978908908754080967539118089711545270393292866557588250787116479546341674975985851318791108768074114121210355659608509113854257493677851780112011053516065048781059761361613409853017535033453997896416355511480069057755205220463158986451933726626781714019352189004060699441752283027199173688877273426479931600413051842909026732192148129355030099736087987835032879264302949802085989635543207730170481446080695187580698323015118647125807401471446437413140532020293604881927856270725677607294897411796868074908977878774588588258946655011556630640214442071918831131351471397679508616542608467322074771091661348278136342901709870360635291451103144692305647239100786223515212569094457685892676825400988189774258596242950852693022055\",\"m\":{\"master_secret\":\"2307093772458771039711933057912384843500743528411547595991148149387405897463262936047925219917981120668180047862724912654604570684672680548843949939043365133411527271086042486203\"},\"m2\":\"3350007083872569628769486907745210896506907039493766347465000482213910452825573519528617062976602075306102068308540480111571831600569611213574129530137747\"},\"ge_proofs\":[]},\"non_revoc_proof\":{\"x_list\":{\"rho\":\"1C3AC92D0868D6AD9F124B88E0AA66ED2F3BBC2401AE52A4512CDEC68B82078D\",\"r\":\"0D0387C22AA96E9D00AC180BF461BA40809BE312BB0FC57B392B4660F8AC02C9\",\"r_prime\":\"156475DD528D2A7F6A7711479C40A634F76A82A0AD098DEFC957CF500ADDD6F6\",\"r_prime_prime\":\"1262D4B6EE055CB7B12AC9CCC5A8C5551DC1398D925162FD63B19A7E27E47601\",\"r_prime_prime_prime\":\"1FC79BA981C70CF3FDDBEE8F3908C63F195284DA250B9F4BF0B8C444F00A1DA5\",\"o\":\"0645F0F20692FC3EB7A8AC6DF8975475D69046A3A1AA2F9454309976628CC2D6\",\"o_prime\":\"0E17AE4D4A318BE3F22B8741A9CD401EEF8EDF2571234353DE93C71F91AEB868\",\"m\":\"07AA5FC3DC804398D1E7C087241D13E05F9920BB3E72AE903EF9780BEA53F516\",\"m_prime\":\"22F8D76B8EEC5B8E8AB10B00165CDCB1638733CEC1DAA82D8E2D1DF64EAEA8CE\",\"t\":\"10ACE2A8623DCB973DF484C9634FB4DC94BA9097F89ABA3C5863693F9EC5F223\",\"t_prime\":\"236B85805AD43E4EEA0DE3A03A764BF717805EC5AADEEAD2566B485B7CAC81D1\",\"m2\":\"1BA5E259DB355BC7D8A7DB2B76E6CA77F6BF7EFA08D19E7F533836005F6FBAB3\",\"s\":\"0B1339A60E431657FFDACA6D5C79CC964471B7595B4D34562AAD8E4648E78A82\",\"c\":\"16608A5E3549E73F2F6A32D54D8AE8B0B2DF36DDE1410876BFE20287CB069E63\"},\"c_list\":{\"e\":\"6 38732649A4C651FABABE98F14CF92AF6F2217F528540B3AC499D80D35D494055 4 3F966F47E48797FB2CEA9B6318782FA70B77880DABDCAF2E0C0EA99351EA842F 4 30738E44CA85F08F501F3E7D53D0F87DEB42862769EBD8B13D062A2F33432A93\",\"d\":\"6 474DE704E04EA60150D37B39FEF9C87908CA371D20A2C3509864591699723647 4 04180C1A54CFE8B2225F09DF98469B26DFE703D1E3596E9E17DA0596F9364DBA 4 2CD33754BC31C6DFC3D265B10255B6C768AD491EF4858DACF6464C95F449F3AB\",\"a\":\"6 4B639F55DECFBC5C3DCEF78E043F5056702E9A24FF62BEF53D5C658AEC998640 4 1E87C680AE0FE4C144C02C2C6D9BFBB6319C3F68DAD161FEE52FF7C9E3B7A5E4 4 1B3FDF399DD2CE9416CBCF9F2DF371CCDADDD26C60882AE6DF55921A6009D07A\",\"g\":\"6 42184EA20FFB2329573A01CD5DE5BA48968E8C6CC0840931B31B410AEFE66B87 4 30CF73E43C59393CEB521ADE04CBD1268039521080C2282B459C0A110866F3F0 4 1C52F59F00FEE09872C01AEAE0AB76A15AD2F00CCDB99B73BEC14EFB3BE7A75E\",\"w\":\"21 13A9D8DB787AD569B83F83E3E4D85D01C1FD50E61ABB41BBAF62CEAA157033180 21 12C955A1AB9842C62A7A3A023A6A34EA3B5C966780A00F5175B1CD5D25D87A1FF 6 6608A8E039569F56F4221EA7B4BDEF52DC0D9F073728700ADEA2F695F9DB4853 4 1AE01005403C489AC15C9349BC2D8D43B34D3C43D0D828F238DA4F742B35260B 6 52AB4701947804C7F3B17D7F22F35DE50483B588AF74C5EA122F508D2D634B74 4 073118B2C588D05F7DCDB3D8C2EA322663DAA589F081C36A28C6220B990793CB\",\"s\":\"21 11AA1CEE4FB15EEBAA34BF79C5BA75A0D22064288FE8D64CEEBBABF24F6D37903 21 113CE1CE8533D17F54BEC9490B3FD3601CDBFC8B04B0B8948F930EBA3E67C8CFF 6 55814737228E6B608EE44B894863605890FB81528C7A67FC0857B73FD9438F5B 4 309834112A9A043C0AF59BBC2BC47D72A258FDA266237FD780925D7AB9A6F43C 6 79E87F6D2789925E22F89F0E5E86B15E26B1259B2EAEE8A86AAF8A38D724A123 4 1A8ABBC77FABDF0C3F3223D9D81F51481E28967A33636CD598878F4483F6B6CA\",\"u\":\"21 12846FAFA8E2998E260BE514A492CA4101F0206BE1C46293F736BB027CBCD7D66 21 13581B75D34A2413C50178B4337DA5C8B4056639057DCCF2DDE6563E200BCCFC6 6 64EA09AD4A1E3C6BCC7EBFF9C3AAD7FEFDE17D2D12517FB3644C891D91B579FA 4 31C98A8C89C90961D814CC181F6036C810DDFC9C8D62703DBBC0EEFAEB5EE73B 6 720417974AA223B2375B13837CDB3D5CC2542EDBAF7B9192CB414CD40A191DF1 4 0BCDF714766E1EB0CF923BF54D954ABFF39A2BACACE00E4E2B73AA86B420E8F9\"}}}],\"aggregated_proof\":{\"c_hash\":\"57204176382419527374101370361393524337764538734535251618083733237783975439070\",\"c_list\":[[4,15,88,167,248,56,102,147,80,24,31,234,110,102,161,67,43,125,207,87,179,56,8,40,221,242,70,202,231,69,195,248,205,25,33,90,195,219,255,23,52,105,221,133,186,132,167,223,162,68,186,75,179,189,1,65,254,76,96,125,100,40,5,100,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,24,49,229,206,52,10,42,52,195,227,91,45,94,133,85,241,105,195,178,217,81,190,25,203,16,149,93,186,44,71,119,190,1,95,192,234,30,175,215,56,136,133,100,233,140,112,56,244,95,204,69,128,213,21,233,94,147,116,37,153,242,52,209,138,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,36,122,151,5,113,228,166,236,38,129,222,222,49,212,15,96,103,229,3,25,28,79,37,225,177,177,237,134,6,66,27,119,27,109,135,41,214,232,251,152,184,10,32,74,82,207,40,195,103,231,154,242,187,30,231,218,67,106,190,128,121,155,131,113,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,34,66,12,235,45,42,171,239,205,121,131,31,41,208,82,246,226,170,49,76,126,165,225,43,128,172,54,126,88,20,128,19,25,223,36,170,76,242,212,148,63,33,235,54,137,148,140,196,40,65,151,62,212,181,189,243,6,88,75,235,151,114,54,232,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[2,220,197,124,183,58,58,157,142,103,86,147,145,21,36,119,22,117,86,200,99,115,154,196,120,116,80,24,138,230,36,177,30,81,86,105,168,250,240,169,14,34,93,141,158,208,228,138,226,86,195,111,234,35,121,40,171,132,129,53,97,162,190,76,17,198,236,135,230,125,232,215,65,239,184,64,2,185,53,15,32,100,138,152,2,23,237,183,77,53,137,194,42,13,147,224,15,251,118,253,30,27,80,73,207,230,147,236,203,187,117,137,203,187,203,51,255,14,254,57,110,87,140,174,202,247,155,13],[6,4,32,235,21,24,190,211,121,184,190,97,209,193,204,252,84,165,232,105,66,242,136,146,55,150,198,158,138,75,9,42,20,94,45,147,73,55,47,29,238,14,37,159,3,138,207,149,38,169,47,201,12,26,72,119,103,113,204,39,9,237,140,171,30,138,231,25,58,230,106,18,39,185,248,42,210,252,84,207,80,156,11,152,33,1,126,84,180,236,37,83,219,45,36,100,8,178,133,234,236,77,114,247,114,116,96,227,221,115,73,209,254,192,44,154,95,138,75,225,140,115,158,153,117,247,46,120],[16,44,243,209,174,98,186,130,29,56,38,87,123,124,238,122,203,120,31,253,232,19,226,74,204,75,162,51,66,66,45,186,9,6,138,241,64,162,56,111,131,25,104,172,138,235,27,138,139,39,130,101,227,74,72,192,159,162,90,203,62,206,169,103,26,216,166,16,244,46,39,151,224,100,180,118,36,16,47,226,176,52,23,161,20,206,124,249,124,111,169,38,165,248,85,186,20,108,129,30,247,163,11,93,67,207,172,13,205,19,137,217,20,51,12,20,189,188,141,172,216,195,210,122,166,225,240,176],[180,131,235,194,141,158,164,112,75,71,68,181,71,3,222,45,131,147,72,120,36,190,183,145,119,59,94,109,178,83,240,117,200,139,183,234,120,1,110,141,136,165,42,78,208,133,128,142,129,225,90,76,185,141,133,255,168,176,156,198,205,174,109,95,175,11,53,125,245,234,195,119,40,130,113,52,218,73,76,203,177,234,76,126,241,151,118,123,75,50,61,64,142,89,4,43,204,101,133,151,134,232,55,175,118,177,0,30,39,220,62,41,191,69,69,176,24,176,190,231,153,46,1,224,26,77,218,181,22,139,97,9,101,122,140,126,141,227,30,235,59,32,28,156,131,249,221,32,2,105,209,58,36,113,168,135,218,59,229,111,101,184,187,104,186,9,42,160,169,62,171,119,200,240,34,22,132,162,120,81,95,241,137,102,7,179,13,132,28,103,203,185,8,79,241,36,7,197,92,180,229,209,207,178,255,134,226,94,183,236,213,184,164,53,139,255,206,186,94,215,173,161,15,160,235,255,163,132,248,68,184,47,160,1,57,39,255,49,113,237,48,199,71,242,219,32,146,28,55,139,17,40,149,67,9,149]]}},\"requested_proof\":{\"revealed_attrs\":{\"reft\":{\"sub_proof_index\":0,\"raw\":\"test\",\"encoded\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"}},\"self_attested_attrs\":{},\"unrevealed_attrs\":{},\"predicates\":{}},\"identifiers\":[{\"schema_id\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\",\"cred_def_id\":\"55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag\",\"rev_reg_id\":\"55GkHamhTU1ZbTbV2ab9DE:4:55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag:CL_ACCUM:default\",\"timestamp\":1656323735}]}";
-
-            //Act
-            Presentation actual = await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
-
-            //Assert
-            _ = actual.Should().BeOfType<Presentation>();
-            _ = actual.Identifiers[0].CredentialDefinitionId.Should().Be("55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag");
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when given empty string.")]
-        public async Task CreatePresentationFromJsonAsyncThrowsIndexOutOfBoundsException()
-        {
-            //Arrange
-            string presentationJson = "";
-
-            //Act
-            Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
-
-            //Assert
-            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
-        }
-
-        [Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when given invalid json string.")]
-        public async Task CreatePresentationFromJsonAsyncThrowsAnoncredsRsException()
-        {
-            //Arrange
-            string presentationJson = "{}";
-
-            //Act
-            Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
-
-            //Assert
-            _ = await act.Should().ThrowAsync<AnoncredsRsException>();
-        }
+        //[Test, TestCase(TestName = "CreatePresentationAsync() with invalid presentation request handle throws.")]
+        //public async Task CreatePresentationAsyncOfSelfAttestProofThrows()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //    string presReqJson = "{" +
+        //        "\"name\": \"proof\"," +
+        //        "\"version\": \"1.0\", " +
+        //        $"\"nonce\": \"{nonce}\"," +
+        //        "\"requested_attributes\": " +
+        //        "{" +
+        //            "\"reft\": " +
+        //            "{" +
+        //                "\"name\":\"attr\"," +
+        //                "\"value\":\"myValue\"," +
+        //                "\"names\": [], " +
+        //                "\"non_revoked\":" +
+        //                "{ " +
+        //                    $"\"from\": {timestamp}, " +
+        //                    $"\"to\": {timestamp}" +
+        //                "}" +
+        //            "}" +
+        //        "}," +
+        //        "\"revealed_attrs_groups\": {}," +
+        //        "\"requested_predicates\": " +
+        //        "{" +
+        //            "\"light\": " +
+        //            "{" +
+        //                "\"name\":\"pred\"," +
+        //                "\"p_type\":\">=\"," +
+        //                "\"p_value\":18," +
+        //                "\"non_revoked\":" +
+        //                "{ " +
+        //                    $"\"from\": {timestamp}, " +
+        //                    $"\"to\": {timestamp}" +
+        //                "}," +
+        //                "\"restrictions\":" +
+        //                "[" +
+        //                    "{\"schema_name\": \"blubb\"," +
+        //                    "\"schema_version\": \"1.0\"}," +
+        //                    "{\"cred_def_id\": \"blubb2\"," +
+        //                    "\"schema_version\": \"2.0\"}," +
+        //                    "{\"not_an_attribute\": \"should Fail\"}" +
+        //                "]" +
+        //            "}" +
+        //        "}," +
+        //        "\"non_revoked\": " +
+        //        "{ " +
+        //            $"\"from\": {timestamp}," +
+        //            $"\"to\": {timestamp}" +
+        //        "}," +
+        //        "\"ver\": \"1.0\"" +
+        //        "}";
+        //    PresentationRequest presReqObject = await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
+        //    presReqObject.Handle = new IntPtr();
+
+        //    List<string> attrNames = new() { "name", "age", "sex" };
+        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
+        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
+        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+        //    string schemaName = "gvt";
+        //    string schemaVersion = "1.0";
+        //    string testTailsPathForRevocation = null;
+
+        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
+        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+
+        //    string schemaId = schemaObject.IssuerId;
+        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
+
+        //    (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+
+        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+
+        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+        //        revRegDefObject,
+        //        revStatusList,
+        //        credObject.Signature.RCredential.I,
+        //        revRegDefObject.Value.TailsLocation,
+        //        emptyRevocationState);
+
+        //    List<CredentialEntry> credentialEntries = new()
+        //    {
+        //        CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState)
+        //        //with empty timestamp and revState
+        //        //new CredentialEntry(credObject,0, null)
+        //    };
+
+        //    List<CredentialProof> credentialProofs = new()
+        //    {
+        //        new CredentialProof
+        //        {
+        //            EntryIndex = 1,
+        //            IsPredicate = Convert.ToByte(false),
+        //            Referent = "testReferent",
+        //            Reveal = Convert.ToByte(true)
+        //        }
+        //    };
+
+        //    List<string> selfAttestNames = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    List<string> selfAttestValues = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    MasterSecret masterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    List<Schema> schemas = new()
+        //    {
+        //        schemaObject
+        //    };
+
+        //    List<CredentialDefinition> credentialDefinitions = new()
+        //    {
+        //        credDefObject
+        //    };
+
+        //    //Act
+        //    Func<Task<Presentation>> func = async () => await PresentationApi.CreatePresentationAsync(
+        //        presReqObject,
+        //        credentialEntries,
+        //        credentialProofs,
+        //        selfAttestNames,
+        //        selfAttestValues,
+        //        masterSecret,
+        //        schemas,
+        //        credentialDefinitions
+        //        );
+
+        //    //Assert
+        //    _ = await func.Should().ThrowAsync<Exception>();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with only self attest.")]
+        //public async Task CreatePresentationJsonAsyncOfSelfAttestProof()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    string presReqJson =
+        //        "{" +
+        //            "\"name\": \"proof\"," +
+        //            "\"version\": \"1.0\", " +
+        //            $"\"nonce\": \"{nonce}\"," +
+        //            "\"requested_attributes\": " +
+        //                "{" +
+        //                    "\"ref1\": " +
+        //                    "{" +
+        //                    "\"name\":\"name\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                    "}" +
+        //                "}" +
+        //            "}," +
+        //            "\"requested_predicates\": " +
+        //            "{" +
+        //            "}," +
+        //            "\"ver\": \"1.0\"" +
+        //        "}";
+
+        //    List<string> selfAttestNames = new()
+        //    {
+        //        "name"
+        //    };
+
+        //    List<string> selfAttestValues = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+        //    //Act
+        //    string actual = await PresentationApi.CreatePresentationAsync(
+        //        presReqJson,
+        //        new List<string>(),
+        //        new List<string>(),
+        //        selfAttestNames,
+        //        selfAttestValues,
+        //        masterSecret,
+        //        new List<string>(),
+        //        new List<string>()
+        //        );
+
+        //    //Assert
+        //    _ = actual.Should().NotBeNullOrEmpty();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with only non self attest.")]
+        //public async Task CreatePresentationJsonAsyncForNonSelfAttest()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //    string presReqJson =
+        //        "{" +
+        //            "\"name\": \"proof\"," +
+        //            "\"version\": \"1.0\", " +
+        //            $"\"nonce\": \"{nonce}\"," +
+        //            "\"requested_attributes\": " +
+        //            "{" +
+        //                "\"ref1\": " +
+        //                "{" +
+        //                    "\"name\":\"age\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                        $"\"from\": {timestamp}, " +
+        //                        $"\"to\": {timestamp}" +
+        //                    "}," +
+        //                    "\"restrictions\":" +
+        //                    "[" +
+        //                        "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
+        //                    "]" +
+        //                "}" +
+        //            "}," +
+        //            "\"requested_predicates\": " +
+        //            "{" +
+        //            "}," +
+        //            "\"ver\": \"1.0\"" +
+        //        "}";
+
+        //    List<string> attrNames = new() { "name", "age", "sex" };
+        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
+        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
+        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+        //    string schemaName = "gvt";
+        //    string schemaVersion = "1.0";
+        //    string testTailsPathForRevocation = null;
+
+        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
+        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+
+        //    string schemaId = schemaObject.IssuerId;
+        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
+        //    (CredentialRequest credRequestObject, _) =
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+
+        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+
+        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+        //        revRegDefObject,
+        //        revStatusList,
+        //        credObject.Signature.RCredential.I,
+        //        revRegDefObject.Value.TailsLocation,
+        //        emptyRevocationState);
+
+        //    List<string> credentialEntries = new()
+        //    {
+        //       JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
+        //        //with empty timestamp and revState
+        //        //new CredentialEntry(credObject,0, null)
+        //    };
+
+        //    List<string> credentialProofs = new()
+        //    {
+        //        JsonConvert.SerializeObject(new CredentialProof
+        //        {
+        //            EntryIndex = 0,
+        //            IsPredicate = Convert.ToByte(false),
+        //            Referent = "ref1",
+        //            Reveal = Convert.ToByte(true)
+        //        })
+        //    };
+
+        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+        //    List<string> schemas = new()
+        //    {
+        //        schemaObject.JsonString
+        //    };
+
+        //    List<string> credentialDefinitions = new()
+        //    {
+        //        credDefObject.JsonString
+        //    };
+
+        //    //Act
+        //    string actual = await PresentationApi.CreatePresentationAsync(
+        //        presReqJson,
+        //        credentialEntries,
+        //        credentialProofs,
+        //        null,
+        //        null,
+        //        masterSecret,
+        //        schemas,
+        //        credentialDefinitions
+        //        );
+
+        //    //Assert
+        //    _ = actual.Should().NotBeNullOrEmpty();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with self attest and non self attest.")]
+        //public async Task CreatePresentationJsonAsyncForAnyProof()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //    string presReqJson =
+        //        "{" +
+        //            "\"name\": \"proof\"," +
+        //            "\"version\": \"1.0\", " +
+        //            $"\"nonce\": \"{nonce}\"," +
+        //            "\"requested_attributes\": " +
+        //            "{" +
+        //                "\"ref1\": " +
+        //                "{" +
+        //                    "\"name\":\"name\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                    "}" +
+        //                "}," +
+        //                "\"ref2\": " +
+        //                "{" +
+        //                    "\"name\":\"age\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                        $"\"from\": {timestamp}, " +
+        //                        $"\"to\": {timestamp}" +
+        //                    "}," +
+        //                    "\"restrictions\":" +
+        //                    "[" +
+        //                        "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
+        //                    "]" +
+        //                "}" +
+        //            "}," +
+        //            "\"requested_predicates\": " +
+        //            "{" +
+        //            "}," +
+        //            "\"ver\": \"1.0\"" +
+        //        "}";
+
+        //    List<string> attrNames = new() { "name", "age", "sex" };
+        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
+        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
+        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+        //    string schemaName = "gvt";
+        //    string schemaVersion = "1.0";
+        //    string testTailsPathForRevocation = null;
+
+        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
+        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+
+        //    string schemaId = schemaObject.IssuerId;
+        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
+        //    (CredentialRequest credRequestObject, _) =
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+
+        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+
+        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+        //        revRegDefObject,
+        //        revStatusList,
+        //        credObject.Signature.RCredential.I,
+        //        revRegDefObject.Value.TailsLocation,
+        //        emptyRevocationState);
+
+        //    List<string> credentialEntries = new()
+        //    {
+        //       JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
+        //        //with empty timestamp and revState
+        //        //new CredentialEntry(credObject,0, null)
+        //    };
+
+        //    List<string> credentialProofs = new()
+        //    {
+        //        JsonConvert.SerializeObject(new CredentialProof
+        //        {
+        //            EntryIndex = 0,
+        //            IsPredicate = Convert.ToByte(false),
+        //            Referent = "ref2",
+        //            Reveal = Convert.ToByte(true)
+        //        })
+        //    };
+
+        //    List<string> selfAttestNames = new()
+        //    {
+        //        "name"
+        //    };
+
+        //    List<string> selfAttestValues = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+        //    List<string> schemas = new()
+        //    {
+        //        schemaObject.JsonString
+        //    };
+
+        //    List<string> credentialDefinitions = new()
+        //    {
+        //        credDefObject.JsonString
+        //    };
+
+        //    //Act
+        //    string actual = await PresentationApi.CreatePresentationAsync(
+        //        presReqJson,
+        //        credentialEntries,
+        //        credentialProofs,
+        //        selfAttestNames,
+        //        selfAttestValues,
+        //        masterSecret,
+        //        schemas,
+        //        credentialDefinitions
+        //        );
+
+        //    //Assert
+        //    _ = actual.Should().NotBeNullOrEmpty();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with self attest and non self attest with CredentialEntry input as Jsons.")]
+        //public async Task CreatePresentationJsonAsyncForAnyProofCredEntryAsJson()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //    string presReqJson =
+        //        "{" +
+        //            "\"name\": \"proof\"," +
+        //            "\"version\": \"1.0\", " +
+        //            $"\"nonce\": \"{nonce}\"," +
+        //            "\"requested_attributes\": " +
+        //            "{" +
+        //                "\"ref1\": " +
+        //                "{" +
+        //                    "\"name\":\"name\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                    "}" +
+        //                "}," +
+        //                "\"ref2\": " +
+        //                "{" +
+        //                    "\"name\":\"age\"," +
+        //                    "\"names\": [], " +
+        //                    "\"non_revoked\":" +
+        //                    "{ " +
+        //                        $"\"from\": {timestamp}, " +
+        //                        $"\"to\": {timestamp}" +
+        //                    "}," +
+        //                    "\"restrictions\":" +
+        //                    "[" +
+        //                        "{\"schema_issuer_did\": \"NcYxiDXkpYi6ov5FcYDi1e\"}" +
+        //                    "]" +
+        //                "}" +
+        //            "}," +
+        //            "\"requested_predicates\": " +
+        //            "{" +
+        //            "}," +
+        //            "\"ver\": \"1.0\"" +
+        //        "}";
+
+        //    List<string> attrNames = new() { "name", "age", "sex" };
+        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
+        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
+        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+        //    string schemaName = "gvt";
+        //    string schemaVersion = "1.0";
+        //    string testTailsPathForRevocation = null;
+
+        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
+        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+
+        //    string schemaId = schemaObject.IssuerId;
+        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
+        //    (CredentialRequest credRequestObject, _) =
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+
+        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+
+        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+        //        revRegDefObject,
+        //        revStatusList,
+        //        credObject.Signature.RCredential.I,
+        //        revRegDefObject.Value.TailsLocation,
+        //        emptyRevocationState);
+
+        //    List<string> credentialEntries = new()
+        //    {
+        //       JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntryJson(credObject.JsonString, timestamp, credRevRegState.JsonString))
+        //        //with empty timestamp and revState
+        //        //new CredentialEntry(credObject,0, null)
+        //    };
+
+        //    List<string> credentialProofs = new()
+        //    {
+        //        JsonConvert.SerializeObject(new CredentialProof
+        //        {
+        //            EntryIndex = 0,
+        //            IsPredicate = Convert.ToByte(false),
+        //            Referent = "ref2",
+        //            Reveal = Convert.ToByte(true)
+        //        })
+        //    };
+
+        //    List<string> selfAttestNames = new()
+        //    {
+        //        "name"
+        //    };
+
+        //    List<string> selfAttestValues = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+        //    List<string> schemas = new()
+        //    {
+        //        schemaObject.JsonString
+        //    };
+
+        //    List<string> credentialDefinitions = new()
+        //    {
+        //        credDefObject.JsonString
+        //    };
+
+        //    //Act
+        //    string actual = await PresentationApi.CreatePresentationAsync(
+        //        presReqJson,
+        //        credentialEntries,
+        //        credentialProofs,
+        //        selfAttestNames,
+        //        selfAttestValues,
+        //        masterSecret,
+        //        schemas,
+        //        credentialDefinitions
+        //        );
+
+        //    //Assert
+        //    _ = actual.Should().NotBeNullOrEmpty();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationAsync() with JSON input and invalid presentation request handle throws.")]
+        //public async Task CreatePresentationJsonAsyncOfSelfAttestProofThrows()
+        //{
+        //    //Arrange
+        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
+        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //    string presReqJson = "{" +
+        //        "\"name\": \"proof\"," +
+        //        "\"version\": \"1.0\", " +
+        //        $"\"nonce\": \"{nonce}\"," +
+        //        "\"requested_attributes\": " +
+        //        "{" +
+        //            "\"reft\": " +
+        //            "{" +
+        //                "\"name\":\"attr\"," +
+        //                "\"value\":\"myValue\"," +
+        //                "\"names\": [], " +
+        //                "\"non_revoked\":" +
+        //                "{ " +
+        //                    $"\"from\": {timestamp}, " +
+        //                    $"\"to\": {timestamp}" +
+        //                "}" +
+        //            "}" +
+        //        "}," +
+        //        "\"revealed_attrs_groups\": {}," +
+        //        "\"requested_predicates\": " +
+        //        "{" +
+        //            "\"light\": " +
+        //            "{" +
+        //                "\"name\":\"pred\"," +
+        //                "\"p_type\":\">=\"," +
+        //                "\"p_value\":18," +
+        //                "\"non_revoked\":" +
+        //                "{ " +
+        //                    $"\"from\": {timestamp}, " +
+        //                    $"\"to\": {timestamp}" +
+        //                "}," +
+        //                "\"restrictions\":" +
+        //                "[" +
+        //                    "{\"schema_name\": \"blubb\"," +
+        //                    "\"schema_version\": \"1.0\"}," +
+        //                    "{\"cred_def_id\": \"blubb2\"," +
+        //                    "\"schema_version\": \"2.0\"}," +
+        //                    "{\"not_an_attribute\": \"should Fail\"}" +
+        //                "]" +
+        //            "}" +
+        //        "}," +
+        //        "\"non_revoked\": " +
+        //        "{ " +
+        //            $"\"from\": {timestamp}," +
+        //            $"\"to\": {timestamp}" +
+        //        "}," +
+        //        "\"ver\": \"1.0\"" +
+        //        "}";
+
+        //    List<string> attrNames = new() { "name", "age", "sex" };
+        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
+        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
+        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
+        //    string schemaName = "gvt";
+        //    string schemaVersion = "1.0";
+        //    string testTailsPathForRevocation = null;
+
+        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
+        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
+        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+
+        //    string schemaId = schemaObject.IssuerId;
+        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
+        //    (CredentialRequest credRequestObject, _) =
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+
+        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+
+        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+        //        revRegDefObject,
+        //        revStatusList,
+        //        credObject.Signature.RCredential.I,
+        //        revRegDefObject.Value.TailsLocation,
+        //        emptyRevocationState);
+
+        //    List<string> credentialEntries = new()
+        //    {
+        //       JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
+        //        //with empty timestamp and revState
+        //        //new CredentialEntry(credObject,0, null)
+        //    };
+
+        //    List<string> credentialProofs = new()
+        //    {
+        //        JsonConvert.SerializeObject(new CredentialProof
+        //        {
+        //            EntryIndex = 1,
+        //            IsPredicate = Convert.ToByte(false),
+        //            Referent = "testReferent",
+        //            Reveal = Convert.ToByte(true)
+        //        })
+        //    };
+
+        //    List<string> selfAttestNames = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    List<string> selfAttestValues = new()
+        //    {
+        //        "testSelfAttestName1"
+        //    };
+
+        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+        //    List<string> schemas = new()
+        //    {
+        //        "{}"
+        //    };
+
+        //    List<string> credentialDefinitions = new()
+        //    {
+        //        credDefObject.JsonString
+        //    };
+
+        //    //Act
+        //    Func<Task<string>> func = async () => await PresentationApi.CreatePresentationAsync(
+        //        presReqJson,
+        //        credentialEntries,
+        //        credentialProofs,
+        //        selfAttestNames,
+        //        selfAttestValues,
+        //        masterSecret,
+        //        schemas,
+        //        credentialDefinitions
+        //        );
+
+        //    //Assert
+        //    _ = await func.Should().ThrowAsync<Exception>();
+        //}
+        //#endregion
+
+        //#region Tests for CreatePresentationFromJsonAsync
+        //[Test, TestCase(TestName = "CreatePresentationFromJsonAsync() works.")]
+        //public async Task CreatePresentationFromJsonAsyncWorks()
+        //{
+        //    //Arrange
+        //    string presentationJson = "{\"proof\":{\"proofs\":[{\"primary_proof\":{\"eq_proof\":{\"revealed_attrs\":{\"attr\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"},\"a_prime\":\"22787947532665702942166390265565099820863799587030609859364101947347429956006178433736182956558680217451360098070400415842618416586813209500267111752188923151298858777205206383545858632930505476551131457277377652820989619031780149993288820195069310942122913730689119829340750366182236664539501596260514894650983980623701649527364749330998285260704338497630597378327025502438431858516849741910716399356638178657965616831942802640713754838111099765928053264003133303245178307245238269379969657844386541201731429479010183162613731023271140443137949920801708151362109823177071910561747744940225633896803721317669782358421\",\"e\":\"69124141745661451232422071833447747082810057151848226659717004723245660321643866206894483809434372484419787675271515845575181681885576485\",\"v\":\"502483187879133716417096480006386205327995711270888126778869121855278753425593998422963838651347769608503283807649516512880075823986911920658063448216074566307723181816414360454851464182162626545924978908908754080967539118089711545270393292866557588250787116479546341674975985851318791108768074114121210355659608509113854257493677851780112011053516065048781059761361613409853017535033453997896416355511480069057755205220463158986451933726626781714019352189004060699441752283027199173688877273426479931600413051842909026732192148129355030099736087987835032879264302949802085989635543207730170481446080695187580698323015118647125807401471446437413140532020293604881927856270725677607294897411796868074908977878774588588258946655011556630640214442071918831131351471397679508616542608467322074771091661348278136342901709870360635291451103144692305647239100786223515212569094457685892676825400988189774258596242950852693022055\",\"m\":{\"master_secret\":\"2307093772458771039711933057912384843500743528411547595991148149387405897463262936047925219917981120668180047862724912654604570684672680548843949939043365133411527271086042486203\"},\"m2\":\"3350007083872569628769486907745210896506907039493766347465000482213910452825573519528617062976602075306102068308540480111571831600569611213574129530137747\"},\"ge_proofs\":[]},\"non_revoc_proof\":{\"x_list\":{\"rho\":\"1C3AC92D0868D6AD9F124B88E0AA66ED2F3BBC2401AE52A4512CDEC68B82078D\",\"r\":\"0D0387C22AA96E9D00AC180BF461BA40809BE312BB0FC57B392B4660F8AC02C9\",\"r_prime\":\"156475DD528D2A7F6A7711479C40A634F76A82A0AD098DEFC957CF500ADDD6F6\",\"r_prime_prime\":\"1262D4B6EE055CB7B12AC9CCC5A8C5551DC1398D925162FD63B19A7E27E47601\",\"r_prime_prime_prime\":\"1FC79BA981C70CF3FDDBEE8F3908C63F195284DA250B9F4BF0B8C444F00A1DA5\",\"o\":\"0645F0F20692FC3EB7A8AC6DF8975475D69046A3A1AA2F9454309976628CC2D6\",\"o_prime\":\"0E17AE4D4A318BE3F22B8741A9CD401EEF8EDF2571234353DE93C71F91AEB868\",\"m\":\"07AA5FC3DC804398D1E7C087241D13E05F9920BB3E72AE903EF9780BEA53F516\",\"m_prime\":\"22F8D76B8EEC5B8E8AB10B00165CDCB1638733CEC1DAA82D8E2D1DF64EAEA8CE\",\"t\":\"10ACE2A8623DCB973DF484C9634FB4DC94BA9097F89ABA3C5863693F9EC5F223\",\"t_prime\":\"236B85805AD43E4EEA0DE3A03A764BF717805EC5AADEEAD2566B485B7CAC81D1\",\"m2\":\"1BA5E259DB355BC7D8A7DB2B76E6CA77F6BF7EFA08D19E7F533836005F6FBAB3\",\"s\":\"0B1339A60E431657FFDACA6D5C79CC964471B7595B4D34562AAD8E4648E78A82\",\"c\":\"16608A5E3549E73F2F6A32D54D8AE8B0B2DF36DDE1410876BFE20287CB069E63\"},\"c_list\":{\"e\":\"6 38732649A4C651FABABE98F14CF92AF6F2217F528540B3AC499D80D35D494055 4 3F966F47E48797FB2CEA9B6318782FA70B77880DABDCAF2E0C0EA99351EA842F 4 30738E44CA85F08F501F3E7D53D0F87DEB42862769EBD8B13D062A2F33432A93\",\"d\":\"6 474DE704E04EA60150D37B39FEF9C87908CA371D20A2C3509864591699723647 4 04180C1A54CFE8B2225F09DF98469B26DFE703D1E3596E9E17DA0596F9364DBA 4 2CD33754BC31C6DFC3D265B10255B6C768AD491EF4858DACF6464C95F449F3AB\",\"a\":\"6 4B639F55DECFBC5C3DCEF78E043F5056702E9A24FF62BEF53D5C658AEC998640 4 1E87C680AE0FE4C144C02C2C6D9BFBB6319C3F68DAD161FEE52FF7C9E3B7A5E4 4 1B3FDF399DD2CE9416CBCF9F2DF371CCDADDD26C60882AE6DF55921A6009D07A\",\"g\":\"6 42184EA20FFB2329573A01CD5DE5BA48968E8C6CC0840931B31B410AEFE66B87 4 30CF73E43C59393CEB521ADE04CBD1268039521080C2282B459C0A110866F3F0 4 1C52F59F00FEE09872C01AEAE0AB76A15AD2F00CCDB99B73BEC14EFB3BE7A75E\",\"w\":\"21 13A9D8DB787AD569B83F83E3E4D85D01C1FD50E61ABB41BBAF62CEAA157033180 21 12C955A1AB9842C62A7A3A023A6A34EA3B5C966780A00F5175B1CD5D25D87A1FF 6 6608A8E039569F56F4221EA7B4BDEF52DC0D9F073728700ADEA2F695F9DB4853 4 1AE01005403C489AC15C9349BC2D8D43B34D3C43D0D828F238DA4F742B35260B 6 52AB4701947804C7F3B17D7F22F35DE50483B588AF74C5EA122F508D2D634B74 4 073118B2C588D05F7DCDB3D8C2EA322663DAA589F081C36A28C6220B990793CB\",\"s\":\"21 11AA1CEE4FB15EEBAA34BF79C5BA75A0D22064288FE8D64CEEBBABF24F6D37903 21 113CE1CE8533D17F54BEC9490B3FD3601CDBFC8B04B0B8948F930EBA3E67C8CFF 6 55814737228E6B608EE44B894863605890FB81528C7A67FC0857B73FD9438F5B 4 309834112A9A043C0AF59BBC2BC47D72A258FDA266237FD780925D7AB9A6F43C 6 79E87F6D2789925E22F89F0E5E86B15E26B1259B2EAEE8A86AAF8A38D724A123 4 1A8ABBC77FABDF0C3F3223D9D81F51481E28967A33636CD598878F4483F6B6CA\",\"u\":\"21 12846FAFA8E2998E260BE514A492CA4101F0206BE1C46293F736BB027CBCD7D66 21 13581B75D34A2413C50178B4337DA5C8B4056639057DCCF2DDE6563E200BCCFC6 6 64EA09AD4A1E3C6BCC7EBFF9C3AAD7FEFDE17D2D12517FB3644C891D91B579FA 4 31C98A8C89C90961D814CC181F6036C810DDFC9C8D62703DBBC0EEFAEB5EE73B 6 720417974AA223B2375B13837CDB3D5CC2542EDBAF7B9192CB414CD40A191DF1 4 0BCDF714766E1EB0CF923BF54D954ABFF39A2BACACE00E4E2B73AA86B420E8F9\"}}}],\"aggregated_proof\":{\"c_hash\":\"57204176382419527374101370361393524337764538734535251618083733237783975439070\",\"c_list\":[[4,15,88,167,248,56,102,147,80,24,31,234,110,102,161,67,43,125,207,87,179,56,8,40,221,242,70,202,231,69,195,248,205,25,33,90,195,219,255,23,52,105,221,133,186,132,167,223,162,68,186,75,179,189,1,65,254,76,96,125,100,40,5,100,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,24,49,229,206,52,10,42,52,195,227,91,45,94,133,85,241,105,195,178,217,81,190,25,203,16,149,93,186,44,71,119,190,1,95,192,234,30,175,215,56,136,133,100,233,140,112,56,244,95,204,69,128,213,21,233,94,147,116,37,153,242,52,209,138,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,36,122,151,5,113,228,166,236,38,129,222,222,49,212,15,96,103,229,3,25,28,79,37,225,177,177,237,134,6,66,27,119,27,109,135,41,214,232,251,152,184,10,32,74,82,207,40,195,103,231,154,242,187,30,231,218,67,106,190,128,121,155,131,113,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,34,66,12,235,45,42,171,239,205,121,131,31,41,208,82,246,226,170,49,76,126,165,225,43,128,172,54,126,88,20,128,19,25,223,36,170,76,242,212,148,63,33,235,54,137,148,140,196,40,65,151,62,212,181,189,243,6,88,75,235,151,114,54,232,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[2,220,197,124,183,58,58,157,142,103,86,147,145,21,36,119,22,117,86,200,99,115,154,196,120,116,80,24,138,230,36,177,30,81,86,105,168,250,240,169,14,34,93,141,158,208,228,138,226,86,195,111,234,35,121,40,171,132,129,53,97,162,190,76,17,198,236,135,230,125,232,215,65,239,184,64,2,185,53,15,32,100,138,152,2,23,237,183,77,53,137,194,42,13,147,224,15,251,118,253,30,27,80,73,207,230,147,236,203,187,117,137,203,187,203,51,255,14,254,57,110,87,140,174,202,247,155,13],[6,4,32,235,21,24,190,211,121,184,190,97,209,193,204,252,84,165,232,105,66,242,136,146,55,150,198,158,138,75,9,42,20,94,45,147,73,55,47,29,238,14,37,159,3,138,207,149,38,169,47,201,12,26,72,119,103,113,204,39,9,237,140,171,30,138,231,25,58,230,106,18,39,185,248,42,210,252,84,207,80,156,11,152,33,1,126,84,180,236,37,83,219,45,36,100,8,178,133,234,236,77,114,247,114,116,96,227,221,115,73,209,254,192,44,154,95,138,75,225,140,115,158,153,117,247,46,120],[16,44,243,209,174,98,186,130,29,56,38,87,123,124,238,122,203,120,31,253,232,19,226,74,204,75,162,51,66,66,45,186,9,6,138,241,64,162,56,111,131,25,104,172,138,235,27,138,139,39,130,101,227,74,72,192,159,162,90,203,62,206,169,103,26,216,166,16,244,46,39,151,224,100,180,118,36,16,47,226,176,52,23,161,20,206,124,249,124,111,169,38,165,248,85,186,20,108,129,30,247,163,11,93,67,207,172,13,205,19,137,217,20,51,12,20,189,188,141,172,216,195,210,122,166,225,240,176],[180,131,235,194,141,158,164,112,75,71,68,181,71,3,222,45,131,147,72,120,36,190,183,145,119,59,94,109,178,83,240,117,200,139,183,234,120,1,110,141,136,165,42,78,208,133,128,142,129,225,90,76,185,141,133,255,168,176,156,198,205,174,109,95,175,11,53,125,245,234,195,119,40,130,113,52,218,73,76,203,177,234,76,126,241,151,118,123,75,50,61,64,142,89,4,43,204,101,133,151,134,232,55,175,118,177,0,30,39,220,62,41,191,69,69,176,24,176,190,231,153,46,1,224,26,77,218,181,22,139,97,9,101,122,140,126,141,227,30,235,59,32,28,156,131,249,221,32,2,105,209,58,36,113,168,135,218,59,229,111,101,184,187,104,186,9,42,160,169,62,171,119,200,240,34,22,132,162,120,81,95,241,137,102,7,179,13,132,28,103,203,185,8,79,241,36,7,197,92,180,229,209,207,178,255,134,226,94,183,236,213,184,164,53,139,255,206,186,94,215,173,161,15,160,235,255,163,132,248,68,184,47,160,1,57,39,255,49,113,237,48,199,71,242,219,32,146,28,55,139,17,40,149,67,9,149]]}},\"requested_proof\":{\"revealed_attrs\":{\"reft\":{\"sub_proof_index\":0,\"raw\":\"test\",\"encoded\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"}},\"self_attested_attrs\":{},\"unrevealed_attrs\":{},\"predicates\":{}},\"identifiers\":[{\"schema_id\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\",\"cred_def_id\":\"55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag\",\"rev_reg_id\":\"55GkHamhTU1ZbTbV2ab9DE:4:55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag:CL_ACCUM:default\",\"timestamp\":1656323735}]}";
+
+        //    //Act
+        //    Presentation actual = await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
+
+        //    //Assert
+        //    _ = actual.Should().BeOfType<Presentation>();
+        //    _ = actual.Identifiers[0].CredentialDefinitionId.Should().Be("55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag");
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when given empty string.")]
+        //public async Task CreatePresentationFromJsonAsyncThrowsIndexOutOfBoundsException()
+        //{
+        //    //Arrange
+        //    string presentationJson = "";
+
+        //    //Act
+        //    Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
+
+        //    //Assert
+        //    _ = await act.Should().ThrowAsync<AnoncredsRsException>();
+        //}
+
+        //[Test, TestCase(TestName = "CreatePresentationFromJsonAsync() throws AnoncredsRsException when given invalid json string.")]
+        //public async Task CreatePresentationFromJsonAsyncThrowsAnoncredsRsException()
+        //{
+        //    //Arrange
+        //    string presentationJson = "{}";
+
+        //    //Act
+        //    Func<Task> act = async () => await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
+
+        //    //Assert
+        //    _ = await act.Should().ThrowAsync<AnoncredsRsException>();
+        //}
         #endregion
 
         #region Tests for VerifyPresentationAsync
@@ -970,17 +969,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             List<RevocationRegistryDefinition> revRegDefinitions = new() { revRegDefObject };
 
-            string revRegJson = "{\"ver\":\"1.0\",\"value\":{\"accum\":\"21 12A1996B8EBA47C9E7CEA41963DF05F99FDB6E9B381B7C8C34BFD66BE01D1C04B 21 13FB3011CFC5A3BF41923A7F9FA3FA9A89F7169738370CB3386F3E4F4CB9FF29D 6 61492CFCB58CB8F4A17D1F5880C88FCBD6DE1348E05EC7692ACEB4C00592FED5 4 3256E2C0799403B0320EF693D67F48922A6E3B233766AE952CBE516F67F27DE8 6 876F21FBF7A1EE72C77DDE8D462C4195D0DD6CB4E3C76E9AD3948D38956DB6C7 4 26EED3F0DA48A5D5187FDA236C4B8FDAB6DF072CA7C1D18B4F6BFD81D72BE731\"}}";
-            RevocationRegistry revRegObject = await RevocationApi.CreateRevocationRegistryFromJsonAsync(revRegJson);
-            List<RevocationRegistryEntry> revRegistries = new()
-            {
-                new RevocationRegistryEntry
-                {
-                    DefEntryIdx = 0,
-                    Entry = revRegObject.Handle,
-                    Timestamp = timestamp
-                }
-            };
+            RevocationStatusList revocationStatusList = await RevocationApi.CreateRevocationStatusListAsync(
+                revRegDefObject.CredentialDefinitionId, revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             string presentationJson = "{\"proof\":{\"proofs\":[{\"primary_proof\":{\"eq_proof\":{\"revealed_attrs\":{\"attr\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"},\"a_prime\":\"22787947532665702942166390265565099820863799587030609859364101947347429956006178433736182956558680217451360098070400415842618416586813209500267111752188923151298858777205206383545858632930505476551131457277377652820989619031780149993288820195069310942122913730689119829340750366182236664539501596260514894650983980623701649527364749330998285260704338497630597378327025502438431858516849741910716399356638178657965616831942802640713754838111099765928053264003133303245178307245238269379969657844386541201731429479010183162613731023271140443137949920801708151362109823177071910561747744940225633896803721317669782358421\",\"e\":\"69124141745661451232422071833447747082810057151848226659717004723245660321643866206894483809434372484419787675271515845575181681885576485\",\"v\":\"502483187879133716417096480006386205327995711270888126778869121855278753425593998422963838651347769608503283807649516512880075823986911920658063448216074566307723181816414360454851464182162626545924978908908754080967539118089711545270393292866557588250787116479546341674975985851318791108768074114121210355659608509113854257493677851780112011053516065048781059761361613409853017535033453997896416355511480069057755205220463158986451933726626781714019352189004060699441752283027199173688877273426479931600413051842909026732192148129355030099736087987835032879264302949802085989635543207730170481446080695187580698323015118647125807401471446437413140532020293604881927856270725677607294897411796868074908977878774588588258946655011556630640214442071918831131351471397679508616542608467322074771091661348278136342901709870360635291451103144692305647239100786223515212569094457685892676825400988189774258596242950852693022055\",\"m\":{\"master_secret\":\"2307093772458771039711933057912384843500743528411547595991148149387405897463262936047925219917981120668180047862724912654604570684672680548843949939043365133411527271086042486203\"},\"m2\":\"3350007083872569628769486907745210896506907039493766347465000482213910452825573519528617062976602075306102068308540480111571831600569611213574129530137747\"},\"ge_proofs\":[]},\"non_revoc_proof\":{\"x_list\":{\"rho\":\"1C3AC92D0868D6AD9F124B88E0AA66ED2F3BBC2401AE52A4512CDEC68B82078D\",\"r\":\"0D0387C22AA96E9D00AC180BF461BA40809BE312BB0FC57B392B4660F8AC02C9\",\"r_prime\":\"156475DD528D2A7F6A7711479C40A634F76A82A0AD098DEFC957CF500ADDD6F6\",\"r_prime_prime\":\"1262D4B6EE055CB7B12AC9CCC5A8C5551DC1398D925162FD63B19A7E27E47601\",\"r_prime_prime_prime\":\"1FC79BA981C70CF3FDDBEE8F3908C63F195284DA250B9F4BF0B8C444F00A1DA5\",\"o\":\"0645F0F20692FC3EB7A8AC6DF8975475D69046A3A1AA2F9454309976628CC2D6\",\"o_prime\":\"0E17AE4D4A318BE3F22B8741A9CD401EEF8EDF2571234353DE93C71F91AEB868\",\"m\":\"07AA5FC3DC804398D1E7C087241D13E05F9920BB3E72AE903EF9780BEA53F516\",\"m_prime\":\"22F8D76B8EEC5B8E8AB10B00165CDCB1638733CEC1DAA82D8E2D1DF64EAEA8CE\",\"t\":\"10ACE2A8623DCB973DF484C9634FB4DC94BA9097F89ABA3C5863693F9EC5F223\",\"t_prime\":\"236B85805AD43E4EEA0DE3A03A764BF717805EC5AADEEAD2566B485B7CAC81D1\",\"m2\":\"1BA5E259DB355BC7D8A7DB2B76E6CA77F6BF7EFA08D19E7F533836005F6FBAB3\",\"s\":\"0B1339A60E431657FFDACA6D5C79CC964471B7595B4D34562AAD8E4648E78A82\",\"c\":\"16608A5E3549E73F2F6A32D54D8AE8B0B2DF36DDE1410876BFE20287CB069E63\"},\"c_list\":{\"e\":\"6 38732649A4C651FABABE98F14CF92AF6F2217F528540B3AC499D80D35D494055 4 3F966F47E48797FB2CEA9B6318782FA70B77880DABDCAF2E0C0EA99351EA842F 4 30738E44CA85F08F501F3E7D53D0F87DEB42862769EBD8B13D062A2F33432A93\",\"d\":\"6 474DE704E04EA60150D37B39FEF9C87908CA371D20A2C3509864591699723647 4 04180C1A54CFE8B2225F09DF98469B26DFE703D1E3596E9E17DA0596F9364DBA 4 2CD33754BC31C6DFC3D265B10255B6C768AD491EF4858DACF6464C95F449F3AB\",\"a\":\"6 4B639F55DECFBC5C3DCEF78E043F5056702E9A24FF62BEF53D5C658AEC998640 4 1E87C680AE0FE4C144C02C2C6D9BFBB6319C3F68DAD161FEE52FF7C9E3B7A5E4 4 1B3FDF399DD2CE9416CBCF9F2DF371CCDADDD26C60882AE6DF55921A6009D07A\",\"g\":\"6 42184EA20FFB2329573A01CD5DE5BA48968E8C6CC0840931B31B410AEFE66B87 4 30CF73E43C59393CEB521ADE04CBD1268039521080C2282B459C0A110866F3F0 4 1C52F59F00FEE09872C01AEAE0AB76A15AD2F00CCDB99B73BEC14EFB3BE7A75E\",\"w\":\"21 13A9D8DB787AD569B83F83E3E4D85D01C1FD50E61ABB41BBAF62CEAA157033180 21 12C955A1AB9842C62A7A3A023A6A34EA3B5C966780A00F5175B1CD5D25D87A1FF 6 6608A8E039569F56F4221EA7B4BDEF52DC0D9F073728700ADEA2F695F9DB4853 4 1AE01005403C489AC15C9349BC2D8D43B34D3C43D0D828F238DA4F742B35260B 6 52AB4701947804C7F3B17D7F22F35DE50483B588AF74C5EA122F508D2D634B74 4 073118B2C588D05F7DCDB3D8C2EA322663DAA589F081C36A28C6220B990793CB\",\"s\":\"21 11AA1CEE4FB15EEBAA34BF79C5BA75A0D22064288FE8D64CEEBBABF24F6D37903 21 113CE1CE8533D17F54BEC9490B3FD3601CDBFC8B04B0B8948F930EBA3E67C8CFF 6 55814737228E6B608EE44B894863605890FB81528C7A67FC0857B73FD9438F5B 4 309834112A9A043C0AF59BBC2BC47D72A258FDA266237FD780925D7AB9A6F43C 6 79E87F6D2789925E22F89F0E5E86B15E26B1259B2EAEE8A86AAF8A38D724A123 4 1A8ABBC77FABDF0C3F3223D9D81F51481E28967A33636CD598878F4483F6B6CA\",\"u\":\"21 12846FAFA8E2998E260BE514A492CA4101F0206BE1C46293F736BB027CBCD7D66 21 13581B75D34A2413C50178B4337DA5C8B4056639057DCCF2DDE6563E200BCCFC6 6 64EA09AD4A1E3C6BCC7EBFF9C3AAD7FEFDE17D2D12517FB3644C891D91B579FA 4 31C98A8C89C90961D814CC181F6036C810DDFC9C8D62703DBBC0EEFAEB5EE73B 6 720417974AA223B2375B13837CDB3D5CC2542EDBAF7B9192CB414CD40A191DF1 4 0BCDF714766E1EB0CF923BF54D954ABFF39A2BACACE00E4E2B73AA86B420E8F9\"}}}],\"aggregated_proof\":{\"c_hash\":\"57204176382419527374101370361393524337764538734535251618083733237783975439070\",\"c_list\":[[4,15,88,167,248,56,102,147,80,24,31,234,110,102,161,67,43,125,207,87,179,56,8,40,221,242,70,202,231,69,195,248,205,25,33,90,195,219,255,23,52,105,221,133,186,132,167,223,162,68,186,75,179,189,1,65,254,76,96,125,100,40,5,100,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,24,49,229,206,52,10,42,52,195,227,91,45,94,133,85,241,105,195,178,217,81,190,25,203,16,149,93,186,44,71,119,190,1,95,192,234,30,175,215,56,136,133,100,233,140,112,56,244,95,204,69,128,213,21,233,94,147,116,37,153,242,52,209,138,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,36,122,151,5,113,228,166,236,38,129,222,222,49,212,15,96,103,229,3,25,28,79,37,225,177,177,237,134,6,66,27,119,27,109,135,41,214,232,251,152,184,10,32,74,82,207,40,195,103,231,154,242,187,30,231,218,67,106,190,128,121,155,131,113,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[4,34,66,12,235,45,42,171,239,205,121,131,31,41,208,82,246,226,170,49,76,126,165,225,43,128,172,54,126,88,20,128,19,25,223,36,170,76,242,212,148,63,33,235,54,137,148,140,196,40,65,151,62,212,181,189,243,6,88,75,235,151,114,54,232,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[2,220,197,124,183,58,58,157,142,103,86,147,145,21,36,119,22,117,86,200,99,115,154,196,120,116,80,24,138,230,36,177,30,81,86,105,168,250,240,169,14,34,93,141,158,208,228,138,226,86,195,111,234,35,121,40,171,132,129,53,97,162,190,76,17,198,236,135,230,125,232,215,65,239,184,64,2,185,53,15,32,100,138,152,2,23,237,183,77,53,137,194,42,13,147,224,15,251,118,253,30,27,80,73,207,230,147,236,203,187,117,137,203,187,203,51,255,14,254,57,110,87,140,174,202,247,155,13],[6,4,32,235,21,24,190,211,121,184,190,97,209,193,204,252,84,165,232,105,66,242,136,146,55,150,198,158,138,75,9,42,20,94,45,147,73,55,47,29,238,14,37,159,3,138,207,149,38,169,47,201,12,26,72,119,103,113,204,39,9,237,140,171,30,138,231,25,58,230,106,18,39,185,248,42,210,252,84,207,80,156,11,152,33,1,126,84,180,236,37,83,219,45,36,100,8,178,133,234,236,77,114,247,114,116,96,227,221,115,73,209,254,192,44,154,95,138,75,225,140,115,158,153,117,247,46,120],[16,44,243,209,174,98,186,130,29,56,38,87,123,124,238,122,203,120,31,253,232,19,226,74,204,75,162,51,66,66,45,186,9,6,138,241,64,162,56,111,131,25,104,172,138,235,27,138,139,39,130,101,227,74,72,192,159,162,90,203,62,206,169,103,26,216,166,16,244,46,39,151,224,100,180,118,36,16,47,226,176,52,23,161,20,206,124,249,124,111,169,38,165,248,85,186,20,108,129,30,247,163,11,93,67,207,172,13,205,19,137,217,20,51,12,20,189,188,141,172,216,195,210,122,166,225,240,176],[180,131,235,194,141,158,164,112,75,71,68,181,71,3,222,45,131,147,72,120,36,190,183,145,119,59,94,109,178,83,240,117,200,139,183,234,120,1,110,141,136,165,42,78,208,133,128,142,129,225,90,76,185,141,133,255,168,176,156,198,205,174,109,95,175,11,53,125,245,234,195,119,40,130,113,52,218,73,76,203,177,234,76,126,241,151,118,123,75,50,61,64,142,89,4,43,204,101,133,151,134,232,55,175,118,177,0,30,39,220,62,41,191,69,69,176,24,176,190,231,153,46,1,224,26,77,218,181,22,139,97,9,101,122,140,126,141,227,30,235,59,32,28,156,131,249,221,32,2,105,209,58,36,113,168,135,218,59,229,111,101,184,187,104,186,9,42,160,169,62,171,119,200,240,34,22,132,162,120,81,95,241,137,102,7,179,13,132,28,103,203,185,8,79,241,36,7,197,92,180,229,209,207,178,255,134,226,94,183,236,213,184,164,53,139,255,206,186,94,215,173,161,15,160,235,255,163,132,248,68,184,47,160,1,57,39,255,49,113,237,48,199,71,242,219,32,146,28,55,139,17,40,149,67,9,149]]}},\"requested_proof\":{\"revealed_attrs\":{\"reft\":{\"sub_proof_index\":0,\"raw\":\"test\",\"encoded\":\"72155939486846849509759369733266486982821795810448245423168957390607644363272\"}},\"self_attested_attrs\":{},\"unrevealed_attrs\":{},\"predicates\":{}},\"identifiers\":[{\"schema_id\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\",\"cred_def_id\":\"55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag\",\"rev_reg_id\":\"55GkHamhTU1ZbTbV2ab9DE:4:55GkHamhTU1ZbTbV2ab9DE:3:CL:15:tag:CL_ACCUM:default\",\"timestamp\":1656323735}]}";
             Presentation presentationObject = await PresentationApi.CreatePresentationFromJsonAsync(presentationJson);
@@ -992,7 +982,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 schemas,
                 credentialDefinitions,
                 revRegDefinitions,
-                revRegistries);
+                revocationStatusList);
 
             //Assert
             _ = actual.Should().BeTrue();

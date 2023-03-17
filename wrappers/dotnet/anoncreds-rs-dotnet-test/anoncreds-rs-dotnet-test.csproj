@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>indy_shared_rs_dotnet_test</RootNamespace>
+    <RootNamespace>anoncreds_rs_dotnet_test</RootNamespace>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\indy-shared-rs-dotnet\anoncreds-rs-dotnet.csproj" />
+    <ProjectReference Include="..\anoncreds-rs-dotnet\anoncreds-rs-dotnet.csproj" />
   </ItemGroup>
 
 </Project>

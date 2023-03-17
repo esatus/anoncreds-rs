@@ -41,7 +41,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<IntPtr> credDefHandles = (from credDef in credDefs
                                          select credDef.Handle).ToList();
             List<string> credDefIds = (from credDef in credDefs
-                                           select credDef.CredentialDefinitionId).ToList();
+                                           select credDef.IssuerId).ToList();
 
             int errorCode = NativeMethods.anoncreds_create_presentation(
                 presentationRequest.Handle,
@@ -125,7 +125,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 credDefHandles.Add(newCredDefHandle);
 
                 CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credDefJson, Settings.JsonSettings);
-                credDefIds.Add(newCredDef.CredentialDefinitionId);
+                credDefIds.Add(newCredDef.IssuerId);
             }
             
             int errorCode = NativeMethods.anoncreds_create_presentation(
@@ -188,7 +188,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<Schema> schemas,
             List<CredentialDefinition> credentialDefinitions,
             List<RevocationRegistryDefinition> revocationRegistryDefinitions,
-            List<RevocationRegistryEntry> revocationRegistryEntries)
+            RevocationStatusList revocationStatusList)
         {
             byte verify = 0;
             List<IntPtr> schemaHandles =
@@ -199,12 +199,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<IntPtr> credDefHandles =
                 (from credDef in credentialDefinitions select credDef.Handle).ToList();
             List<string> credDefIds =
-                (from credDef in credentialDefinitions select credDef.CredentialDefinitionId).ToList();
+                (from credDef in credentialDefinitions select credDef.IssuerId).ToList();
 
             List<IntPtr> revRegDefHandles =
                 (from revRegDef in revocationRegistryDefinitions select revRegDef.Handle).ToList();
             List<string> revRegDefIds =
-               (from revRegDef in revocationRegistryDefinitions select revRegDef.IssuerId).ToList();
+                (from revRegDef in revocationRegistryDefinitions select revRegDef.IssuerId).ToList();
+            List<IntPtr> revStatusHandles =
+                (from revStatus in revocationStatusList.RevocationList select new IntPtr(Convert.ToInt32(revStatus))).ToList();
 
             int errorCode = NativeMethods.anoncreds_verify_presentation(
                 presentation.Handle,
@@ -215,7 +217,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
                 FfiStrList.Create(revRegDefIds),
-                FfiUIntList.Create(revocationRegistryEntries.Select(x => x.Entry).ToList()),
+                FfiUIntList.Create(revStatusHandles),
                 ref verify);
 
             if (errorCode != 0)
@@ -276,7 +278,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 credDefHandles.Add(newCredentialDefinitionHandle);
 
                 CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credentialDefinitionJson, Settings.JsonSettings);
-                credDefIds.Add(newCredDef.CredentialDefinitionId);
+                credDefIds.Add(newCredDef.IssuerId);
             }
             foreach (string revocationRegistryDefinitionJson in revocationRegistryDefinitionJsons)
             {

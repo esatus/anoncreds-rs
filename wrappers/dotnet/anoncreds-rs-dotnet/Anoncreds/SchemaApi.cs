@@ -12,7 +12,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <summary>
         /// Creates a new <see cref="Schema"/> object.
         /// </summary>
-        /// <param name="originDid">Did of issuer.</param>
+        /// <param name="issuerUri">Did of issuer.</param>
         /// <param name="schemaName">Schema name.</param>
         /// <param name="schemaVersion">Version of schema.</param>
         /// <param name="attrNames">Names of the schema attributes.</param>
@@ -21,14 +21,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <exception cref="System.InvalidOperationException">Throws when <paramref name="attrNames"/> are empty.</exception>
         /// <returns>A new <see cref="Schema"/> object.</returns>
         public static async Task<Schema> CreateSchemaAsync(
-            string originDid, 
+            string issuerUri, 
             string schemaName, 
             string schemaVersion, 
             List<string> attrNames 
             )
         {
             IntPtr schemaObjectHandle = new IntPtr();
-            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStr.Create(originDid), FfiStrList.Create(attrNames), ref schemaObjectHandle);
+            int errorCode = NativeMethods.anoncreds_create_schema(FfiStr.Create(schemaName), FfiStr.Create(schemaVersion), FfiStr.Create(issuerUri), FfiStrList.Create(attrNames), ref schemaObjectHandle);
 
             if (errorCode != 0)
             {

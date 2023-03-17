@@ -26,7 +26,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Act
             string schemaId = schemaObject.IssuerId;
-            CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.CredentialDefinitionId, keyProof);
+            CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.IssuerId, keyProof);
 
             //Assert
             _ = testObject.Should().BeOfType(typeof(CredentialOffer));
@@ -97,7 +97,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             }
 
             //Act
-            Func<Task> act = async () => await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.CredentialDefinitionId, keyProof);
+            Func<Task> act = async () => await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.IssuerId, keyProof);
 
             //Assert
             _ = await act.Should().ThrowAsync<Exception>();

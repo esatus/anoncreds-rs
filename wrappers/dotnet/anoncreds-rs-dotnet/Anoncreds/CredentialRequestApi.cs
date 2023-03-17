@@ -19,15 +19,17 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/>.</returns>
         public static async Task<(CredentialRequest, CredentialRequestMetadata)> CreateCredentialRequestAsync(
-            string proverDid,
+            string entropy,
             CredentialDefinition credentialDefinition,
             MasterSecret masterSecret,
             string masterSecretId,
-            CredentialOffer credentialOffer)
+            CredentialOffer credentialOffer,
+            string proverDid = null)
         {
             IntPtr requestHandle = new IntPtr();
             IntPtr metadataHandle = new IntPtr();
             int errorCode = NativeMethods.anoncreds_create_credential_request(
+                FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credentialDefinition.Handle,
                 masterSecret.Handle,
@@ -57,11 +59,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/> as JSON strings.</returns>
         public static async Task<(string, string)> CreateCredentialRequestJsonAsync(
-            string proverDid,
+            string entropy,
             string credentialDefinitionJson,
             string masterSecretJson,
             string masterSecretId,
-            string credentialOfferJson)
+            string credentialOfferJson,
+            string proverDid = null)
         {
             IntPtr credDefObjectHandle = new IntPtr();
             IntPtr masterSecretObjectHandle = new IntPtr();
@@ -74,6 +77,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr requestHandle = new IntPtr();
             IntPtr metadataHandle = new IntPtr();
             int errorCode = NativeMethods.anoncreds_create_credential_request(
+                FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credDefObjectHandle,
                 masterSecretObjectHandle,

@@ -136,7 +136,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObject.Handle,
-                FfiStr.Create(credDefObject.CredentialDefinitionId),
+                FfiStr.Create(credDefObject.IssuerId),
                 FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),
@@ -185,7 +185,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObjectHandle,
-                FfiStr.Create(credDefObject.CredentialDefinitionId),
+                FfiStr.Create(credDefObject.IssuerId),
                 FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),

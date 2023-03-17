@@ -51,7 +51,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region CredentialRequest
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_credential_request(FfiStr proverDid, IntPtr credDefObjectHandle, IntPtr masterSecretObjectHandle, FfiStr masterSecretId, IntPtr credOfferObjectHandle, ref IntPtr credReqObjectHandle, ref IntPtr credReqMetaObjectHandle);
+        internal static extern int anoncreds_create_credential_request(FfiStr entropy, FfiStr proverDid, IntPtr credDefObjectHandle, IntPtr masterSecretObjectHandle, FfiStr masterSecretId, IntPtr credOfferObjectHandle, ref IntPtr credReqObjectHandle, ref IntPtr credReqMetaObjectHandle);
         
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_credential_request_from_json(ByteBuffer credReqJson, ref IntPtr credReqObjectHandle);

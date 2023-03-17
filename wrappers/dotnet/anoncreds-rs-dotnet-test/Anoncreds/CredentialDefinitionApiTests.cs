@@ -160,7 +160,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Assert
             _ = actual.Should().BeOfType<CredentialDefinition>();
-            _ = actual.CredentialDefinitionId.Should().Be(id);
+            _ = actual.IssuerId.Should().Be(id);
             _ = actual.SchemaId.Should().Be(schemaId);
         }
 

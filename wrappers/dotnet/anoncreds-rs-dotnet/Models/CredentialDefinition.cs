@@ -10,7 +10,7 @@ namespace anoncreds_rs_dotnet.Models
 
         // TODO : IssuerId oder so lassen? sieht auch bei Schema classe
         [JsonProperty("issuerId")]
-        public string CredentialDefinitionId { get; set; }
+        public string IssuerId { get; set; }
 
         [JsonProperty("schemaId")]
         public string SchemaId { get; set; }
