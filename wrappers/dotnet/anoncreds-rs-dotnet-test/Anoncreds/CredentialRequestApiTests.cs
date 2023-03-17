@@ -34,14 +34,14 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialRequestJsonAsyncWorks()
         {
             //Arrange
-            CredentialDefinition mockCredDef = (await MockDataProvider.MockCredDef()).Item1;
-            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            string mockCredDefJson = (await MockDataProvider.MockCredDefJson()).Item1;
+            string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
             string mockEntropy = "mockEntropy";
             string mockMasterSecretName = "mockMasterSecretName";
-            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            string mockMasterSecretJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
 
             //Act
-            (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, JsonConvert.SerializeObject(mockCredDef), JsonConvert.SerializeObject(mockMasterSecret), mockMasterSecretName, JsonConvert.SerializeObject(mockCredOffer));
+            (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockMasterSecretJson, mockMasterSecretName, mockCredOfferJson);
 
             //Assert
             _ = request.Should().NotBeNullOrEmpty();
