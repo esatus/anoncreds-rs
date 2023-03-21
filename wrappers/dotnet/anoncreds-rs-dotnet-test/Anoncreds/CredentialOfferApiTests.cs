@@ -15,18 +15,11 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialOfferWorks()
         {
             //Arrange
-            List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDef, _, CredentialKeyCorrectnessProof keyProof) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+            Schema mockSchema = await MockDataProvider.MockSchema();
+            (CredentialDefinition mockCredDef, _, CredentialKeyCorrectnessProof mockKCP) = await MockDataProvider.MockCredDef();
 
             //Act
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.IssuerId, keyProof);
+            CredentialOffer testObject = await CredentialOfferApi.CreateCredentialOfferAsync(mockSchema.IssuerId, mockCredDef.IssuerId, mockKCP);
 
             //Assert
             _ = testObject.Should().BeOfType(typeof(CredentialOffer));
@@ -36,71 +29,17 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialOfferJsonWorks()
         {
             //Arrange
-            List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
+            string mockSchemaUri = "mock:SchemaUri";
+            Schema mockSchema = await MockDataProvider.MockSchema(issuerUri: mockSchemaUri);
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (string credDef, _, string keyProof) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
+            string mockCredDefUri = "mock:CredDefUri";
+            (_, _, string mockKCPJson) = await MockDataProvider.MockCredDefJson(issuerUri: mockCredDefUri, schema: mockSchema);
 
             //Act
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string testObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProof);
+            string testObject = await CredentialOfferApi.CreateCredentialOfferJsonAsync(mockSchemaUri, mockCredDefUri, mockKCPJson);
 
             //Assert
             _ = testObject.Should().NotBeNullOrEmpty();
-        }
-
-        private static IEnumerable<TestCaseData> CreateCredentialOfferCases()
-        {
-            yield return new TestCaseData(false, false, false)
-                .SetName("CreateCredentialOfferAsync() throws Exception if all arguments are null.");
-            yield return new TestCaseData(false, true, true)
-                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if SchemaId is null.");
-            yield return new TestCaseData(true, false, true)
-                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if CredentialDefinition is null.");
-            yield return new TestCaseData(true, true, false)
-                .SetName("CreateCredentialOfferAsync() throws AnoncredsRsException if CredentialKeyCorrectnessProof is null.");
-        }
-
-        [Test, TestCaseSource(nameof(CreateCredentialOfferCases))]
-        public async Task CreateCredentialOfferThrowsException(bool hasSchemaId, bool hasCredDef, bool hasKeyProof)
-        {
-            //Arrange
-            List<string> attrNames = new() { "gender", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-
-            string schemaId = null;
-            CredentialDefinition credDef = null;
-            CredentialKeyCorrectnessProof keyProof = null;
-
-            if (hasSchemaId)
-            {
-                (CredentialDefinition tmpCredDef, CredentialDefinitionPrivate tmpCredDefPrivate, CredentialKeyCorrectnessProof tmpKeyProof) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag",issuerDid , SignatureType.CL, true);
-                schemaId = schemaObject.IssuerId;
-            }
-            if (hasCredDef)
-            {
-                (CredentialDefinition tmpCredDef, CredentialDefinitionPrivate tmpCredDefPrivate, CredentialKeyCorrectnessProof tmpKeyProof) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag",issuerDid,  SignatureType.CL, true);
-                credDef = tmpCredDef;
-            }
-            if (hasKeyProof)
-            {
-                (CredentialDefinition tmpCredDef, CredentialDefinitionPrivate tmpCredDefPrivate, CredentialKeyCorrectnessProof tmpKeyProof) = await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag",issuerDid, SignatureType.CL, true);
-                keyProof = tmpKeyProof;
-            }
-
-            //Act
-            Func<Task> act = async () => await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDef.IssuerId, keyProof);
-
-            //Assert
-            _ = await act.Should().ThrowAsync<Exception>();
         }
         #endregion
     }

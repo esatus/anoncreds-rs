@@ -121,7 +121,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         internal static extern int anoncreds_create_presentation(
             IntPtr presReqObjectHandle,
             FfiCredentialEntryList credentials,
-            FfiCredentialProveList credentialsProof,
+            FfiCredentialProveList credentialsProve,
             FfiStrList selfAttestNames,
             FfiStrList selfAttestValues,
             IntPtr masterSecret,
@@ -147,6 +147,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiUIntList revRegDefObjectHandles,
             FfiStrList revRegDefIds,
             FfiUIntList revStatusObjectHandles,
+            FfiNonrevokedIntervalOverrideList ffiNonrevokedIntervalOverride,
             ref byte verifyResult);
         #endregion
 

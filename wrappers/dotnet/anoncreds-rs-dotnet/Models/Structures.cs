@@ -222,6 +222,26 @@ namespace anoncreds_rs_dotnet.Models
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct FfiNonrevokedIntervalOverride
+        {
+            public FfiStr RevRegDefId;
+            public long RequestedFromTs;
+            public long OverrideRevStatusListTs;
+
+            public static FfiNonrevokedIntervalOverride Create(NonrevokedIntervalOverride intervalOverride)
+            {
+                FfiNonrevokedIntervalOverride result = new FfiNonrevokedIntervalOverride()
+                {
+                    RevRegDefId = FfiStr.Create(intervalOverride.RevRegDefId),
+                    RequestedFromTs = intervalOverride.RequestedFromTs,
+                    OverrideRevStatusListTs = intervalOverride.OverrideRevStatusListTs
+                };
+
+                return result;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public unsafe struct FfiCredentialEntryList
         {
             public IntPtr count;
@@ -391,6 +411,51 @@ namespace anoncreds_rs_dotnet.Models
                 else
                 {
                     return Create(new List<RevocationRegistryEntry>());
+                }
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct FfiNonrevokedIntervalOverrideList
+        {
+            public IntPtr count;
+            public FfiNonrevokedIntervalOverride* data;
+
+            public static FfiNonrevokedIntervalOverrideList Create(NonrevokedIntervalOverride[] args)
+            {
+                FfiNonrevokedIntervalOverrideList list = new FfiNonrevokedIntervalOverrideList();
+
+                if (args != null && args.Any())
+                {
+                    list.count = (IntPtr)args.Length;
+                    FfiNonrevokedIntervalOverride[] ffiNIOs = new FfiNonrevokedIntervalOverride[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        ffiNIOs[i] = FfiNonrevokedIntervalOverride.Create(args[i]);
+                    }
+                    fixed (FfiNonrevokedIntervalOverride* ffiNIOP = &ffiNIOs[0])
+                    {
+                        list.data = ffiNIOP;
+                    }
+                }
+                else
+                {
+                    list.count = IntPtr.Zero;
+                    list.data = null;
+                }
+
+                return list;
+            }
+
+            public static FfiNonrevokedIntervalOverrideList Create(List<NonrevokedIntervalOverride> args)
+            {
+                if (args != null)
+                {
+                    return Create(args.ToArray());
+                }
+                else
+                {
+                    return Create(new List<NonrevokedIntervalOverride>());
                 }
             }
         }

@@ -1,5 +1,8 @@
 ﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
+using Newtonsoft.Json;
+using NUnit.Framework.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -157,6 +160,94 @@ namespace anoncreds_rs_dotnet_test
 
             (CredentialRequestJson, CredentialRequestMetadataJson) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockMasterSecretJson, mockMasterSecretName, mockCredOfferJson);
             return (CredentialRequestJson, CredentialRequestMetadataJson);
+        }
+
+        public static async Task<PresentationRequest> MockPresReq(string name = "ProofRequest", string version = "1.0", List<AttributeInfo> requestedAttributes = null, List<PredicateInfo> requestedPredicates = null)
+        {
+            string nonce = await PresentationRequestApi.GenerateNonceAsync();
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            string requestedAttributesString =
+                "\"attributeKey1\": " +
+                    "{" +
+                        "\"name\":\"attribute1\"," +
+                        "\"value\":\"value1\"," +
+                        "\"names\": [], " +
+                        "\"non_revoked\":" +
+                        "{ " +
+                            $"\"from\": {timestamp}, " +
+                            $"\"to\": {timestamp}" +
+                        "}" +
+                    "}";
+            if (requestedAttributes != null)
+            {
+                requestedAttributesString = "";
+                int i = 1;
+                foreach (var attribute in requestedAttributes)
+                {
+                    if (i > 1)
+                    {
+                        requestedAttributesString += ", ";
+                    }
+                    requestedAttributesString += $"\"attributeKey{i}\": ";
+                    requestedAttributesString += JsonConvert.SerializeObject(attribute);
+                    i += 1;
+                }
+            }
+            string requestedPredicatesString;
+            if (requestedPredicates != null)
+            {
+                requestedPredicatesString = "";
+                int i = 1;
+                foreach (var predicate in requestedPredicates)
+                {
+                    if (i > 1)
+                    {
+                        requestedPredicatesString += ", ";
+                    }
+                    requestedPredicatesString += $"\"predicateKey{i}\": ";
+                    requestedPredicatesString += JsonConvert.SerializeObject(predicate);
+                    i += 1;
+                }
+            }
+            string presReqJson = "{" +
+                $"\"name\": \"{name}\", " +
+                $"\"version\": \"{version}\", " +
+                $"\"nonce\": \"{nonce}\", " +
+                "\"requested_attributes\": {" +
+                $"{requestedAttributesString}" +
+                "}, \"revealed_attrs_groups\": {}," +
+                "\"requested_predicates\": {}, " +
+                "\"non_revoked\": " +
+                "{ " +
+                    $"\"from\": {timestamp}," +
+                    $"\"to\": {timestamp}" +
+                "}," +
+                "\"ver\": \"1.0\"" +
+                "}";
+            return await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
+        }
+
+        public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest = null,
+            List<CredentialEntry> credentialEntries = null,
+            List<CredentialProof> credentialProofs = null,
+            List<string> selfAttestNames = null,
+            List<string> selfAttestValues = null,
+            MasterSecret masterSecret = null,
+            List<Schema> schemas = null,
+            List<CredentialDefinition> credentialDefinitions = null)
+        {
+            PresentationRequest mockPresentationRequest = presentationRequest ?? await MockPresReq();
+            List<CredentialEntry> mockCredentialEntries = credentialEntries ?? new List<CredentialEntry>() {  };
+            List<CredentialProof> mockCredentialProofs = credentialProofs ?? new List<CredentialProof>() {  };
+            List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { "attribute1",  };
+            List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "value1" };
+            MasterSecret mockMasterSecret = masterSecret ?? await MasterSecretApi.CreateMasterSecretAsync();
+            List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
+            List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };
+
+
+            return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
+                mockSelfAttestNames, mockSelfAttestValues, mockMasterSecret, mockSchemas, mockCredentialDefinitions);
         }
     }
 }
