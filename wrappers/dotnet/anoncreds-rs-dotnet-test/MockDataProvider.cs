@@ -249,5 +249,25 @@ namespace anoncreds_rs_dotnet_test
             return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
                 mockSelfAttestNames, mockSelfAttestValues, mockMasterSecret, mockSchemas, mockCredentialDefinitions);
         }
+
+        public static async Task<(List<string>, List<string>, List<string>)> MockAttrValues(Schema schema = null)
+        {
+            Schema mockSchema = schema ?? await MockSchema();
+
+            List<string> attrNames = new List<string>();
+            List<string> attrValuesRaw = new List<string>();
+
+            int i = 1;
+            foreach (string attr in mockSchema.AttrNames)
+            {
+                attrNames.Add(attr);
+                attrValuesRaw.Add($"value{i}");
+                i += 1;
+            }
+
+            List<string> attrValuesEncoded = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
+
+            return(attrNames, attrValuesRaw, attrValuesEncoded);
+        }
     }
 }

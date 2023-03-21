@@ -166,19 +166,14 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateSchemaFromJsonAsyncWorks()
         {
             //Arrange
-            string schemaJson = "{" +
-               "\"name\":\"schema name\"," +
-               "\"version\":\"schema version\"," +
-               "\"attrNames\":[\"attr\"]," +
-               "\"issuerId\":\"NcYxiDXkpYi6ov5FcYDi1e\"" +
-               "}";
+            string schemaJson = await MockDataProvider.MockSchemaJson();
 
             //Act
             Schema actual = await SchemaApi.CreateSchemaFromJsonAsync(schemaJson);
 
             //Assert
             _ = actual.Should().BeOfType<Schema>();
-            _ = actual.IssuerId.Should().Be("NcYxiDXkpYi6ov5FcYDi1e");
+            _ = actual.IssuerId.Should().Be("mock:SchemaIssuerUri");
         }
 
         [Test, TestCase(TestName = "CreateSchemaFromJsonAsync() throws a AnoncredsRsException if an empty json string is provided.")]

@@ -41,7 +41,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             Credential credObject = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPrivate, mockCredOffer, mockCredRequest, requestedAttributes.Select(x => x.Name).ToList() , attrValuesRaw, attrValuesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
@@ -902,7 +902,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
             List<RevocationRegistryDefinition> revRegDefinitions = new() { revRegDefObject };
 
             Presentation presentationObject = await MockDataProvider.MockPresentation();
