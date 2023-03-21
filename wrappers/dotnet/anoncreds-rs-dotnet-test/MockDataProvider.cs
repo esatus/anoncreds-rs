@@ -271,5 +271,29 @@ namespace anoncreds_rs_dotnet_test
 
             return(attrNames, attrValuesRaw, attrValuesEncoded);
         }
+
+        public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate)> MockRevRegDef(CredentialDefinition credDef = null,
+            RegistryType registryType = RegistryType.CL_ACCUM,
+            int maxCredNumber = 100,
+            string tailsPath = null)
+        {
+            CredentialDefinition mockCredDef = credDef ?? (await MockCredDef()).Item1;
+            string mockUri = mockCredDef.IssuerId;
+            string mockCredDefTag = mockCredDef.Tag;
+
+            return await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, mockCredDef, mockCredDefTag, registryType, maxCredNumber, tailsPath);
+        }
+
+        public static async Task<RevocationStatusList> MockRevStatusList(RevocationRegistryDefinition revRegDef = null,
+            string issuerId = null,
+            long timestamp = 0,
+            IssuerType issuerType = IssuerType.ISSUANCE_BY_DEFAULT)
+        {
+            RevocationRegistryDefinition mockRevRegDef = revRegDef ?? (await MockRevRegDef()).Item1;
+            string mockUri = issuerId ?? "mock:CredDefIssuerUri";
+            long mockTimestamp = timestamp == 0 ? DateTimeOffset.Now.ToUnixTimeSeconds() : timestamp;
+
+            return await RevocationApi.CreateRevocationStatusListAsync(revRegDef.IssuerId, mockRevRegDef, mockUri, mockTimestamp, issuerType);
+        }
     }
 }
