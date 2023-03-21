@@ -12,6 +12,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<RevocationStatusList> CreateRevocationStatusListAsync(
             string revRegDefId,
             RevocationRegistryDefinition revRegDefObject,
+            string issuerId,
             long timestamp,
             IssuerType issuanceType//byte issuanceByDefault
             )
@@ -21,6 +22,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_create_revocation_status_list(
                 FfiStr.Create(revRegDefId),
                 revRegDefObject.Handle,
+                FfiStr.Create(issuerId),
                 timestamp,
                 issuanceType.Equals(IssuerType.ISSUANCE_BY_DEFAULT) ? Convert.ToByte(true) : Convert.ToByte(false),
                 ref revStatusListObjectHandle);
@@ -38,6 +40,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<string> CreateRevocationStatusListJsonAsync(
             string revRegDefId,
             string revRegDefJson,
+            string issuerId,
             long timestamp,
             IssuerType issuanceType//byte issuanceByDefault
             )
@@ -50,6 +53,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_create_revocation_status_list(
                 FfiStr.Create(revRegDefId),
                 revRegDefObjectHandle,
+                FfiStr.Create(issuerId),
                 timestamp,
                 issuanceType.Equals(IssuerType.ISSUANCE_BY_DEFAULT) ? Convert.ToByte(true) : Convert.ToByte(false),
                 ref revStatusListObjectHandle);

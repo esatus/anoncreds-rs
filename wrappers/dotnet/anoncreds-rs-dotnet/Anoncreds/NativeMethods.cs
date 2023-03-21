@@ -156,6 +156,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         internal static extern int anoncreds_create_revocation_status_list(
             FfiStr revRegDefId,
             IntPtr revRegDefObjectHandle,
+            FfiStr issuerId,
             long timestamp,
             byte issuanceByDefault,
             ref IntPtr revStatusListObjectHandle);

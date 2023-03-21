@@ -19,7 +19,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Arrange
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             List<string> attrNames = new() { "name", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string issuerDid = "mock:uri";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
             string testTailsPathForRevocation = null;
@@ -30,7 +30,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
             //Act
-            RevocationStatusList actual = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList actual = await RevocationApi.CreateRevocationStatusListAsync(issuerDid, revRegDefObject, issuerDid, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Assert
             _ = actual.Should().BeOfType<RevocationStatusList>();
@@ -41,7 +41,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         {
             //Arrange
             List<string> attrNames = new() { "name", "age", "sex" };
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
+            string issuerDid = "mock:Uri";
             string schemaName = "gvt";
             string schemaVersion = "1.0";
             string testTailsPathForRevocation = null;
@@ -52,7 +52,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 
             //Act
-            string actual = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefJson, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string actual = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefJson, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Assert
             _ = actual.Should().NotBeNullOrEmpty();

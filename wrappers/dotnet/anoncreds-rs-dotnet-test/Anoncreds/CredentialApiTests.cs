@@ -16,28 +16,13 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialAsyncWorks()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            (CredentialRequest mockCredReq, _) = await MockDataProvider.MockCredReq();
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
             //Act
-            Credential actual = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc);
+            Credential actual = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc);
 
             //Assert
             _ = actual.Should().NotBeNull();
@@ -69,7 +54,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(mockUri, revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(mockUri, revRegDefObject, mockUri, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Act
             Credential actual = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
@@ -155,16 +140,16 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             List<string> attrValuesRaw = new() { "value1" };
             List<string> attrValuesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
 
-            (string revRegDefObjectJson, string revRegDefPvtObjectJson) =
+            (string revRegDefJson, string revRegDefPvtJson) =
                 await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockCredDef.IssuerId, mockCredDefJson, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             (RevocationRegistryDefinition mockRevRegDef, _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync(mockRevRegDef.CredentialDefinitionId, revRegDefObjectJson, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync(mockRevRegDef.CredentialDefinitionId, revRegDefJson, mockRevRegDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Act
             string actual = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
-                attrNames, attrValuesRaw, attrValuesEnc, revStatusListJson, null, revRegDefObjectJson, revRegDefPvtObjectJson, 1);
+                attrNames, attrValuesRaw, attrValuesEnc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
 
             //Assert
             _ = actual.Should().NotBeNullOrEmpty();
@@ -199,7 +184,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             (string revRegDefObjectJson, string revRegDefPvtObjectJson) =
                 await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(issuerDid, credDefObjectJson, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Act
             Func<Task> act = async () => await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson,
@@ -366,7 +351,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
@@ -414,7 +399,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(issuerDid, credDefObjectJson, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
 
             string credObject = await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson,
