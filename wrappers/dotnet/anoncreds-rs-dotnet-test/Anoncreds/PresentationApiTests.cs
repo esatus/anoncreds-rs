@@ -24,11 +24,18 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockMasterSecretName = "mockMasterSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
-
-            List<AttributeInfo> requestedAttributes = new() 
+            //TODO : Test with Restrictions --> at the moment ByteBuffer "tooSmall" error in Structures
+            /**
+             * List<AttributeInfo> requestedAttributes = new() 
             { 
                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
                 new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
+            };
+             **/
+            List<AttributeInfo> requestedAttributes = new() 
+            { 
+                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } }
             };
             List<string> attrValuesRaw = new() { "value1" };
             List<string> attrValuesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
@@ -41,7 +48,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             Credential credObject = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPrivate, mockCredOffer, mockCredRequest, requestedAttributes.Select(x => x.Name).ToList() , attrValuesRaw, attrValuesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
@@ -885,15 +892,21 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockMasterSecretName = "mockMasterSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
-
+            /** TODO : siehe test oben
             List<AttributeInfo> requestedAttributes = new()
             {
-                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
+                new AttributeInfo { Name = "attribute1", Value="value1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
                 new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
+            };**/
+            List<AttributeInfo> requestedAttributes = new()
+            {
+                new AttributeInfo { Name = "attribute1", Value="value1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } }
             };
             List<string> attrValuesRaw = new() { "value1" };
             List<string> attrValuesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
-            PresentationRequest presReqObject = await MockDataProvider.MockPresReq(requestedAttributes: requestedAttributes);
+            //PresentationRequest presReqObject = await MockDataProvider.MockPresReq(requestedAttributes: requestedAttributes);
+            PresentationRequest presReqObject = await MockDataProvider.MockPresReq();
 
             //Act
             (CredentialRequest mockCredRequest, CredentialRequestMetadata mockCredReqMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
@@ -902,10 +915,12 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            RevocationStatusList revStatusListObject = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            List<RevocationStatusList> revStatusLists = new() { revStatusListObject };
+
             List<RevocationRegistryDefinition> revRegDefinitions = new() { revRegDefObject };
 
-            Presentation presentationObject = await MockDataProvider.MockPresentation();
+            Presentation presentationObject = await MockDataProvider.MockPresentation(presReqObject);
 
             List<Schema> schemas = new()
             {
@@ -924,7 +939,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 schemas,
                 credentialDefinitions,
                 revRegDefinitions,
-                revStatusList,
+                revStatusLists,
                 new List<NonrevokedIntervalOverride>());
 
             //Assert

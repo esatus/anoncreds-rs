@@ -166,6 +166,7 @@ namespace anoncreds_rs_dotnet_test
         {
             string nonce = await PresentationRequestApi.GenerateNonceAsync();
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            
             string requestedAttributesString =
                 "\"attributeKey1\": " +
                     "{" +
@@ -193,6 +194,7 @@ namespace anoncreds_rs_dotnet_test
                     i += 1;
                 }
             }
+
             string requestedPredicatesString;
             if (requestedPredicates != null)
             {
@@ -227,7 +229,7 @@ namespace anoncreds_rs_dotnet_test
             return await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
         }
 
-        public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest = null,
+        public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest,
             List<CredentialEntry> credentialEntries = null,
             List<CredentialProof> credentialProofs = null,
             List<string> selfAttestNames = null,
@@ -236,11 +238,11 @@ namespace anoncreds_rs_dotnet_test
             List<Schema> schemas = null,
             List<CredentialDefinition> credentialDefinitions = null)
         {
-            PresentationRequest mockPresentationRequest = presentationRequest ?? await MockPresReq();
+            PresentationRequest mockPresentationRequest = presentationRequest;
             List<CredentialEntry> mockCredentialEntries = credentialEntries ?? new List<CredentialEntry>() {  };
             List<CredentialProof> mockCredentialProofs = credentialProofs ?? new List<CredentialProof>() {  };
-            List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { "attribute1",  };
-            List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "value1" };
+            List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { presentationRequest.RequestedAttributes.First().Key,  };
+            List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "SomeValue" };
             MasterSecret mockMasterSecret = masterSecret ?? await MasterSecretApi.CreateMasterSecretAsync();
             List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
             List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };

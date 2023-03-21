@@ -225,8 +225,8 @@ namespace anoncreds_rs_dotnet.Models
         public struct FfiNonrevokedIntervalOverride
         {
             public FfiStr RevRegDefId;
-            public long RequestedFromTs;
-            public long OverrideRevStatusListTs;
+            public int RequestedFromTs;
+            public int OverrideRevStatusListTs;
 
             public static FfiNonrevokedIntervalOverride Create(NonrevokedIntervalOverride intervalOverride)
             {

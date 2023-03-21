@@ -188,7 +188,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<Schema> schemas,
             List<CredentialDefinition> credentialDefinitions,
             List<RevocationRegistryDefinition> revocationRegistryDefinitions,
-            RevocationStatusList revocationStatusList,
+            List<RevocationStatusList> revocationStatusList,
             List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides)
         {
             byte verify = 0;
@@ -207,7 +207,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> revRegDefIds =
                 (from revRegDef in revocationRegistryDefinitions select revRegDef.IssuerId).ToList();
             List<IntPtr> revStatusHandles =
-                (from revStatus in revocationStatusList.RevocationList select new IntPtr(Convert.ToInt32(revStatus))).ToList();
+                (from revStatus in revocationStatusList select revStatus.Handle).ToList();
 
             int errorCode = NativeMethods.anoncreds_verify_presentation(
                 presentation.Handle,
