@@ -295,5 +295,95 @@ namespace anoncreds_rs_dotnet_test
 
             return await RevocationApi.CreateRevocationStatusListAsync(revRegDef.IssuerId, mockRevRegDef, mockUri, mockTimestamp, issuerType);
         }
+
+        public static async Task<Credential> MockCredential(CredentialDefinition credentialDefinition = null,
+            CredentialDefinitionPrivate credentialDefinitionPrivate = null,
+            CredentialOffer credentialOffer = null,
+            CredentialRequest credentialRequest = null,
+            List<string> attributeNames = null,
+            List<string> valuesRaw = null,
+            List<string> valuesEncoded = null,
+            RevocationStatusList revocationStatusList = null,
+            string revocationRegistryId = null,
+            RevocationRegistryDefinition revocationRegistryDefinition = null,
+            RevocationRegistryDefinitionPrivate revocationRegistryDefinitionPrivate = null,
+            long regIdX = -1)
+        {
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) =
+                (credentialDefinition != null && credentialDefinitionPrivate != null)
+                ? (credentialDefinition, credentialDefinitionPrivate, null)
+                : await MockCredDef();
+            CredentialOffer mockCredOffer = credentialOffer ?? await MockCredOffer();
+            CredentialRequest mockCredReq = credentialRequest ?? (await MockCredReq()).Item1;
+
+            (List<string> mockNames, List<string> mockRaws, List<string> mockEncodeds) = 
+                (attributeNames != null && valuesRaw != null && valuesEncoded != null && valuesEncoded.Count == valuesRaw.Count && valuesEncoded.Count == attributeNames.Count)
+                ? (attributeNames, valuesRaw, valuesEncoded)
+                : await MockAttrValues();
+
+            RevocationStatusList mockRevStatList = null;
+            string mockRevRegId = null;
+            RevocationRegistryDefinition mockRevRegDef = null;
+            RevocationRegistryDefinitionPrivate mockRevRegDefPriv = null;
+            long mockRegId = -1;
+
+            if(revocationStatusList != null && revocationRegistryId != null && regIdX != -1
+                && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
+            {
+                mockRevStatList = revocationStatusList;
+                mockRevRegId = revocationRegistryId;
+                mockRevRegDef = revocationRegistryDefinition;
+                mockRevRegDefPriv= revocationRegistryDefinitionPrivate;
+                mockRegId = regIdX;
+            }
+
+            return await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, mockNames, mockRaws, mockEncodeds,
+                mockRevStatList, mockRevRegId, mockRevRegDef, mockRevRegDefPriv, mockRegId);
+        }
+
+        public static async Task<string> MockCredentialJson(string credentialDefinitionJson = null,
+            string credentialDefinitionPrivateJson = null,
+            string credentialOfferJson = null,
+            string credentialRequestJson = null,
+            List<string> attributeNames = null,
+            List<string> valuesRaw = null,
+            List<string> valuesEncoded = null,
+            string revocationStatusListJson = null,
+            string revocationRegistryId = null,
+            string revocationRegistryDefinitionJson = null,
+            string revocationRegistryDefinitionPrivateJson = null,
+            long regIdX = -1)
+        {
+            (string mockCredDef, string mockCredDefPriv, _) =
+                (credentialDefinitionJson != null && credentialDefinitionPrivateJson != null)
+                ? (credentialDefinitionJson, credentialDefinitionPrivateJson, null)
+                : await MockCredDefJson();
+            string mockCredOffer = credentialOfferJson ?? await MockCredOfferJson();
+            string mockCredReq = credentialRequestJson ?? (await MockCredReqJson()).Item1;
+
+            (List<string> mockNames, List<string> mockRaws, List<string> mockEncodeds) =
+                (attributeNames != null && valuesRaw != null && valuesEncoded != null && valuesEncoded.Count == valuesRaw.Count && valuesEncoded.Count == attributeNames.Count)
+                ? (attributeNames, valuesRaw, valuesEncoded)
+                : await MockAttrValues();
+
+            string mockRevStatList = null;
+            string mockRevRegId = null;
+            string mockRevRegDef = null;
+            string mockRevRegDefPriv = null;
+            long mockRegId = -1;
+
+            if (revocationStatusListJson != null && revocationRegistryId != null && regIdX != -1
+                && revocationRegistryDefinitionJson != null && revocationRegistryDefinitionPrivateJson != null)
+            {
+                mockRevStatList = revocationStatusListJson;
+                mockRevRegId = revocationRegistryId;
+                mockRevRegDef = revocationRegistryDefinitionJson;
+                mockRevRegDefPriv = revocationRegistryDefinitionPrivateJson;
+                mockRegId = regIdX;
+            }
+
+            return await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, mockNames, mockRaws, mockEncodeds,
+                mockRevStatList, mockRevRegId, mockRevRegDef, mockRevRegDefPriv, mockRegId);
+        }
     }
 }
