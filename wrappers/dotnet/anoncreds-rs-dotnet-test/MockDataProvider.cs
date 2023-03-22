@@ -185,6 +185,8 @@ namespace anoncreds_rs_dotnet_test
                             $"\"to\": {timestamp}" +
                         "}" +
                     "}";
+            //TODO : fix for PresentationApiTests to test with restrictions and predicates with $or, $and combination.
+            /**
             if (requestedAttributes != null)
             {
                 requestedAttributesString = "";
@@ -222,6 +224,21 @@ namespace anoncreds_rs_dotnet_test
                         }
                         requestedAttributesString += "}}";
                     }
+                    i += 1;
+                }
+            }**/
+            if (requestedAttributes != null)
+            {
+                requestedAttributesString = "";
+                int i = 1;
+                foreach (var attribute in requestedAttributes)
+                {
+                    if (i > 1)
+                    {
+                        requestedAttributesString += ", ";
+                    }
+                    requestedAttributesString += $"\"attributeKey{i}\": ";
+                    requestedAttributesString += JsonConvert.SerializeObject(attribute);
                     i += 1;
                 }
             }
