@@ -70,29 +70,13 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialAsyncJsonWorks()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-
-            string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-
-            (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
-            (string credRequestObjectJson, _) =
-                await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
+            (string mockCredDefJson, string mockCredDefPrivJson, _) = await MockDataProvider.MockCredDefJson();
+            string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
+            (string mockCredReqJson, _) = await MockDataProvider.MockCredReqJson();
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
             //Act
-            string actual = await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson, attrNames, attrNamesRaw, attrNamesEnc);
+            string actual = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson, names, raw, enc);
 
             //Assert
             _ = actual.Should().NotBeNullOrEmpty();
@@ -108,9 +92,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             (string mockCredReqJson, _) = await MockDataProvider.MockCredReqJson();
             string testTailsPathForRevocation = null;
 
-            List<string> attrNames = new() { "attribute1" };
-            List<string> attrValuesRaw = new() { "value1" };
-            List<string> attrValuesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
             (string revRegDefJson, string revRegDefPvtJson) =
                 await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockCredDef.IssuerId, mockCredDefJson, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
@@ -121,7 +103,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Act
             string actual = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
-                attrNames, attrValuesRaw, attrValuesEnc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
+                names, raw, enc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
 
             //Assert
             _ = actual.Should().NotBeNullOrEmpty();
@@ -131,36 +113,24 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task CreateCredentialAsyncJsonIncompleteRevocation()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
+            //Arrange
+            (string mockCredDefJson, string mockCredDefPrivJson, _) = await MockDataProvider.MockCredDefJson();
+            (CredentialDefinition mockCredDef, _, _) = await MockDataProvider.MockCredDef();
+            string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
+            (string mockCredReqJson, _) = await MockDataProvider.MockCredReqJson();
             string testTailsPathForRevocation = null;
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
-            string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            (string revRegDefJson, string revRegDefPvtJson) =
+                await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockCredDef.IssuerId, mockCredDefJson, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            (RevocationRegistryDefinition mockRevRegDef, _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
-
-            (string credRequestObjectJson, string metaDataObjectJson) =
-                await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
-
-            (string revRegDefObjectJson, string revRegDefPvtObjectJson) =
-                await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(issuerDid, credDefObjectJson, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync(mockRevRegDef.CredentialDefinitionId, revRegDefJson, mockRevRegDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
             //Act
-            Func<Task> act = async () => await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson,
-                attrNames, attrNamesRaw, attrNamesEnc, revStatusListJson, null, revRegDefObjectJson, "", 1);
+            Func<Task> act = async () => await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
+                names, raw, enc, revStatusListJson, null, revRegDefJson, "", 1);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>("Revocation data incomplete.");
@@ -200,29 +170,16 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsync()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq(masterSecret: mockMasterSecret);
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-
-            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc);
+            Credential mockCredential = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc);
 
             //Act
-            Credential credObjectProcessed = await CredentialApi.ProcessCredentialAsync(credObject, metaDataObject, masterSecretObject, credDefObject);
+            Credential credObjectProcessed = await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockMasterSecret, mockCredDef);
 
             //Assert
             _ = credObjectProcessed.Should().BeOfType(typeof(Credential));
@@ -232,31 +189,26 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsyncJson()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
+            string masterSecretJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            (string mockCredDefJson, string mockCredDefPrivJson, _) = await MockDataProvider.MockCredDefJson();
+            (CredentialDefinition mockCredDef, _, _) = await MockDataProvider.MockCredDef();
+            string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
+            (string mockCredReqJson, string mockMetaDataJson) = await MockDataProvider.MockCredReqJson(masterSecretJson: masterSecretJson);
+            string testTailsPathForRevocation = null;
 
-            string masterSecretObjectJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
-            string schemaObjectJson = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObjectJson) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObjectJson, "tag", issuerDid, SignatureType.CL, true);
+            (string revRegDefJson, string revRegDefPvtJson) =
+                await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockCredDef.IssuerId, mockCredDefJson, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            (RevocationRegistryDefinition mockRevRegDef, _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObjectJson);
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync(mockRevRegDef.CredentialDefinitionId, revRegDefJson, mockRevRegDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
-            (string credRequestObjectJson, string metaDataObjectJson) =
-                await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObjectJson, "testMasterSecretName", credOfferObjectJson);
-
-            string credObjectJson = await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson, attrNames, attrNamesRaw, attrNamesEnc);
-
+            string mockCredentialJson = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
+                names, raw, enc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
             //Act
-            string credObjectProcessedJson = await CredentialApi.ProcessCredentialAsync(credObjectJson, metaDataObjectJson, masterSecretObjectJson, credDefObjectJson);
+            string credObjectProcessedJson = await CredentialApi.ProcessCredentialAsync(mockCredentialJson, mockMetaDataJson, masterSecretJson, mockCredDefJson);
 
             //Assert
             _ = credObjectProcessedJson.Should().NotBeNullOrEmpty();
@@ -266,31 +218,16 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsyncThrowsException()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
+            MasterSecret mockWrongMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq();
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-            MasterSecret masterSecretObject2 = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-
-            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc);
+            Credential mockCredential = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc);
 
             //Act
-            Func<Task> act = async () => await CredentialApi.ProcessCredentialAsync(credObject, metaDataObject, masterSecretObject2, credDefObject);
+            Func<Task> act = async () => await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockWrongMasterSecret, mockCredDef);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
@@ -302,44 +239,31 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task GetCredentialAttributeAsync()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-            string testTailsPathForRevocation = null;
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-            (CredentialRequest credRequestObject, _) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            (CredentialRequest mockCredReq, _) = await MockDataProvider.MockCredReq();
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObject, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await MockDataProvider.MockRevRegDef(mockCredDef);
+            RevocationStatusList revStatusList = await MockDataProvider.MockRevStatusList(revRegDefObject, mockCredDef.IssuerId, timestamp);
 
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+            //Act
+            Credential mockCredential = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
             //Act
             //note: only attribute "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index" supported so far.
-            string attrSchemaId = await CredentialApi.GetCredentialAttributeAsync(credObject, "schema_id");
-            string attrCredDefId = await CredentialApi.GetCredentialAttributeAsync(credObject, "cred_def_id");
-            string attrRevRegId = await CredentialApi.GetCredentialAttributeAsync(credObject, "rev_reg_id");
-            string attrRevRegIndex = await CredentialApi.GetCredentialAttributeAsync(credObject, "rev_reg_index");
+            string attrSchemaId = await CredentialApi.GetCredentialAttributeAsync(mockCredential, "schema_id");
+            string attrCredDefId = await CredentialApi.GetCredentialAttributeAsync(mockCredential, "cred_def_id");
+            string attrRevRegId = await CredentialApi.GetCredentialAttributeAsync(mockCredential, "rev_reg_id");
+            string attrRevRegIndex = await CredentialApi.GetCredentialAttributeAsync(mockCredential, "rev_reg_index");
             //string attrDefault = await CredentialApi.GetCredentialAttributeAsync(credObject, "default");
 
             //Assert
-            _ = attrSchemaId.Should().Be(credObject.SchemaId);
-            _ = attrCredDefId.Should().Be(credObject.CredentialDefinitionId);
-            _ = attrRevRegId.Should().Be(credObject.RevocationRegistryId);
-            _ = attrRevRegIndex.Should().Be(credObject.Signature.RCredential.I.ToString());
+            _ = attrSchemaId.Should().Be(mockCredential.SchemaId);
+            _ = attrCredDefId.Should().Be(mockCredential.CredentialDefinitionId);
+            _ = attrRevRegId.Should().Be(mockCredential.RevocationRegistryId);
+            _ = attrRevRegIndex.Should().Be(mockCredential.Signature.RCredential.I.ToString());
             //attrDefault.Should().Be("");
         }
 
@@ -347,46 +271,34 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task GetCredentialAttributeJsonAsync()
         {
             //Arrange
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            (string mockCredDefJson, string mockCredDefPrivJson, _) = await MockDataProvider.MockCredDefJson();
+            (CredentialDefinition mockCredDef, _, _) = await MockDataProvider.MockCredDef();
+            string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
+            (string mockCredReqJson, _) = await MockDataProvider.MockCredReqJson();
             string testTailsPathForRevocation = null;
 
-            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+            (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObject);
-            (string credRequestObjectJson, _) =
-                await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObject, "testMasterSecretName", credOfferObjectJson);
-
-            (string revRegDefObjectJson, string revRegDefPvtObjectJson) =
-                await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(issuerDid, credDefObjectJson, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            (string revRegDefJson, string revRegDefPvtJson) =
+                await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockCredDef.IssuerId, mockCredDefJson, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            (RevocationRegistryDefinition mockRevRegDef, _) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, mockCredDef.Tag, RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag", revRegDefObjectJson, "mock:Uri", timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            string revStatusListJson = await RevocationApi.CreateRevocationStatusListJsonAsync(mockRevRegDef.CredentialDefinitionId, revRegDefJson, mockRevRegDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
 
-
-            string credObject = await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson,
-                attrNames, attrNamesRaw, attrNamesEnc, revStatusListJson, null, revRegDefObjectJson, revRegDefPvtObjectJson, 1);
+            string mockCredentialJson = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
+                names, raw, enc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
 
             //Act
             //note: only attribute "schema_id", "cred_def_id", "rev_reg_id", "rev_reg_index" supported so far.
-            string attrSchemaId = await CredentialApi.GetCredentialAttributeAsync(credObject, "schema_id");
-            string attrCredDefId = await CredentialApi.GetCredentialAttributeAsync(credObject, "cred_def_id");
-            string attrRevRegIndex = await CredentialApi.GetCredentialAttributeAsync(credObject, "rev_reg_index");
+            string attrSchemaId = await CredentialApi.GetCredentialAttributeAsync(mockCredentialJson, "schema_id");
+            string attrCredDefId = await CredentialApi.GetCredentialAttributeAsync(mockCredentialJson, "cred_def_id");
+            string attrRevRegIndex = await CredentialApi.GetCredentialAttributeAsync(mockCredentialJson, "rev_reg_index");
 
             //Assert
-            _ = attrSchemaId.Should().Be(JObject.Parse(credObject)["schema_id"].ToString());
-            _ = attrCredDefId.Should().Be(JObject.Parse(credObject)["cred_def_id"].ToString());
-            _ = attrRevRegIndex.Should().Be(JObject.Parse(JObject.Parse(JObject.Parse(credObject)["signature"].ToString())["r_credential"].ToString())["i"].ToString());
+            _ = attrSchemaId.Should().Be(JObject.Parse(mockCredentialJson)["schema_id"].ToString());
+            _ = attrCredDefId.Should().Be(JObject.Parse(mockCredentialJson)["cred_def_id"].ToString());
+            _ = attrRevRegIndex.Should().Be(JObject.Parse(JObject.Parse(JObject.Parse(mockCredentialJson)["signature"].ToString())["r_credential"].ToString())["i"].ToString());
 
         }
 
@@ -395,29 +307,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         {
             //Arrange
             string attributeName = "";
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
-
-            Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = schemaObject.IssuerId;
-            CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-
-            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc);
+            Credential mockCredential = await MockDataProvider.MockCredential();
 
             //Act
-            Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(credObject, attributeName);
+            Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(mockCredential, attributeName);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
@@ -429,30 +322,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Arrange
             string attributeName = "";
 
-            List<string> attrNames = new() { "name", "age", "sex" };
-            List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-            List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-            string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-            string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-            string schemaName = "gvt";
-            string schemaVersion = "1.0";
-            string masterSecretObject = await MasterSecretApi.CreateMasterSecretJsonAsync();
-
-            string schemaObject = await SchemaApi.CreateSchemaJsonAsync(issuerDid, schemaName, schemaVersion, attrNames);
-            (string credDefObjectJson, string credDefPvtObjectJson, string keyProofObject) =
-                await CredentialDefinitionApi.CreateCredentialDefinitionJsonAsync(issuerDid, schemaObject, "tag", issuerDid, SignatureType.CL, true);
-
-            string schemaId = issuerDid;
-            string credDefId = issuerDid;
-            string credOfferObjectJson = await CredentialOfferApi.CreateCredentialOfferJsonAsync(schemaId, credDefId, keyProofObject);
-
-            (string credRequestObjectJson, string metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestJsonAsync(proverDid, credDefObjectJson, masterSecretObject, "testMasterSecretName", credOfferObjectJson);
-
-            string credObject = await CredentialApi.CreateCredentialAsync(credDefObjectJson, credDefPvtObjectJson, credOfferObjectJson, credRequestObjectJson, attrNames, attrNamesRaw, attrNamesEnc);
+            string mockCredentialJson = await MockDataProvider.MockCredentialJson();
 
             //Act
-            Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(credObject, attributeName);
+            Func<Task> act = async () => await CredentialApi.GetCredentialAttributeAsync(mockCredentialJson, attributeName);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
