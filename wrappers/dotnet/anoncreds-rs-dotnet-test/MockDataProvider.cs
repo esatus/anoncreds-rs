@@ -1,6 +1,7 @@
 ﻿using anoncreds_rs_dotnet.Anoncreds;
 using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
@@ -314,6 +315,18 @@ namespace anoncreds_rs_dotnet_test
             return await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, mockCredDef, mockCredDefTag, registryType, maxCredNumber, tailsPath);
         }
 
+        public static async Task<(string, string)> MockRevRegDefJson(string credDef = null,
+            RegistryType registryType = RegistryType.CL_ACCUM,
+            int maxCredNumber = 100,
+            string tailsPath = null)
+        {
+            string mockCredDef = credDef ?? (await MockCredDefJson()).Item1;
+            string mockUri = JObject.Parse(mockCredDef)["issuerId"].ToString();
+            string mockCredDefTag = JObject.Parse(mockCredDef)["tag"].ToString();
+
+            return await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockUri, mockCredDef, mockCredDefTag, registryType, maxCredNumber, tailsPath);
+        }
+
         public static async Task<RevocationStatusList> MockRevStatusList(RevocationRegistryDefinition revRegDef = null,
             string issuerId = null,
             long timestamp = 0,
@@ -357,14 +370,19 @@ namespace anoncreds_rs_dotnet_test
             RevocationRegistryDefinitionPrivate mockRevRegDefPriv = null;
             long mockRegId = -1;
 
-            if(revocationStatusList != null && revocationRegistryId != null && regIdX != -1
+            if(revocationStatusList != null && regIdX != -1
                 && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
             {
                 mockRevStatList = revocationStatusList;
-                mockRevRegId = revocationRegistryId;
                 mockRevRegDef = revocationRegistryDefinition;
                 mockRevRegDefPriv= revocationRegistryDefinitionPrivate;
                 mockRegId = regIdX;
+            }
+            else if(revocationRegistryId != null && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
+            {
+                mockRevRegId= revocationRegistryId;
+                mockRevRegDef = revocationRegistryDefinition;
+                mockRevRegDefPriv = revocationRegistryDefinitionPrivate;
             }
 
             return await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, mockNames, mockRaws, mockEncodeds,

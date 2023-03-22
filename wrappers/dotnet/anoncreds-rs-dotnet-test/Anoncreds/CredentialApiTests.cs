@@ -39,7 +39,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await MockDataProvider.MockRevRegDef(mockCredDef);
-            RevocationStatusList revStatusList = await MockDataProvider.MockRevStatusList(revRegDefObject,  mockCredDef.IssuerId, timestamp);
+            RevocationStatusList revStatusList = await MockDataProvider.MockRevStatusList(revRegDefObject, mockCredDef.IssuerId, timestamp);
 
             //Act
             Credential actual = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
