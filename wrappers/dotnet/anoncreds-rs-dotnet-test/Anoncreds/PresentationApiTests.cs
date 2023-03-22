@@ -30,8 +30,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             List<AttributeInfo> requestedAttributes = new()
              {
-                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis"} }
-             } };
+                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis"} } }
+             };
             /**
              List<AttributeInfo> requestedAttributes = new() 
              { 

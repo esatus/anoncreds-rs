@@ -11,6 +11,11 @@ namespace anoncreds_rs_dotnet_test
 {
     internal class MockDataProvider
     {
+        static readonly JsonSerializerSettings settings = new()
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+
         public static Schema Schema { get; set; }
         public static string SchemaJson { get; set; }
         public static CredentialDefinition CredentialDefinition { get; set; }
@@ -190,7 +195,32 @@ namespace anoncreds_rs_dotnet_test
                         requestedAttributesString += ", ";
                     }
                     requestedAttributesString += $"\"attributeKey{i}\": ";
-                    requestedAttributesString += JsonConvert.SerializeObject(attribute);
+                    if (attribute.Name != null)
+                    {
+                        requestedAttributesString += $"{{\"name\":\"{attribute.Name}\",";
+                    }
+                    if (attribute.Names != null)
+                    {
+                        requestedAttributesString += $"\"names\": [";
+                        foreach (var ele in attribute.Names)
+                        {
+                            requestedAttributesString += $"{JsonConvert.SerializeObject(ele, settings)},";
+                        }
+                        requestedAttributesString += "],";
+                    }
+                    if (attribute.NonRevoked != null)
+                    {
+                        requestedAttributesString += $"\"non_revoked\": {{\"from\": {attribute.NonRevoked.From}, \"to\":{attribute.NonRevoked.To} }},";
+                    }
+                    if (attribute.Restrictions != null)
+                    {
+                        requestedAttributesString += "\"restrictions\":{\"$or\":";
+                        foreach (var ele in attribute.Restrictions)
+                        {
+                            requestedAttributesString += $"[{JsonConvert.SerializeObject(ele, settings)}]";
+                        }
+                        requestedAttributesString += "}}";
+                    }
                     i += 1;
                 }
             }
