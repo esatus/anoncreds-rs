@@ -28,18 +28,23 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string testTailsPathForRevocation = null;
             //TODO : Test with Restrictions --> at the moment ByteBuffer "tooSmall" error in Structures
 
+            List<AttributeInfo> requestedAttributes = new()
+             {
+                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis"} }
+             } };
             /**
-            List<AttributeInfo> requestedAttributes = new() 
-            { 
-                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
-                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
-            };
-             **/
+             List<AttributeInfo> requestedAttributes = new() 
+             { 
+                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
+                 new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
+             };
+            **/
+            /**
             List<AttributeInfo> requestedAttributes = new() 
             { 
                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } },
                 new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } }
-            };
+            };**/
 
             List<PredicateInfo> requestedPredicates = null;
 
@@ -48,7 +53,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Act
             (CredentialRequest mockCredRequest, _) = await CredentialRequestApi.CreateCredentialRequestAsync(
                 mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
-
+            
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = 
                 await RevocationApi.CreateRevocationRegistryDefinitionAsync(
                     mockCredDef.IssuerId, 
@@ -133,106 +138,6 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             _ = actual.Should().BeOfType(typeof(Presentation));
         }
 
-        [Test, TestCase(TestName = "CreatePresentationAsync() with invalid presentation request handle throws.")]
-        public async Task CreatePresentationAsyncOfSelfAttestProofThrows()
-        {
-            //Arrange
-            Schema mockSchema = await MockDataProvider.MockSchema();
-            (List<string> attrNames, List<string> attrNamesRaw, List<string> attrNamesEnc) = await MockDataProvider.MockAttrValues(mockSchema);
-            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPrivate, _) = await MockDataProvider.MockCredDef();
-            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
-            string mockEntropy = "mockEntropy";
-            string mockMasterSecretName = "mockMasterSecretName";
-            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
-            string testTailsPathForRevocation = null;
-
-            //Act
-            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
-                await CredentialRequestApi.CreateCredentialRequestAsync(
-                    mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
-
-            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(
-                mockCredDef.IssuerId, mockCredDef,
-                "test_tag",
-                RegistryType.CL_ACCUM,
-                99,
-                testTailsPathForRevocation);
-
-            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(
-                "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag",
-                revRegDefObject,
-                mockCredDef.IssuerId,
-                timestamp,
-                IssuerType.ISSUANCE_BY_DEFAULT);
-
-            Credential credObject = await CredentialApi.CreateCredentialAsync
-                (mockCredDef, mockCredDefPrivate, mockCredOffer, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
-
-            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-                revRegDefObject,
-                revStatusList,
-                credObject.Signature.RCredential.I,
-                revRegDefObject.Value.TailsLocation,
-                emptyRevocationState);
-
-            List<CredentialEntry> credentialEntries = new()
-            {
-                CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState)
-                //with empty timestamp and revState
-                //new CredentialEntry(credObject,0, null)
-            };
-
-            List<CredentialProof> credentialProofs = new()
-            {
-                new CredentialProof
-                {
-                    EntryIndex = 0,
-                    IsPredicate = Convert.ToByte(false),
-                    Referent = "testSomeReferent",
-                    Reveal = Convert.ToByte(true)
-                }
-            };
-
-            List<string> selfAttestNames = new()
-            {
-                 "testAttribute"
-            };
-
-            List<string> selfAttestValues = new()
-            {
-                "testSomeValue"
-            };
-
-            MasterSecret masterSecret = await MasterSecretApi.CreateMasterSecretAsync();
-
-            List<Schema> schemas = new()
-            {
-                mockSchema
-            };
-
-            List<CredentialDefinition> credentialDefinitions = new()
-            {
-                mockCredDef
-            };
-
-            //Act
-            Func<Task<Presentation>> func = async () => await PresentationApi.CreatePresentationAsync(
-                new PresentationRequest { Handle = new IntPtr()},
-                credentialEntries,
-                credentialProofs,
-                selfAttestNames,
-                selfAttestValues,
-                masterSecret,
-                schemas,
-                credentialDefinitions
-                );
-
-            //Assert
-            _ = await func.Should().ThrowAsync<Exception>();
-        }
-
         [Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with only self attest.")]
         public async Task CreatePresentationJsonAsyncOfSelfAttestProof()
         {
@@ -241,8 +146,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
             List<AttributeInfo> requestedAttributes = new()
             {
-                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } },
-                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } }
+                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To =(ulong)timestamp } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } }
             };
             List<PredicateInfo> requestedPredicates = null;
 
@@ -287,19 +192,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
             string testTailsPathForRevocation = null;
-            //TODO : Test with Restrictions --> at the moment ByteBuffer "tooSmall" error in Structures
-
-            /**
-            List<AttributeInfo> requestedAttributes = new() 
-            { 
-                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
-                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
-            };
-             **/
             List<AttributeInfo> requestedAttributes = new()
             {
-                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } },
-                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) } }
+                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } }
             };
 
             List<PredicateInfo> requestedPredicates = null;
@@ -381,7 +277,6 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Assert
             _ = actual.Should().NotBeNullOrEmpty();
         }
-        #endregion
 
         //[Test, TestCase(TestName = "CreatePresentationAsync() returns a presentation object as JSON string for a proof with self attest and non self attest.")]
         //public async Task CreatePresentationJsonAsyncForAnyProof()
@@ -655,157 +550,207 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         //    _ = actual.Should().NotBeNullOrEmpty();
         //}
 
-        //[Test, TestCase(TestName = "CreatePresentationAsync() with JSON input and invalid presentation request handle throws.")]
-        //public async Task CreatePresentationJsonAsyncOfSelfAttestProofThrows()
-        //{
-        //    //Arrange
-        //    string nonce = await PresentationRequestApi.GenerateNonceAsync();
-        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-        //    string presReqJson = "{" +
-        //        "\"name\": \"proof\"," +
-        //        "\"version\": \"1.0\", " +
-        //        $"\"nonce\": \"{nonce}\"," +
-        //        "\"requested_attributes\": " +
-        //        "{" +
-        //            "\"reft\": " +
-        //            "{" +
-        //                "\"name\":\"attr\"," +
-        //                "\"value\":\"myValue\"," +
-        //                "\"names\": [], " +
-        //                "\"non_revoked\":" +
-        //                "{ " +
-        //                    $"\"from\": {timestamp}, " +
-        //                    $"\"to\": {timestamp}" +
-        //                "}" +
-        //            "}" +
-        //        "}," +
-        //        "\"revealed_attrs_groups\": {}," +
-        //        "\"requested_predicates\": " +
-        //        "{" +
-        //            "\"light\": " +
-        //            "{" +
-        //                "\"name\":\"pred\"," +
-        //                "\"p_type\":\">=\"," +
-        //                "\"p_value\":18," +
-        //                "\"non_revoked\":" +
-        //                "{ " +
-        //                    $"\"from\": {timestamp}, " +
-        //                    $"\"to\": {timestamp}" +
-        //                "}," +
-        //                "\"restrictions\":" +
-        //                "[" +
-        //                    "{\"schema_name\": \"blubb\"," +
-        //                    "\"schema_version\": \"1.0\"}," +
-        //                    "{\"cred_def_id\": \"blubb2\"," +
-        //                    "\"schema_version\": \"2.0\"}," +
-        //                    "{\"not_an_attribute\": \"should Fail\"}" +
-        //                "]" +
-        //            "}" +
-        //        "}," +
-        //        "\"non_revoked\": " +
-        //        "{ " +
-        //            $"\"from\": {timestamp}," +
-        //            $"\"to\": {timestamp}" +
-        //        "}," +
-        //        "\"ver\": \"1.0\"" +
-        //        "}";
+        [Test, TestCase(TestName = "CreatePresentationAsync() with invalid presentation request handle throws.")]
+        public async Task CreatePresentationAsyncOfSelfAttestProofThrows()
+        {
+            //Arrange
+            Schema mockSchema = await MockDataProvider.MockSchema();
+            (List<string> attrNames, List<string> attrNamesRaw, List<string> attrNamesEnc) = await MockDataProvider.MockAttrValues(mockSchema);
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPrivate, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            string mockEntropy = "mockEntropy";
+            string mockMasterSecretName = "mockMasterSecretName";
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            string testTailsPathForRevocation = null;
 
-        //    List<string> attrNames = new() { "name", "age", "sex" };
-        //    List<string> attrNamesRaw = new() { "Alex", "20", "male" };
-        //    List<string> attrNamesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrNamesRaw);
-        //    string issuerDid = "NcYxiDXkpYi6ov5FcYDi1e";
-        //    string proverDid = "VsKV7grR1BUE29mG2Fm2kX";
-        //    string schemaName = "gvt";
-        //    string schemaVersion = "1.0";
-        //    string testTailsPathForRevocation = null;
+            //Act
+            (CredentialRequest credRequestObject, CredentialRequestMetadata metaDataObject) =
+                await CredentialRequestApi.CreateCredentialRequestAsync(
+                    mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
 
-        //    MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(
+                mockCredDef.IssuerId, mockCredDef,
+                "test_tag",
+                RegistryType.CL_ACCUM,
+                99,
+                testTailsPathForRevocation);
 
-        //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
-        //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
-        //        await CredentialDefinitionApi.CreateCredentialDefinitionAsync(schemaObject.IssuerId, schemaObject, "tag", issuerDid, SignatureType.CL, true);
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(
+                "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag",
+                revRegDefObject,
+                mockCredDef.IssuerId,
+                timestamp,
+                IssuerType.ISSUANCE_BY_DEFAULT);
 
-        //    string schemaId = schemaObject.IssuerId;
-        //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
-        //    (CredentialRequest credRequestObject, _) =
-        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, masterSecretObject, "testMasterSecretName", credOfferObject);
+            Credential credObject = await CredentialApi.CreateCredentialAsync
+                (mockCredDef, mockCredDefPrivate, mockCredOffer, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
-        //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
-        //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(
-        //        "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag",
-        //        revRegDefObject,
-        //        mockCredDef.IssuerId,
-        //        timestamp,
-        //        IssuerType.ISSUANCE_BY_DEFAULT);
+            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject,
+                revStatusList,
+                credObject.Signature.RCredential.I,
+                revRegDefObject.Value.TailsLocation,
+                emptyRevocationState);
 
-        //    Credential credObject = await CredentialApi.CreateCredentialAsync(credDefObject, credDefPvtObject, credOfferObject, credRequestObject, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+            List<CredentialEntry> credentialEntries = new()
+            {
+                CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState)
+                //with empty timestamp and revState
+                //new CredentialEntry(credObject,0, null)
+            };
 
-        //    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
-        //    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
-        //        revRegDefObject,
-        //        revStatusList,
-        //        credObject.Signature.RCredential.I,
-        //        revRegDefObject.Value.TailsLocation,
-        //        emptyRevocationState);
+            List<CredentialProof> credentialProofs = new()
+            {
+                new CredentialProof
+                {
+                    EntryIndex = 0,
+                    IsPredicate = Convert.ToByte(false),
+                    Referent = "testSomeReferent",
+                    Reveal = Convert.ToByte(true)
+                }
+            };
 
-        //    List<string> credentialEntries = new()
-        //    {
-        //       JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
-        //        //with empty timestamp and revState
-        //        //new CredentialEntry(credObject,0, null)
-        //    };
+            List<string> selfAttestNames = new()
+            {
+                 "testAttribute"
+            };
 
-        //    List<string> credentialProofs = new()
-        //    {
-        //        JsonConvert.SerializeObject(new CredentialProof
-        //        {
-        //            EntryIndex = 1,
-        //            IsPredicate = Convert.ToByte(false),
-        //            Referent = "testReferent",
-        //            Reveal = Convert.ToByte(true)
-        //        })
-        //    };
+            List<string> selfAttestValues = new()
+            {
+                "testSomeValue"
+            };
 
-        //    List<string> selfAttestNames = new()
-        //    {
-        //        "testSelfAttestName1"
-        //    };
+            MasterSecret masterSecret = await MasterSecretApi.CreateMasterSecretAsync();
 
-        //    List<string> selfAttestValues = new()
-        //    {
-        //        "testSelfAttestName1"
-        //    };
+            List<Schema> schemas = new()
+            {
+                mockSchema
+            };
 
-        //    string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            List<CredentialDefinition> credentialDefinitions = new()
+            {
+                mockCredDef
+            };
 
-        //    List<string> schemas = new()
-        //    {
-        //        "{}"
-        //    };
+            //Act
+            Func<Task<Presentation>> func = async () => await PresentationApi.CreatePresentationAsync(
+                new PresentationRequest { Handle = new IntPtr() },
+                credentialEntries,
+                credentialProofs,
+                selfAttestNames,
+                selfAttestValues,
+                masterSecret,
+                schemas,
+                credentialDefinitions
+                );
 
-        //    List<string> credentialDefinitions = new()
-        //    {
-        //        credDefObject.JsonString
-        //    };
+            //Assert
+            _ = await func.Should().ThrowAsync<Exception>();
+        }
 
-        //    //Act
-        //    Func<Task<string>> func = async () => await PresentationApi.CreatePresentationAsync(
-        //        presReqJson,
-        //        credentialEntries,
-        //        credentialProofs,
-        //        selfAttestNames,
-        //        selfAttestValues,
-        //        masterSecret,
-        //        schemas,
-        //        credentialDefinitions
-        //        );
+        [Test, TestCase(TestName = "CreatePresentationAsync() with JSON input and invalid presentation request handle throws.")]
+        public async Task CreatePresentationJsonAsyncOfSelfAttestProofThrows()
+        {
+            //Arrange
+            string invalidPresReqJson = "";
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            Schema mockSchema = await MockDataProvider.MockSchema();
+            (List<string> attrNames, List<string> attrNamesRaw, List<string> attrNamesEnc) = await MockDataProvider.MockAttrValues(mockSchema);
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPrivate, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            string mockEntropy = "mockEntropy";
+            string mockMasterSecretName = "mockMasterSecretName";
+            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            string testTailsPathForRevocation = null;
 
-        //    //Assert
-        //    _ = await func.Should().ThrowAsync<Exception>();
-        //}
-        //#endregion
+            List<AttributeInfo> requestedAttributes = new()
+            {
+                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } }
+            };
 
-        //#region Tests for CreatePresentationFromJsonAsync
+            List<PredicateInfo> requestedPredicates = null;
+
+            PresentationRequest presReqObject = await MockDataProvider.MockPresReq(requestedAttributes: requestedAttributes, requestedPredicates: requestedPredicates);
+
+            //Act
+            (CredentialRequest mockCredRequest, _) = await CredentialRequestApi.CreateCredentialRequestAsync(
+                mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
+
+            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) =
+                await RevocationApi.CreateRevocationRegistryDefinitionAsync(
+                    mockCredDef.IssuerId,
+                    mockCredDef,
+                    "test_tag",
+                    RegistryType.CL_ACCUM,
+                    99,
+                    testTailsPathForRevocation);
+
+            RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(
+                "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:test_tag",
+                revRegDefObject,
+                mockCredDef.IssuerId,
+                timestamp,
+                IssuerType.ISSUANCE_BY_DEFAULT);
+
+            Credential credObject = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPrivate, mockCredOffer, mockCredRequest, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+            CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+            CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject,
+                revStatusList,
+                credObject.Signature.RCredential.I,
+                revRegDefObject.Value.TailsLocation,
+                emptyRevocationState);
+
+            List<string> credentialEntries = new()
+            {
+               JsonConvert.SerializeObject(CredentialEntry.CreateCredentialEntry(credObject, timestamp, credRevRegState))
+                //with empty timestamp and revState
+                //new CredentialEntry(credObject,0, null)
+            };
+
+            List<string> credentialProofs = new()
+            {
+                JsonConvert.SerializeObject(new CredentialProof
+                {
+                    EntryIndex = 0, //1
+                    IsPredicate = presReqObject.RequestedPredicates.Count.Equals(0) ? Convert.ToByte(false) : Convert.ToByte(true),
+                    Referent = presReqObject.RequestedAttributes.First().Key,
+                    Reveal = Convert.ToByte(true)
+                })
+            };
+
+            string masterSecret = await MasterSecretApi.CreateMasterSecretJsonAsync();
+
+            List<string> schemas = new() { mockSchema.JsonString };
+
+            List<string> credentialDefinitions = new() { mockCredDef.JsonString };
+
+            List<string> selfAttestNames = new() { presReqObject.RequestedAttributes.First().Key };
+
+            List<string> selfAttestValues = new() { "testSomeValue" };
+
+            //Act
+            Func<Task<string>> func = async () => await PresentationApi.CreatePresentationAsync(
+                invalidPresReqJson,
+                credentialEntries,
+                credentialProofs,
+                selfAttestNames,
+                selfAttestValues,
+                masterSecret,
+                schemas,
+                credentialDefinitions
+                );
+
+            //Assert
+            _ = await func.Should().ThrowAsync<Exception>();
+        }
+        #endregion
+
+        #region Tests for CreatePresentationFromJsonAsync
         //[Test, TestCase(TestName = "CreatePresentationFromJsonAsync() works.")]
         //public async Task CreatePresentationFromJsonAsyncWorks()
         //{
@@ -845,9 +790,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         //    //Assert
         //    _ = await act.Should().ThrowAsync<AnoncredsRsException>();
         //}
-        //#endregion
+        #endregion
 
-        //#region Tests for VerifyPresentationAsync
+        #region Tests for VerifyPresentationAsync
         //[Test, TestCase(TestName = "VerifyPresentationAsync() works.")]
         //public async Task VerifyPresentationWorks()
         //{
@@ -1178,6 +1123,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         ////    //Assert
         ////    _ = await func.Should().ThrowAsync<Exception>();
         ////}
-        //#endregion
+        //
+        #endregion
     }
 }

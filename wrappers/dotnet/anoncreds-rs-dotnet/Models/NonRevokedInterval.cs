@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace anoncreds_rs_dotnet.Models
 {
     public class NonRevokedInterval
     {
-        public IntPtr From { get; set; }
-        public IntPtr To { get; set; }
+        [JsonProperty("from")]
+        public ulong From { get; set; }
+        [JsonProperty("to")]
+        public ulong To { get; set; }
     }
 }

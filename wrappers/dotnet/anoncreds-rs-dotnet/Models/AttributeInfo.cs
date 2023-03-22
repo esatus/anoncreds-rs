@@ -8,12 +8,11 @@ namespace anoncreds_rs_dotnet.Models
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("value")]
-        public string Value { get; set; }
         [JsonProperty("names")]
         public List<string> Names { get; set; }
         [JsonProperty("restrictions")]
         public List<AttributeFilter> Restrictions { get; set; }
+        [JsonProperty("non_revoked")]
         public NonRevokedInterval NonRevoked { get; set; }
     }
 }
