@@ -264,7 +264,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
             List<string> revRegDefIds = new List<string>();
             List<IntPtr> revocationStatusListHandles = new List<IntPtr>();
-            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = (nonrevokedIntervalOverrideJsons == null || nonrevokedIntervalOverrideJsons.Count == 0) null : new List<NonrevokedIntervalOverride>();
+            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = new List<NonrevokedIntervalOverride>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);
             _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
