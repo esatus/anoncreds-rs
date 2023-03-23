@@ -9,7 +9,7 @@ namespace anoncreds_rs_dotnet.Models
 
         public string JsonString { get; set; } 
 
-        [JsonProperty("IssuerId")]
+        [JsonProperty("issuerId")]
         public string IssuerId { get; set; }
 
         [JsonProperty("credDefId")]
