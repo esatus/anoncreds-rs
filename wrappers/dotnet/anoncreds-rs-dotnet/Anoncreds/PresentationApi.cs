@@ -179,7 +179,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="schemas">Corresponding schemas.</param>
         /// <param name="credentialDefinitions">Corresponding credential definitions.</param>
         /// <param name="revocationRegistryDefinitions">Corresponding revocation registry definitions.</param>
-        /// <param name="revocationRegistryEntries">Corresponding revocation registry entries.</param>
+        /// <param name="revocationStatusList">Corresponding revocation status lists.</param>
+        /// <param name="nonrevokedIntervalOverrides">Corresponding NonRevokedIntervalOverride object list.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>TRUE if provided <see cref="Presentation"/> can be verified, otherwise FALSE.</returns>
         public static async Task<bool> VerifyPresentationAsync(
@@ -189,7 +190,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<CredentialDefinition> credentialDefinitions,
             List<RevocationRegistryDefinition> revocationRegistryDefinitions,
             List<RevocationStatusList> revocationStatusList,
-            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides)
+            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = null)
         {
             byte verify = 0;
             List<IntPtr> schemaHandles =
@@ -239,7 +240,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="schemaJsons">Corresponding schemas as JSON strings.</param>
         /// <param name="credentialDefinitionJsons">Corresponding credential definitions as JSON strings.</param>
         /// <param name="revocationRegistryDefinitionJsons">Corresponding revocation registry definitions as JSON strings.</param>
-        /// <param name="revocationRegistryEntryJsons">Corresponding revocation registry entries as JSON strings.</param>
+        /// <param name="revocationStatusListJsons">Corresponding revocation status lists as JSON strings.</param>
+        /// <param name="nonrevokedIntervalOverrideJsons">Corresponding NonRevokedIntervalOverride object list as JSON.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameter is invalid.</exception>
         /// <returns>TRUE if provided <see cref="Presentation"/> can be verified, otherwise FALSE.</returns>
         public static async Task<bool> VerifyPresentationAsync(
@@ -248,8 +250,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> schemaJsons,
             List<string> credentialDefinitionJsons,
             List<string> revocationRegistryDefinitionJsons,
-            List<string> revocationRegistryEntryJsons,
-            List<string> nonrevokedIntervalOverrideJsons)
+            List<string> revocationStatusListJsons,
+            List<string> nonrevokedIntervalOverrideJsons = null)
         {
             byte verify = 0;
 
@@ -261,8 +263,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> credDefIds = new List<string>();
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
             List<string> revRegDefIds = new List<string>();
-            List<IntPtr> revocationRegistryHandles = new List<IntPtr>();
-            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = new List<NonrevokedIntervalOverride>();
+            List<IntPtr> revocationStatusListHandles = new List<IntPtr>();
+            List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = (nonrevokedIntervalOverrideJsons == null || nonrevokedIntervalOverrideJsons.Count == 0) null : new List<NonrevokedIntervalOverride>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);
             _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
@@ -293,9 +295,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 RevocationRegistryDefinition newRevRegDef = JsonConvert.DeserializeObject<RevocationRegistryDefinition>(revocationRegistryDefinitionJson, Settings.JsonSettings);
                 revRegDefIds.Add(newRevRegDef.IssuerId);
             }
-            foreach (string revocationRegistryEntryJson in revocationRegistryEntryJsons)
+            foreach (string revocationStatusListJson in revocationStatusListJsons)
             {
-                revocationRegistryHandles.Add(JsonConvert.DeserializeObject<RevocationRegistryEntry>(revocationRegistryEntryJson).Entry);
+                IntPtr newRevStatusListHandle = new IntPtr();
+                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(revocationStatusListJson), ref newRevStatusListHandle);
+                revocationStatusListHandles.Add(newRevStatusListHandle);
             }
             foreach(string nonrevokedIntervalOverride in nonrevokedIntervalOverrideJsons)
             {
@@ -311,7 +315,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStrList.Create(credDefIds),
                 FfiUIntList.Create(revRegDefHandles),
                 FfiStrList.Create(revRegDefIds),
-                FfiUIntList.Create(revocationRegistryHandles),
+                FfiUIntList.Create(revocationStatusListHandles),
                 FfiNonrevokedIntervalOverrideList.Create(nonrevokedIntervalOverrides),
                 ref verify);
 
