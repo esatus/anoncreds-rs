@@ -95,6 +95,41 @@ namespace anoncreds_rs_dotnet.Anoncreds
             RevocationStatusList newRevStatusListObject = await CreateRevocationStatusListObject(newRevStatusListObjectHandle);
             return await Task.FromResult(newRevStatusListObject);
         }
+
+        public static async Task<string> UpdateRevocationStatusListJsonAsync(
+            long timestamp,
+            List<long> issued,
+            List<long> revoked,
+            string revRegDefJson,
+            string currentRevStatusListJson
+            )
+        {
+            IntPtr revRegDefObjectHandle = new IntPtr();
+            IntPtr revStatusListObjectHandle = new IntPtr();
+            IntPtr newRevStatusListObjectHandle = new IntPtr();
+
+            _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefObjectHandle);
+
+            _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(currentRevStatusListJson), ref revStatusListObjectHandle);
+
+            int errorCode = NativeMethods.anoncreds_update_revocation_status_list(
+                timestamp,
+                FfiLongList.Create(issued),
+                FfiLongList.Create(revoked),
+                revRegDefObjectHandle,
+                revStatusListObjectHandle,
+                ref newRevStatusListObjectHandle);
+
+            if (errorCode != 0)
+            {
+                string error = await ErrorApi.GetCurrentErrorAsync();
+                throw AnoncredsRsException.FromSdkError(error);
+            }
+
+            string newRevStatusListJson = await ObjectApi.ToJsonAsync(newRevStatusListObjectHandle);
+            return await Task.FromResult(newRevStatusListJson);
+        }
+
         public static async Task<RevocationStatusList> UpdateRevocationStatusListTimestampOnlyAsync(
             long timestamp,
             RevocationStatusList currentRevStatusListObject)
