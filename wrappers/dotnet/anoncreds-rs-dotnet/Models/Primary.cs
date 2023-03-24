@@ -10,7 +10,7 @@ namespace anoncreds_rs_dotnet.Models
         [JsonProperty("s")]
         public string S { get; set; }
 
-        [JsonProperty("r")]
+        [JsonIgnore]
         public List<KeyProofAttributeValue> R { get; set; }
         
         [JsonProperty("rctxt")]
