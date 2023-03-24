@@ -5,7 +5,7 @@
     <RootNamespace>anoncreds_rs_dotnet</RootNamespace>
 	<AssemblyName>Hyperledger.Anoncreds-Rs</AssemblyName>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	<Version>0.3.14-alpha</Version>
+	<Version>0.3.15-alpha</Version>
 	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 	<Authors>esatus AG</Authors>
 	<Company>Hyperledger Indy</Company>
