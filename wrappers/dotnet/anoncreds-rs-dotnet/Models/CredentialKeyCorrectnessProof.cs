@@ -9,6 +9,7 @@ namespace anoncreds_rs_dotnet.Models
         [JsonIgnore]
         public IntPtr Handle { get; set; }
         public string JsonString { get; set; }
+        [JsonProperty("c")]
         public string C { get; set; }
 
         [JsonProperty("xz_cap")]

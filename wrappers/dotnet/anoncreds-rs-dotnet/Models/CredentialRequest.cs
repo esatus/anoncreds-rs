@@ -16,6 +16,7 @@ namespace anoncreds_rs_dotnet.Models
 
         [JsonProperty("blinded_ms_correctness_proof")]
         public BlindingMsCorrectnessProof BlindedMsCorrectnessProof { get; set; }
+        [JsonProperty("nonce")]
         public string Nonce { get; set; }
         public IntPtr Handle { get; set; }
         public string JsonString { get; set; }

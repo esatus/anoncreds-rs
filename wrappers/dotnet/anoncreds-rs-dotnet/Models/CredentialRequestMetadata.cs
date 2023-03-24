@@ -7,6 +7,7 @@ namespace anoncreds_rs_dotnet.Models
     {
         [JsonProperty("master_secret_blinding_data")]
         public MasterSecretBlindingData MsBlindingData { get; set; }
+        [JsonProperty("nonce")]
         public string Nonce { get; set; }
 
         [JsonProperty("master_secret_name")]

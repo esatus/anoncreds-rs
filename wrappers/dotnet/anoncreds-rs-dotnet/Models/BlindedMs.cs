@@ -6,8 +6,9 @@ namespace anoncreds_rs_dotnet.Models
 {
     public class BlindedMs
     {
+        [JsonProperty("u")]
         public string U { get; set; }
-
+        [JsonProperty("ur")]
         public string Ur { get; set; }
 
         [JsonProperty("hidden_attributes")]

@@ -13,6 +13,8 @@ namespace anoncreds_rs_dotnet.Models
 
         [JsonProperty("key_correctness_proof")]
         public CredentialKeyCorrectnessProof KeyCorrectnessProof { get; set; }
+
+        [JsonProperty("nonce")]
         public string Nonce { get; set; }
 
         [JsonProperty("method_name")]

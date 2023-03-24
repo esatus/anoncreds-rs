@@ -23,7 +23,7 @@ namespace anoncreds_rs_dotnet.Models
 
         [JsonProperty("ver")]
         public string Ver { get; set; }
-
+        [JsonProperty("value")]
         public CredentialDefinitionData Value { get; set; }
     }
 }
