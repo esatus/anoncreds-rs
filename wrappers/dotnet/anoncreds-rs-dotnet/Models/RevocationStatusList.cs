@@ -12,14 +12,18 @@ namespace anoncreds_rs_dotnet.Models
 
         public string JsonString { get; set; }
 
+        [JsonProperty("issuerId")]
+        public string IssuerId { get; set; }
+
         [JsonProperty("revRegDefId")]
         public string RevocationRegistryDefinitionId { get; set; }
 
         [JsonProperty("revocationList")]
         public List<bool> RevocationList { get; set; }
 
-        [JsonProperty("registry")]
-        public RevocationRegistry RevocationRegistry { get; set; }
+        [JsonProperty("currentAccumulator")]
+        //public RevocationRegistry RevocationRegistry { get; set; }
+        public string RevocationRegistry { get; set; }
 
         [JsonProperty("timestamp")]
         public long Timestamp { get; set; }

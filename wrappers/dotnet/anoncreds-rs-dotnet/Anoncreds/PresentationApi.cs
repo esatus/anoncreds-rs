@@ -188,11 +188,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
             PresentationRequest presentationRequest,
             List<Schema> schemas,
             List<CredentialDefinition> credentialDefinitions,
-            List<RevocationRegistryDefinition> revocationRegistryDefinitions,
-            List<RevocationStatusList> revocationStatusList,
+            List<RevocationRegistryDefinition> revocationRegistryDefinitions = null,
+            List<RevocationStatusList> revocationStatusList = null,
             List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = null)
         {
             byte verify = 0;
+
+            revocationRegistryDefinitions = revocationRegistryDefinitions == null ? new List<RevocationRegistryDefinition>() : revocationRegistryDefinitions;
+            revocationStatusList = revocationStatusList == null ? new List<RevocationStatusList>() : revocationStatusList;
             List<IntPtr> schemaHandles =
                 (from schema in schemas select schema.Handle).ToList();
             List<string> schemaIds =
@@ -249,8 +252,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string presentationRequestJson,
             List<string> schemaJsons,
             List<string> credentialDefinitionJsons,
-            List<string> revocationRegistryDefinitionJsons,
-            List<string> revocationStatusListJsons,
+            List<string> revocationRegistryDefinitionJsons = null,
+            List<string> revocationStatusListJsons = null,
             List<string> nonrevokedIntervalOverrideJsons = null)
         {
             byte verify = 0;
@@ -261,9 +264,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> schemaIds = new List<string>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
             List<string> credDefIds = new List<string>();
+            revocationRegistryDefinitionJsons = revocationRegistryDefinitionJsons == null ? new List<string>() : revocationRegistryDefinitionJsons;
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
             List<string> revRegDefIds = new List<string>();
+            revocationStatusListJsons = revocationStatusListJsons == null ? new List<string>() : revocationStatusListJsons;
             List<IntPtr> revocationStatusListHandles = new List<IntPtr>();
+            nonrevokedIntervalOverrideJsons = nonrevokedIntervalOverrideJsons == null? new List<string>() : nonrevokedIntervalOverrideJsons;
             List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = new List<NonrevokedIntervalOverride>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);

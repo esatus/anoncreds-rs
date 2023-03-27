@@ -858,6 +858,68 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             _ = actual.Should().BeTrue();
         }
 
+        [Test, TestCase(TestName = "VerifyPresentationAsync() without revocation works.")]
+        public async Task VerifyPresentationNoRevocationWorks()
+        {
+            //Arrange
+            Schema mockSchema = await MockDataProvider.MockSchema();
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPrivate, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            string mockEntropy = "mockEntropy";
+            string mockMasterSecretName = "mockMasterSecretName";
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            /** TODO : siehe test oben
+            List<AttributeInfo> requestedAttributes = new()
+            {
+                new AttributeInfo { Name = "attribute1", Value="value1", NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = new IntPtr(timestamp), To = new IntPtr(timestamp) }, Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
+            };**/
+            List<AttributeInfo> requestedAttributes = new()
+            {
+                new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } },
+                new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp } }
+            };
+            List<string> attrValuesRaw = new() { "value1" };
+            List<string> attrValuesEnc = await CredentialApi.EncodeCredentialAttributesAsync(attrValuesRaw);
+            //PresentationRequest presReqObject = await MockDataProvider.MockPresReq(requestedAttributes: requestedAttributes);
+            PresentationRequest presReqObject = await MockDataProvider.MockPresReq();
+
+            //Act
+            (CredentialRequest mockCredRequest, CredentialRequestMetadata mockCredReqMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
+            string testTailsPathForRevocation = null;
+
+            MasterSecret masterSecretObject = await MasterSecretApi.CreateMasterSecretAsync();
+
+            (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
+            RevocationStatusList revStatusListObject = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            List<RevocationStatusList> revStatusLists = new() { revStatusListObject };
+
+            List<RevocationRegistryDefinition> revRegDefinitions = new() { revRegDefObject };
+
+            Presentation presentationObject = await MockDataProvider.MockPresentation(presReqObject);
+
+            List<Schema> schemas = new()
+            {
+                mockSchema
+            };
+
+            List<CredentialDefinition> credentialDefinitions = new()
+            {
+                mockCredDef
+            };
+
+            //Act
+            bool actual = await PresentationApi.VerifyPresentationAsync(
+                presentationObject,
+                presReqObject,
+                schemas,
+                credentialDefinitions);
+
+            //Assert
+            _ = actual.Should().BeTrue();
+        }
+
         ////[Test, TestCase(TestName = "VerifyPresentationAsync() throws.")]
         ////public async Task VerifyPresentationThrows()
         ////{
