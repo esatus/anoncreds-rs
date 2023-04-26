@@ -208,9 +208,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
             ref IntPtr revRegObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_revocation_registry_delta_from_json(ByteBuffer credentialRevocationRegistryDeltaJson, ref IntPtr credentialRevocationRegistryDeltaObjectHandle);
-
-        [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_revocation_status_list_from_json(
             ByteBuffer revocationStatusListJson, 
             ref IntPtr revocationStatusListObjectHandle);
