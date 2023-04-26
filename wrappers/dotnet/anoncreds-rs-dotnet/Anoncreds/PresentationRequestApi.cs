@@ -162,13 +162,17 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>The <see cref="PredicateTypes"/>.</returns>
         private static PredicateTypes ParsePredicateType(string type)
         {
-            return type switch
+            switch (type)
             {
-                "<" => PredicateTypes.LT,
-                "<=" => PredicateTypes.LE,
-                ">" => PredicateTypes.GT,
-                _ => PredicateTypes.GE,
-            };
+                case "<":
+                    return PredicateTypes.LT;
+                case "<=":
+                    return PredicateTypes.LE;
+                case ">":
+                    return PredicateTypes.GT;
+                default:
+                    return PredicateTypes.GE;
+            }
         }
     }
 }
