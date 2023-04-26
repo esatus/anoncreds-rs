@@ -148,7 +148,7 @@ namespace anoncreds_rs_dotnet_test
         {
             string mockEntropy = entropy ?? "mockEntropy";
             CredentialDefinition mockCredDef = credDef ?? CredentialDefinition ??(await MockCredDef()).Item1;
-            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
             string mockLinkSecretName = linkSecretName ?? "mockLinkSecretName";
             CredentialOffer mockCredOffer = credOffer ?? CredentialOffer ?? await MockCredOffer();
 
@@ -160,7 +160,7 @@ namespace anoncreds_rs_dotnet_test
         {
             string mockEntropy = entropy ?? "mockEntropy";
             string mockCredDefJson = credDefJson ?? CredentialDefinitionJson ?? (await MockCredDefJson()).Item1;
-            string mockLinkSecretJson = linkSecretJson ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecretJson = linkSecretJson ?? await LinkSecretApi.CreateLinkSecretAsync();
             string mockLinkSecretName = linkSecretName ?? "mockLinkSecretName";
             string mockCredOfferJson = credOfferJson ?? CredentialOfferJson ?? await MockCredOfferJson();
 
@@ -291,7 +291,7 @@ namespace anoncreds_rs_dotnet_test
             List<CredentialProof> mockCredentialProofs = credentialProofs ?? new List<CredentialProof>() {  };
             List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { presentationRequest.RequestedAttributes.First().Key,  };
             List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "SomeValue" };
-            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
             List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
             List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };
 

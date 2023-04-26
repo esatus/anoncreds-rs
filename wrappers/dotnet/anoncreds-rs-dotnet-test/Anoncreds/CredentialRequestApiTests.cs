@@ -18,7 +18,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             //Act
             (CredentialRequest request, CredentialRequestMetadata metaData) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockLinkSecret, mockLinkSecretName, mockCredOffer);
@@ -38,7 +38,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
-            string mockLinkSecretJson = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecretJson = await LinkSecretApi.CreateLinkSecretAsync();
 
             //Act
             (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockLinkSecretJson, mockLinkSecretName, mockCredOfferJson);

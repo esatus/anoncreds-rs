@@ -16,7 +16,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Arrange
 
             //Act
-            Func<Task> act = async () => { _ = await LinkSecretApi.CreateLinkSecretJsonAsync(); };
+            Func<Task> act = async () => { _ = await LinkSecretApi.CreateLinkSecretAsync(); };
 
             //Assert
             _ = await act.Should().NotThrowAsync();
@@ -29,7 +29,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Arrange
 
             //Act
-            string testObject = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string testObject = await LinkSecretApi.CreateLinkSecretAsync();
 
             //Assert
             _ = testObject.Should().NotBeNullOrEmpty();

@@ -14,13 +14,19 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task GetTypeNameWorks()
         {
             //Arrange
-            LinkSecret secretObject = await LinkSecretApi.CreateLinkSecretAsync();
+            string expected = "{" +
+               "\"name\":\"schema name\"," +
+               "\"version\":\"schema version\"," +
+               "\"attrNames\":[\"attr\"]," +
+               "\"issuerId\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\"" +
+               "}";
+            Schema schemaObject = await SchemaApi.CreateSchemaFromJsonAsync(expected);
 
             //Act
-            string actual = await ObjectApi.GetTypeNameAsync(secretObject.Handle);
+            string actual = await ObjectApi.GetTypeNameAsync(schemaObject.Handle);
 
             //Assert
-            _ = actual.Should().Be("LinkSecret");
+            _ = actual.Should().Be("Schema");
 
         }
 
@@ -42,11 +48,17 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task FreeObjectAsyncWorks()
         {
             //Arrange
-            LinkSecret secretObject = await LinkSecretApi.CreateLinkSecretAsync();
-            string testJson = await ObjectApi.ToJsonAsync(secretObject.Handle);
+            string expected = "{" +
+               "\"name\":\"schema name\"," +
+               "\"version\":\"schema version\"," +
+               "\"attrNames\":[\"attr\"]," +
+               "\"issuerId\":\"55GkHamhTU1ZbTbV2ab9DE:2:schema name:schema version\"" +
+               "}";
+            Schema schemaObject = await SchemaApi.CreateSchemaFromJsonAsync(expected);
+            string testJson = await ObjectApi.ToJsonAsync(schemaObject.Handle);
             //Act
-            await ObjectApi.FreeObjectAsync(secretObject.Handle);
-            Func<Task> actual = async () => await ObjectApi.ToJsonAsync(secretObject.Handle);
+            await ObjectApi.FreeObjectAsync(schemaObject.Handle);
+            Func<Task> actual = async () => await ObjectApi.ToJsonAsync(schemaObject.Handle);
             //Assert
             _ = testJson.Should().NotBe("");
             _ = await actual.Should().ThrowAsync<Exception>();

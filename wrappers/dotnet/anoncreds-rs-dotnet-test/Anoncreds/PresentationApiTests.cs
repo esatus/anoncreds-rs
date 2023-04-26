@@ -24,7 +24,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             string testTailsPathForRevocation = null;
             //TODO : Test with Restrictions --> at the moment ByteBuffer "tooSmall" error in Structures
 
@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 "testSomeValue"
             };
 
-            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             List<Schema> schemas = new()
             {
@@ -143,7 +143,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         {
             //Arrange
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             List<AttributeInfo> requestedAttributes = new()
             {
                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To =(ulong)timestamp } },
@@ -190,7 +190,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             string testTailsPathForRevocation = null;
             List<AttributeInfo> requestedAttributes = new()
             {
@@ -250,7 +250,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 })
             };
 
-            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             List<string> schemas = new()
             {
@@ -561,7 +561,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             string testTailsPathForRevocation = null;
 
             //Act
@@ -622,7 +622,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 "testSomeValue"
             };
 
-            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             List<Schema> schemas = new()
             {
@@ -662,7 +662,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             string testTailsPathForRevocation = null;
 
             List<AttributeInfo> requestedAttributes = new()
@@ -723,7 +723,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 })
             };
 
-            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             List<string> schemas = new() { mockSchema.JsonString };
 
@@ -803,7 +803,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             /** TODO : siehe test oben
             List<AttributeInfo> requestedAttributes = new()
             {
@@ -866,7 +866,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             /** TODO : siehe test oben
             List<AttributeInfo> requestedAttributes = new()
             {
