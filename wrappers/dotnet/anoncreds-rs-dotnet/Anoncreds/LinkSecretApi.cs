@@ -15,7 +15,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>New <see cref="LinkSecret"/>.</returns>
         public static async Task<LinkSecret> CreateLinkSecretAsync()
         {
-            IntPtr result = new IntPtr();
+            string result = "";
             int errorCode = NativeMethods.anoncreds_create_link_secret(ref result);
 
             if (errorCode != 0)
@@ -24,10 +24,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 throw AnoncredsRsException.FromSdkError(error);
             }
 
-            string linkSecretJson = await ObjectApi.ToJsonAsync(result);
-            LinkSecret msObject = JsonConvert.DeserializeObject<LinkSecret>(linkSecretJson, Settings.JsonSettings);
-            msObject.JsonString = linkSecretJson;
-            msObject.Handle = result;
+            //string linkSecret = await ObjectApi.ToJsonAsync(result.data);
+            LinkSecret msObject = JsonConvert.DeserializeObject<LinkSecret>(result, Settings.JsonSettings);
+            msObject.JsonString = result;
+            //msObject.Handle = result.data;
             return await Task.FromResult(msObject);
         }
         /// <summary>
@@ -37,7 +37,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>New <see cref="LinkSecret"/> as JSON string.</returns>
         public static async Task<string> CreateLinkSecretJsonAsync()
         {
-            IntPtr result = new IntPtr();
+            string result = "";
             int errorCode = NativeMethods.anoncreds_create_link_secret(ref result);
 
             if (errorCode != 0)
@@ -46,7 +46,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 throw AnoncredsRsException.FromSdkError(error);
             }
 
-            string linkSecretJson = await ObjectApi.ToJsonAsync(result);
+            string linkSecretJson = result;
 
             return await Task.FromResult(linkSecretJson);
         }

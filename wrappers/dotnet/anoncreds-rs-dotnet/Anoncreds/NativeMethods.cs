@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region LinkSecret
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_link_secret(ref IntPtr linkSecretObjectHandle);
+        internal static extern int anoncreds_create_link_secret(ref string linkSecretObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_link_secret_from_json(ByteBuffer linkSecretJson, ref IntPtr linkSecretObjectHandle);
