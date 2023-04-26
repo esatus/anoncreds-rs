@@ -68,7 +68,7 @@ export interface NativeBindings {
   processCredential(options: {
     credential: number
     credentialRequestMetadata: number
-    masterSecret: number
+    linkSecret: string
     credentialDefinition: number
     revocationRegistryDefinition?: number
   }): ReturnObject<Handle>
@@ -83,12 +83,12 @@ export interface NativeBindings {
     entropy?: string
     proverDid?: string
     credentialDefinition: number
-    masterSecret: number
-    masterSecretId: string
+    linkSecret: string
+    linkSecretId: string
     credentialOffer: number
   }): ReturnObject<{ credentialRequest: Handle; credentialRequestMetadata: Handle }>
 
-  createMasterSecret(options: Record<never, never>): ReturnObject<number>
+  createLinkSecret(options: Record<never, never>): ReturnObject<string>
 
   createPresentation(options: {
     presentationRequest: number
@@ -96,7 +96,7 @@ export interface NativeBindings {
     credentialsProve: NativeCredentialProve[]
     selfAttestNames: string[]
     selfAttestValues: string[]
-    masterSecret: number
+    linkSecret: string
     schemaIds: string[]
     schemas: number[]
     credentialDefinitionIds: string[]
@@ -133,9 +133,10 @@ export interface NativeBindings {
 
   createOrUpdateRevocationState(options: {
     revocationRegistryDefinition: number
+    revocationStatusList: number
     revocationRegistryIndex: number
     tailsPath: string
-    revocationState?: number
+    oldRevocationState?: number
     oldRevocationStatusList?: number
   }): ReturnObject<Handle>
 
@@ -159,13 +160,13 @@ export interface NativeBindings {
 
   revocationRegistryFromJson(options: { json: string }): ReturnObject<Handle>
 
+  revocationStatusListFromJson(options: { json: string }): ReturnObject<Handle>
+
   presentationFromJson(options: { json: string }): ReturnObject<Handle>
 
   credentialOfferFromJson(options: { json: string }): ReturnObject<Handle>
 
   schemaFromJson(options: { json: string }): ReturnObject<Handle>
-
-  masterSecretFromJson(options: { json: string }): ReturnObject<Handle>
 
   credentialRequestFromJson(options: { json: string }): ReturnObject<Handle>
 
@@ -174,8 +175,6 @@ export interface NativeBindings {
   credentialFromJson(options: { json: string }): ReturnObject<Handle>
 
   revocationRegistryDefinitionPrivateFromJson(options: { json: string }): ReturnObject<Handle>
-
-  revocationRegistryDeltaFromJson(options: { json: string }): ReturnObject<Handle>
 
   revocationStateFromJson(options: { json: string }): ReturnObject<Handle>
 

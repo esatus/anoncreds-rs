@@ -6,7 +6,7 @@ import {
   CredentialRequest,
   CredentialRevocationConfig,
   CredentialRevocationState,
-  MasterSecret,
+  LinkSecret,
   Presentation,
   PresentationRequest,
   RevocationRegistryDefinition,
@@ -44,7 +44,7 @@ describe('API', () => {
       requested_predicates: {
         predicate1_referent: { name: 'age', p_type: '>=', p_value: 18 },
       },
-      non_revoked: { from: 10, to: 200 },
+      non_revoked: { from: 13, to: 200 },
     })
 
     const schema = Schema.create({
@@ -89,14 +89,14 @@ describe('API', () => {
       keyCorrectnessProof,
     })
 
-    const masterSecret = MasterSecret.create()
-    const masterSecretId = 'master secret id'
+    const linkSecret = LinkSecret.create()
+    const linkSecretId = 'link secret id'
 
     const { credentialRequestMetadata, credentialRequest } = CredentialRequest.create({
       entropy: 'entropy',
       credentialDefinition,
-      masterSecret,
-      masterSecretId,
+      linkSecret,
+      linkSecretId,
       credentialOffer,
     })
 
@@ -119,7 +119,7 @@ describe('API', () => {
     const credentialReceived = credential.process({
       credentialDefinition,
       credentialRequestMetadata,
-      masterSecret,
+      linkSecret,
       revocationRegistryDefinition,
     })
 
@@ -168,12 +168,23 @@ describe('API', () => {
           reveal: true,
         },
       ],
-      masterSecret,
+      linkSecret,
       schemas: { 'mock:uri': schema },
       selfAttest: { attr3_referent: '8-800-300' },
     })
 
     expect(presentation.handle.handle).toStrictEqual(expect.any(Number))
+
+    // Without revocation timestamp override, it shall fail
+    expect(() => {
+      presentation.verify({
+        presentationRequest,
+        schemas: { ['mock:uri']: schema },
+        credentialDefinitions: { ['mock:uri']: credentialDefinition },
+        revocationRegistryDefinitions: { ['mock:uri']: revocationRegistryDefinition },
+        revocationStatusLists: [revocationStatusList],
+      })
+    }).toThrowError('Invalid timestamp')
 
     const verify = presentation.verify({
       presentationRequest,
@@ -181,6 +192,13 @@ describe('API', () => {
       credentialDefinitions: { ['mock:uri']: credentialDefinition },
       revocationRegistryDefinitions: { ['mock:uri']: revocationRegistryDefinition },
       revocationStatusLists: [revocationStatusList],
+      nonRevokedIntervalOverrides: [
+        {
+          overrideRevocationStatusListTimestamp: 12,
+          requestedFromTimestamp: 13,
+          revocationRegistryDefinitionId: 'mock:uri',
+        },
+      ],
     })
 
     expect(verify).toBeTruthy()
@@ -209,14 +227,14 @@ describe('API', () => {
       keyCorrectnessProof,
     })
 
-    const masterSecret = MasterSecret.create()
-    const masterSecretId = 'master secret id'
+    const linkSecret = LinkSecret.create()
+    const linkSecretId = 'link secret id'
 
     const { credentialRequestMetadata, credentialRequest } = CredentialRequest.create({
       entropy: 'entropy',
       credentialDefinition,
-      masterSecret,
-      masterSecretId,
+      linkSecret,
+      linkSecretId,
       credentialOffer,
     })
 
@@ -231,7 +249,7 @@ describe('API', () => {
     const credReceived = credential.process({
       credentialDefinition,
       credentialRequestMetadata,
-      masterSecret,
+      linkSecret,
     })
 
     const credJson = credential.toJson()
@@ -312,7 +330,7 @@ describe('API', () => {
           reveal: true,
         },
       ],
-      masterSecret,
+      linkSecret,
       schemas: { 'mock:uri': schema },
       selfAttest: { attr3_referent: '8-800-300' },
     })
@@ -329,7 +347,11 @@ describe('API', () => {
   })
 })
 
-test('create and verify presentation passing only JSON objects as parameters)', () => {
+test('create and verify presentation passing only JSON objects as parameters', () => {
+  setup()
+
+  const nonce = anoncreds.generateNonce()
+
   // a schema can be created from JSON
   const schema = Schema.fromJson({
     name: 'schema-1',
@@ -354,24 +376,45 @@ test('create and verify presentation passing only JSON objects as parameters)', 
       attrNames: ['name', 'age', 'sex', 'height'],
     },
     signatureType: 'CL',
-    supportRevocation: false,
+    supportRevocation: true,
     tag: 'TAG',
   })
 
-  const credentialOffer = CredentialOffer.create({
-    schemaId: 'mock:uri',
+  const { revocationRegistryDefinition, revocationRegistryDefinitionPrivate } = RevocationRegistryDefinition.create({
     credentialDefinitionId: 'mock:uri',
-    keyCorrectnessProof: keyCorrectnessProof.toJson(),
+    credentialDefinition,
+    issuerId: 'mock:uri',
+    tag: 'some_tag',
+    revocationRegistryType: 'CL_ACCUM',
+    maximumCredentialNumber: 10,
   })
 
-  const masterSecret = MasterSecret.create()
-  const masterSecretId = 'master secret id'
+  const tailsPath = revocationRegistryDefinition.getTailsLocation()
+
+  const timeCreateRevStatusList = 12
+  const revocationStatusList = RevocationStatusList.create({
+    issuerId: 'mock:uri',
+    timestamp: timeCreateRevStatusList,
+    issuanceByDefault: true,
+    revocationRegistryDefinition,
+    revocationRegistryDefinitionId: 'mock:uri',
+  })
+
+  const credentialOffer = CredentialOffer.fromJson({
+    schema_id: 'mock:uri',
+    cred_def_id: 'mock:uri',
+    key_correctness_proof: keyCorrectnessProof.toJson(),
+    nonce,
+  })
+
+  const linkSecret = '123'
+  const linkSecretId = 'link secret id'
 
   const { credentialRequestMetadata, credentialRequest } = CredentialRequest.create({
     entropy: 'entropy',
     credentialDefinition: credentialDefinition.toJson(),
-    masterSecret: masterSecret.toJson(),
-    masterSecretId,
+    linkSecret,
+    linkSecretId,
     credentialOffer: credentialOffer.toJson(),
   })
 
@@ -381,12 +424,21 @@ test('create and verify presentation passing only JSON objects as parameters)', 
     credentialOffer: credentialOffer.toJson(),
     credentialRequest: credentialRequest.toJson(),
     attributeRawValues: { name: 'Alex', height: '175', age: '28', sex: 'male' },
+    revocationRegistryId: 'mock:uri',
+    revocationStatusList: revocationStatusList.toJson(),
+    revocationConfiguration: new CredentialRevocationConfig({
+      registryDefinition: revocationRegistryDefinition,
+      registryDefinitionPrivate: revocationRegistryDefinitionPrivate,
+      registryIndex: 9,
+      tailsPath,
+    }),
   })
 
   const credReceived = credential.process({
     credentialDefinition: credentialDefinition.toJson(),
     credentialRequestMetadata: credentialRequestMetadata.toJson(),
-    masterSecret: masterSecret.toJson(),
+    linkSecret,
+    revocationRegistryDefinition: revocationRegistryDefinition.toJson(),
   })
 
   const credJson = credential.toJson()
@@ -394,6 +446,7 @@ test('create and verify presentation passing only JSON objects as parameters)', 
     expect.objectContaining({
       cred_def_id: 'mock:uri',
       schema_id: 'mock:uri',
+      rev_reg_id: 'mock:uri',
     })
   )
 
@@ -402,12 +455,11 @@ test('create and verify presentation passing only JSON objects as parameters)', 
     expect.objectContaining({
       cred_def_id: 'mock:uri',
       schema_id: 'mock:uri',
+      rev_reg_id: 'mock:uri',
     })
   )
   expect(credReceivedJson).toHaveProperty('signature')
   expect(credReceivedJson).toHaveProperty('witness')
-
-  const nonce = anoncreds.generateNonce()
 
   const presentationRequest = {
     nonce,
@@ -467,7 +519,7 @@ test('create and verify presentation passing only JSON objects as parameters)', 
         reveal: true,
       },
     ],
-    masterSecret: masterSecret.toJson(),
+    linkSecret,
     schemas: { 'mock:uri': schema.toJson() },
     selfAttest: { attr3_referent: '8-800-300' },
   })
@@ -478,6 +530,8 @@ test('create and verify presentation passing only JSON objects as parameters)', 
     presentationRequest,
     schemas: { ['mock:uri']: schema.toJson() },
     credentialDefinitions: { ['mock:uri']: credentialDefinition.toJson() },
+    revocationRegistryDefinitions: { ['mock:uri']: revocationRegistryDefinition.toJson() },
+    revocationStatusLists: [revocationStatusList.toJson()],
   })
 
   expect(verify).toBeTruthy()

@@ -1,7 +1,6 @@
 import type { ObjectHandle } from '../ObjectHandle'
 import type { JsonObject } from '../types'
 import type { RevocationRegistry } from './RevocationRegistry'
-import type { RevocationStatusList } from './RevocationStatusList'
 
 import { AnoncredsObject } from '../AnoncredsObject'
 import { anoncreds } from '../register'
@@ -9,9 +8,9 @@ import { anoncreds } from '../register'
 import { Credential } from './Credential'
 import { CredentialDefinition } from './CredentialDefinition'
 import { CredentialRevocationState } from './CredentialRevocationState'
-import { MasterSecret } from './MasterSecret'
 import { PresentationRequest } from './PresentationRequest'
 import { RevocationRegistryDefinition } from './RevocationRegistryDefinition'
+import { RevocationStatusList } from './RevocationStatusList'
 import { Schema } from './Schema'
 import { pushToArray } from './utils'
 
@@ -48,7 +47,7 @@ export type CreatePresentationOptions = {
   credentials: CredentialEntry[]
   credentialsProve: CredentialProve[]
   selfAttest: Record<string, string>
-  masterSecret: MasterSecret | JsonObject
+  linkSecret: string
   schemas: Record<string, Schema | JsonObject>
   credentialDefinitions: Record<string, CredentialDefinition | JsonObject>
 }
@@ -58,8 +57,8 @@ export type VerifyPresentationOptions = {
   schemas: Record<string, Schema | JsonObject>
   credentialDefinitions: Record<string, CredentialDefinition | JsonObject>
   revocationRegistryDefinitions?: Record<string, RevocationRegistryDefinition | JsonObject>
-  revocationStatusLists?: RevocationStatusList[]
-  nonRevokedIntervalOverride?: NonRevokedIntervalOverride[]
+  revocationStatusLists?: Array<RevocationStatusList | JsonObject>
+  nonRevokedIntervalOverrides?: NonRevokedIntervalOverride[]
 }
 
 export class Presentation extends AnoncredsObject {
@@ -72,11 +71,6 @@ export class Presentation extends AnoncredsObject {
         options.presentationRequest instanceof PresentationRequest
           ? options.presentationRequest.handle
           : pushToArray(PresentationRequest.fromJson(options.presentationRequest).handle, objectHandles)
-
-      const masterSecret =
-        options.masterSecret instanceof MasterSecret
-          ? options.masterSecret.handle
-          : pushToArray(MasterSecret.fromJson(options.masterSecret).handle, objectHandles)
 
       presentationHandle = anoncreds.createPresentation({
         presentationRequest,
@@ -96,7 +90,7 @@ export class Presentation extends AnoncredsObject {
         })),
         credentialsProve: options.credentialsProve,
         selfAttest: options.selfAttest,
-        masterSecret,
+        linkSecret: options.linkSecret,
         schemas: Object.entries(options.schemas).reduce<Record<string, ObjectHandle>>((prev, [id, object]) => {
           const objectHandle =
             object instanceof Schema ? object.handle : pushToArray(Schema.fromJson(object).handle, objectHandles)
@@ -169,8 +163,12 @@ export class Presentation extends AnoncredsObject {
             : pushToArray(RevocationRegistryDefinition.fromJson(o).handle, objectHandles)
         ),
         revocationRegistryDefinitionIds,
-        revocationStatusLists: options.revocationStatusLists?.map((o) => o.handle),
-        nonRevokedIntervalOverride: options.nonRevokedIntervalOverride,
+        revocationStatusLists: options.revocationStatusLists?.map((o) =>
+          o instanceof RevocationStatusList
+            ? o.handle
+            : pushToArray(RevocationStatusList.fromJson(o).handle, objectHandles)
+        ),
+        nonRevokedIntervalOverrides: options.nonRevokedIntervalOverrides,
       })
     } finally {
       objectHandles.forEach((handle) => handle.clear())

@@ -33,7 +33,7 @@ jsi::Value setDefaultLogger(jsi::Runtime &rt, jsi::Object options);
 jsi::Value objectFree(jsi::Runtime &rt, jsi::Object options);
 
 // Meta
-jsi::Value createMasterSecret(jsi::Runtime &rt, jsi::Object options);
+jsi::Value createLinkSecret(jsi::Runtime &rt, jsi::Object options);
 jsi::Value generateNonce(jsi::Runtime &rt, jsi::Object options);
 
 // Anoncreds Objects
@@ -41,21 +41,24 @@ jsi::Value createSchema(jsi::Runtime &rt, jsi::Object options);
 jsi::Value createCredentialDefinition(jsi::Runtime &rt, jsi::Object options);
 
 // Anoncreds Objects from JSON
-jsi::Value revocationRegistryDefinitionFromJson(jsi::Runtime &rt, jsi::Object options);
+jsi::Value revocationRegistryDefinitionFromJson(jsi::Runtime &rt,
+                                                jsi::Object options);
 jsi::Value revocationRegistryFromJson(jsi::Runtime &rt, jsi::Object options);
+jsi::Value revocationStatusListFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value presentationFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value presentationRequestFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value credentialOfferFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value schemaFromJson(jsi::Runtime &rt, jsi::Object options);
-jsi::Value masterSecretFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value credentialRequestFromJson(jsi::Runtime &rt, jsi::Object options);
-jsi::Value credentialRequestMetadataFromJson(jsi::Runtime &rt, jsi::Object options);
+jsi::Value credentialRequestMetadataFromJson(jsi::Runtime &rt,
+                                             jsi::Object options);
 jsi::Value credentialFromJson(jsi::Runtime &rt, jsi::Object options);
-jsi::Value revocationRegistryDefinitionPrivateFromJson(jsi::Runtime &rt, jsi::Object options);
+jsi::Value revocationRegistryDefinitionPrivateFromJson(jsi::Runtime &rt,
+                                                       jsi::Object options);
 jsi::Value revocationStateFromJson(jsi::Runtime &rt, jsi::Object options);
-jsi::Value revocationRegistryDeltaFromJson(jsi::Runtime &rt, jsi::Object options);
 jsi::Value credentialDefinitionFromJson(jsi::Runtime &rt, jsi::Object options);
-jsi::Value credentialDefinitionPrivateFromJson(jsi::Runtime &rt, jsi::Object options);
+jsi::Value credentialDefinitionPrivateFromJson(jsi::Runtime &rt,
+                                               jsi::Object options);
 jsi::Value keyCorrectnessProofFromJson(jsi::Runtime &rt, jsi::Object options);
 
 // Proofs

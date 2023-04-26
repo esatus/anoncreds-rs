@@ -75,7 +75,7 @@ export interface Anoncreds {
   processCredential(options: {
     credential: ObjectHandle
     credentialRequestMetadata: ObjectHandle
-    masterSecret: ObjectHandle
+    linkSecret: string
     credentialDefinition: ObjectHandle
     revocationRegistryDefinition?: ObjectHandle
   }): ObjectHandle
@@ -90,19 +90,19 @@ export interface Anoncreds {
     entropy?: string
     proverDid?: string
     credentialDefinition: ObjectHandle
-    masterSecret: ObjectHandle
-    masterSecretId: string
+    linkSecret: string
+    linkSecretId: string
     credentialOffer: ObjectHandle
   }): { credentialRequest: ObjectHandle; credentialRequestMetadata: ObjectHandle }
 
-  createMasterSecret(): ObjectHandle
+  createLinkSecret(): string
 
   createPresentation(options: {
     presentationRequest: ObjectHandle
     credentials: NativeCredentialEntry[]
     credentialsProve: NativeCredentialProve[]
     selfAttest: Record<string, string>
-    masterSecret: ObjectHandle
+    linkSecret: string
     schemas: Record<string, ObjectHandle>
     credentialDefinitions: Record<string, ObjectHandle>
   }): ObjectHandle
@@ -117,7 +117,7 @@ export interface Anoncreds {
     revocationRegistryDefinitions?: ObjectHandle[]
     revocationRegistryDefinitionIds?: string[]
     revocationStatusLists?: ObjectHandle[]
-    nonRevokedIntervalOverride?: NativeNonRevokedIntervalOverride[]
+    nonRevokedIntervalOverrides?: NativeNonRevokedIntervalOverride[]
   }): boolean
 
   createRevocationRegistryDefinition(options: {
@@ -138,7 +138,7 @@ export interface Anoncreds {
     revocationStatusList: ObjectHandle
     revocationRegistryIndex: number
     tailsPath: string
-    previousRevocationState?: ObjectHandle
+    oldRevocationState?: ObjectHandle
     oldRevocationStatusList?: ObjectHandle
   }): ObjectHandle
 
@@ -173,13 +173,13 @@ export interface Anoncreds {
 
   revocationRegistryFromJson(options: { json: string }): ObjectHandle
 
+  revocationStatusListFromJson(options: { json: string }): ObjectHandle
+
   presentationFromJson(options: { json: string }): ObjectHandle
 
   credentialOfferFromJson(options: { json: string }): ObjectHandle
 
   schemaFromJson(options: { json: string }): ObjectHandle
-
-  masterSecretFromJson(options: { json: string }): ObjectHandle
 
   credentialRequestFromJson(options: { json: string }): ObjectHandle
 
@@ -188,8 +188,6 @@ export interface Anoncreds {
   credentialFromJson(options: { json: string }): ObjectHandle
 
   revocationRegistryDefinitionPrivateFromJson(options: { json: string }): ObjectHandle
-
-  revocationRegistryDeltaFromJson(options: { json: string }): ObjectHandle
 
   revocationStateFromJson(options: { json: string }): ObjectHandle
 

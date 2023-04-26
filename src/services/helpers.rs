@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::data_types::{
     credential::AttributeValues,
@@ -21,7 +21,7 @@ pub fn attr_common_view(attr: &str) -> String {
     attr.replace(' ', "").to_lowercase()
 }
 
-pub fn build_credential_schema(attrs: &HashSet<String>) -> Result<CredentialSchema> {
+pub fn build_credential_schema(attrs: &[String]) -> Result<CredentialSchema> {
     trace!("build_credential_schema >>> attrs: {:?}", attrs);
 
     let mut credential_schema_builder = issuer::Issuer::new_credential_schema_builder()?;
@@ -40,6 +40,7 @@ pub fn build_non_credential_schema() -> Result<NonCredentialSchema> {
     trace!("build_non_credential_schema");
 
     let mut non_credential_schema_builder = issuer::Issuer::new_non_credential_schema_builder()?;
+    // value is master_secret as that's what's historically been used in published credential definitions
     non_credential_schema_builder.add_attr("master_secret")?;
     let res = non_credential_schema_builder.finalize()?;
 
@@ -49,7 +50,7 @@ pub fn build_non_credential_schema() -> Result<NonCredentialSchema> {
 
 pub fn build_credential_values(
     credential_values: &HashMap<String, AttributeValues>,
-    master_secret: Option<&CryptoMasterSecret>,
+    link_secret: Option<&CryptoMasterSecret>,
 ) -> Result<CryptoCredentialValues> {
     trace!(
         "build_credential_values >>> credential_values: {:?}",
@@ -60,7 +61,8 @@ pub fn build_credential_values(
     for (attr, values) in credential_values {
         credential_values_builder.add_dec_known(&attr_common_view(attr), &values.encoded)?;
     }
-    if let Some(ms) = master_secret {
+    if let Some(ms) = link_secret {
+        // value is master_secret as that's what's historically been used in published credential definitions
         credential_values_builder.add_value_hidden("master_secret", &ms.value()?)?;
     }
 
@@ -102,7 +104,7 @@ pub fn build_sub_proof_request(
         let names = if let Some(name) = &attr.name {
             vec![name.clone()]
         } else if let Some(names) = &attr.names {
-            names.to_owned()
+            names.clone()
         } else {
             error!(
                 r#"Attr for credential restriction should contain "name" or "names" param. Current attr: {:?}"#,
@@ -114,7 +116,7 @@ pub fn build_sub_proof_request(
         };
 
         for name in names {
-            sub_proof_request_builder.add_revealed_attr(&attr_common_view(&name))?
+            sub_proof_request_builder.add_revealed_attr(&attr_common_view(&name))?;
         }
     }
 
@@ -143,7 +145,7 @@ pub fn get_revealed_attributes_for_credential(
     sub_proof_index: usize,
     requested_proof: &RequestedProof,
     pres_req: &PresentationRequestPayload,
-) -> Result<(Vec<AttributeInfo>, Option<NonRevokedInterval>)> {
+) -> (Vec<AttributeInfo>, Option<NonRevokedInterval>) {
     trace!("_get_revealed_attributes_for_credential >>> sub_proof_index: {:?}, requested_credentials: {:?}, pres_req: {:?}",
            sub_proof_index, requested_proof, pres_req);
     let mut non_revoked_interval: Option<NonRevokedInterval> = None;
@@ -197,14 +199,14 @@ pub fn get_revealed_attributes_for_credential(
         revealed_attrs_for_credential
     );
 
-    Ok((revealed_attrs_for_credential, non_revoked_interval))
+    (revealed_attrs_for_credential, non_revoked_interval)
 }
 
 pub fn get_predicates_for_credential(
     sub_proof_index: usize,
     requested_proof: &RequestedProof,
     pres_req: &PresentationRequestPayload,
-) -> Result<(Vec<PredicateInfo>, Option<NonRevokedInterval>)> {
+) -> (Vec<PredicateInfo>, Option<NonRevokedInterval>) {
     trace!("_get_predicates_for_credential >>> sub_proof_index: {:?}, requested_credentials: {:?}, pres_req: {:?}",
            sub_proof_index, requested_proof, pres_req);
 
@@ -238,5 +240,5 @@ pub fn get_predicates_for_credential(
         predicates_for_credential
     );
 
-    Ok((predicates_for_credential, non_revoked_interval))
+    (predicates_for_credential, non_revoked_interval)
 }

@@ -225,18 +225,18 @@ export class NodeJSAnoncreds implements Anoncreds {
   public processCredential(options: {
     credential: ObjectHandle
     credentialRequestMetadata: ObjectHandle
-    masterSecret: ObjectHandle
+    linkSecret: string
     credentialDefinition: ObjectHandle
     revocationRegistryDefinition?: ObjectHandle | undefined
   }): ObjectHandle {
-    const { credential, credentialRequestMetadata, masterSecret, credentialDefinition } = serializeArguments(options)
+    const { credential, credentialRequestMetadata, linkSecret, credentialDefinition } = serializeArguments(options)
 
     const ret = allocatePointer()
 
     this.nativeAnoncreds.anoncreds_process_credential(
       credential,
       credentialRequestMetadata,
-      masterSecret,
+      linkSecret,
       credentialDefinition,
       options.revocationRegistryDefinition?.handle ?? 0,
       ret
@@ -264,11 +264,11 @@ export class NodeJSAnoncreds implements Anoncreds {
     entropy?: string
     proverDid?: string
     credentialDefinition: ObjectHandle
-    masterSecret: ObjectHandle
-    masterSecretId: string
+    linkSecret: string
+    linkSecretId: string
     credentialOffer: ObjectHandle
   }): { credentialRequest: ObjectHandle; credentialRequestMetadata: ObjectHandle } {
-    const { entropy, proverDid, credentialDefinition, masterSecret, masterSecretId, credentialOffer } =
+    const { entropy, proverDid, credentialDefinition, linkSecret, linkSecretId, credentialOffer } =
       serializeArguments(options)
 
     const credentialRequestPtr = allocatePointer()
@@ -278,8 +278,8 @@ export class NodeJSAnoncreds implements Anoncreds {
       entropy,
       proverDid,
       credentialDefinition,
-      masterSecret,
-      masterSecretId,
+      linkSecret,
+      linkSecretId,
       credentialOffer,
       credentialRequestPtr,
       credentialRequestMetadataPtr
@@ -292,13 +292,13 @@ export class NodeJSAnoncreds implements Anoncreds {
     }
   }
 
-  public createMasterSecret(): ObjectHandle {
-    const ret = allocatePointer()
+  public createLinkSecret(): string {
+    const ret = allocateStringBuffer()
 
-    this.nativeAnoncreds.anoncreds_create_master_secret(ret)
+    this.nativeAnoncreds.anoncreds_create_link_secret(ret)
     this.handleError()
 
-    return new ObjectHandle(handleReturnPointer<number>(ret))
+    return handleReturnPointer<string>(ret)
   }
 
   public createPresentation(options: {
@@ -306,11 +306,11 @@ export class NodeJSAnoncreds implements Anoncreds {
     credentials: NativeCredentialEntry[]
     credentialsProve: NativeCredentialProve[]
     selfAttest: Record<string, string>
-    masterSecret: ObjectHandle
+    linkSecret: string
     schemas: Record<string, ObjectHandle>
     credentialDefinitions: Record<string, ObjectHandle>
   }): ObjectHandle {
-    const { presentationRequest, masterSecret } = serializeArguments(options)
+    const { presentationRequest, linkSecret } = serializeArguments(options)
 
     const credentialEntries = options.credentials.map((value) =>
       CredentialEntryStruct({
@@ -390,7 +390,7 @@ export class NodeJSAnoncreds implements Anoncreds {
       credentialProveList as unknown as Buffer,
       selfAttestNames as unknown as Buffer,
       selfAttestValues as unknown as Buffer,
-      masterSecret,
+      linkSecret,
       schemas as unknown as Buffer,
       schemaIds as unknown as Buffer,
       credentialDefinitions as unknown as Buffer,
@@ -425,7 +425,7 @@ export class NodeJSAnoncreds implements Anoncreds {
       credentialDefinitionIds,
     } = serializeArguments(options)
 
-    const nativeNonRevokedIntervalOverride = options.nonRevokedIntervalOverrides?.map((value) => {
+    const nativeNonRevokedIntervalOverrides = options.nonRevokedIntervalOverrides?.map((value) => {
       const { requestedFromTimestamp, revocationRegistryDefinitionId, overrideRevocationStatusListTimestamp } =
         serializeArguments(value)
       return NonRevokedIntervalOverrideStruct({
@@ -437,7 +437,7 @@ export class NodeJSAnoncreds implements Anoncreds {
 
     const nonRevokedIntervalOverrideList = NonRevokedIntervalOverrideListStruct({
       count: options.nonRevokedIntervalOverrides?.length ?? 0,
-      data: nativeNonRevokedIntervalOverride as unknown as TypedArray<
+      data: nativeNonRevokedIntervalOverrides as unknown as TypedArray<
         StructObject<{
           rev_reg_def_id: string
           requested_from_ts: number
@@ -482,7 +482,7 @@ export class NodeJSAnoncreds implements Anoncreds {
       revocationRegistryDefinitionId,
       revocationRegistryDefinition,
       issuerId,
-      timestamp,
+      timestamp ?? -1,
       issuanceByDefault,
       ret
     )
@@ -520,7 +520,7 @@ export class NodeJSAnoncreds implements Anoncreds {
     const ret = allocatePointer()
 
     this.nativeAnoncreds.anoncreds_update_revocation_status_list(
-      timestamp,
+      timestamp ?? -1,
       issued,
       revoked,
       revocationRegistryDefinition,
@@ -580,14 +580,14 @@ export class NodeJSAnoncreds implements Anoncreds {
     revocationStatusList: ObjectHandle
     revocationRegistryIndex: number
     tailsPath: string
-    previousRevocationStatusList?: ObjectHandle
-    previousRevocationState?: ObjectHandle
+    oldRevocationState?: ObjectHandle
+    oldRevocationStatusList?: ObjectHandle
   }): ObjectHandle {
     const { revocationRegistryDefinition, revocationStatusList, revocationRegistryIndex, tailsPath } =
       serializeArguments(options)
 
-    const previousRevocationState = options.previousRevocationState ?? new ObjectHandle(0)
-    const previousRevocationStatusList = options.previousRevocationStatusList ?? new ObjectHandle(0)
+    const oldRevocationState = options.oldRevocationState ?? new ObjectHandle(0)
+    const oldRevocationStatusList = options.oldRevocationStatusList ?? new ObjectHandle(0)
     const ret = allocatePointer()
 
     this.nativeAnoncreds.anoncreds_create_or_update_revocation_state(
@@ -595,14 +595,15 @@ export class NodeJSAnoncreds implements Anoncreds {
       revocationStatusList,
       revocationRegistryIndex,
       tailsPath,
-      previousRevocationStatusList.handle,
-      previousRevocationState.handle,
+      oldRevocationState.handle,
+      oldRevocationStatusList.handle,
       ret
     )
     this.handleError()
 
     return new ObjectHandle(handleReturnPointer<number>(ret))
   }
+
   public version(): string {
     return this.nativeAnoncreds.anoncreds_version()
   }
@@ -636,10 +637,6 @@ export class NodeJSAnoncreds implements Anoncreds {
     return this.objectFromJson(this.nativeAnoncreds.anoncreds_presentation_request_from_json, options)
   }
 
-  public masterSecretFromJson(options: { json: string }): ObjectHandle {
-    return this.objectFromJson(this.nativeAnoncreds.anoncreds_master_secret_from_json, options)
-  }
-
   public credentialRequestFromJson(options: { json: string }): ObjectHandle {
     return this.objectFromJson(this.nativeAnoncreds.anoncreds_credential_request_from_json, options)
   }
@@ -654,6 +651,10 @@ export class NodeJSAnoncreds implements Anoncreds {
 
   public revocationRegistryFromJson(options: { json: string }): ObjectHandle {
     return this.objectFromJson(this.nativeAnoncreds.anoncreds_revocation_registry_from_json, options)
+  }
+
+  public revocationStatusListFromJson(options: { json: string }): ObjectHandle {
+    return this.objectFromJson(this.nativeAnoncreds.anoncreds_revocation_status_list_from_json, options)
   }
 
   public revocationStateFromJson(options: { json: string }): ObjectHandle {
@@ -678,10 +679,6 @@ export class NodeJSAnoncreds implements Anoncreds {
 
   public revocationRegistryDefinitionPrivateFromJson(options: { json: string }): ObjectHandle {
     return this.objectFromJson(this.nativeAnoncreds.anoncreds_revocation_registry_definition_private_from_json, options)
-  }
-
-  public revocationRegistryDeltaFromJson(options: { json: string }): ObjectHandle {
-    return this.objectFromJson(this.nativeAnoncreds.anoncreds_revocation_registry_delta_from_json, options)
   }
 
   public credentialDefinitionFromJson(options: { json: string }): ObjectHandle {

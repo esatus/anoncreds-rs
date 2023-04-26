@@ -1,5 +1,9 @@
 name: 'Anoncreds'
 
+env:
+  RUST_VERSION: '1.63.0'
+  CROSS_VERSION: '0.2.4'
+
 on:
   push:
     branches: [main]
@@ -22,6 +26,8 @@ on:
 
 jobs:
   lint:
+    name: Lint
+
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +36,9 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: clippy, rustfmt
 
       - name: Cache cargo resources
         uses: Swatinem/rust-cache@v2
@@ -40,10 +49,12 @@ jobs:
       - name: Cargo fmt
         run: cargo fmt --all -- --check
 
-  check:
+  test:
+    name: Test
+
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [anoncreds-windows-latest, anoncreds-ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -53,6 +64,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Cache cargo resources
         uses: Swatinem/rust-cache@v2
@@ -73,19 +86,26 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            arch: linux-x86_64
+          - architecture: linux-aarch64
+            os: anoncreds-ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            lib: libanoncreds.so
+            use_cross: true
+          - architecture: linux-x86_64
+            os: anoncreds-ubuntu-latest
             target: x86_64-unknown-linux-gnu
             lib: libanoncreds.so
-          - os: macos-latest
-            arch: darwin-x86_64
-            lib: libanoncreds.dylib
+            use_cross: true
+          - architecture: darwin-x86_64
+            os: macos-latest
             target: x86_64-apple-darwin
-          - os: macos-latest
-            arch: darwin-aarch64
+            lib: libanoncreds.dylib
+          - architecture: darwin-aarch64
+            os: macos-latest
             target: aarch64-apple-darwin
             lib: libanoncreds.dylib
-          - os: windows-latest
+          - architecture: windows-x86_64
+            os: anoncreds-windows-latest
             arch: windows-x86_64
             target: x86_64-pc-windows-msvc
             lib: anoncreds.dll
@@ -103,6 +123,9 @@ jobs:
 
       - name: Cache cargo resources
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: deps
+          save-if: false
 
       - name: Build library for Windows
         if: "runner.os == 'Windows'"
@@ -112,12 +135,18 @@ jobs:
 
       - name: Build library for macOS and Linux
         if: "runner.os != 'Windows'"
-        run: cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
+        run: |
+          if [ -n "${{ matrix.use_cross }}" ]; then
+            cargo install --bins --git https://github.com/rust-embedded/cross --tag v${{ env.CROSS_VERSION }} cross
+            cross build --release --package anoncreds --target ${{matrix.target}} --features vendored
+          else
+            cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
+          fi
 
       - name: Upload library artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: library-${{ matrix.arch }}
+          name: library-${{ matrix.architecture }}
           path: target/${{ matrix.target }}/release/${{ matrix.lib }}
 
       - name: Create library artifacts directory
@@ -128,7 +157,8 @@ jobs:
           mkdir release-artifacts
           cp target/${{ matrix.target }}/release/${{ matrix.lib }} release-artifacts/
 
-      - uses: a7ul/tar-action@v1.1.2
+      - name: Release artifacts
+        uses: a7ul/tar-action@v1.1.2
         if: |
           github.event_name == 'release' ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-binaries == 'true')
@@ -136,7 +166,7 @@ jobs:
           command: c
           cwd: release-artifacts
           files: .
-          outPath: 'library-${{ matrix.arch }}.tar.gz'
+          outPath: 'library-${{ matrix.architecture }}.tar.gz'
 
       - name: Add library artifacts to release
         if: |
@@ -144,13 +174,13 @@ jobs:
           (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-binaries == 'true')
         uses: svenstaro/upload-release-action@v2
         with:
-          file: library-${{ matrix.arch }}.tar.gz
-          asset_name: 'library-${{ matrix.arch }}.tar.gz'
+          file: library-${{ matrix.architecture }}.tar.gz
+          asset_name: 'library-${{ matrix.architecture }}.tar.gz'
 
   build-javascript:
     name: Build and Test JavaScript wrapper
     needs: [build-release]
-    runs-on: ubuntu-latest
+    runs-on: anoncreds-ubuntu-latest
     defaults:
       run:
         working-directory: wrappers/javascript
@@ -203,86 +233,88 @@ jobs:
         if: |
           github.event_name == 'release' ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-wrappers == 'true')
-        run:
-          npx lerna publish from-package --no-push --no-private --yes --no-git-tag-version
+        run: npx lerna publish from-package --no-push --no-private --yes --no-git-tag-version
 
-          # build-py:
-          #   name: Build Python
-          #   needs: [build-release]
+  build-py:
+    name: Build Python
+    needs: [build-release]
 
-          #   strategy:
-          #     matrix:
-          #       include:
-          #         - os: ubuntu-latest
-          #           library: library-linux-x86_64
-          #           plat-name: manylinux2014_x86_64
-          #         - os: windows-latest
-          #           library: library-windows-x86_64
-          #           plat-name: win_amd64
-          #         - os: macos-latest
-          #           library: library-macos-x86_64
-          #           plat-name: win_amd64
+    strategy:
+      matrix:
+        include:
+          - runner: anoncreds-ubuntu-latest
+            os: ubuntu-x86_64
+            library: library-linux-x86_64
+            plat-name: manylinux2014_x86_64
+          - runner: anoncreds-windows-latest
+            os: windows-x86_64
+            library: library-windows-x86_64
+            plat-name: win_amd64
+          - runner: macos-latest
+            os: macos-x86_64
+            library: library-darwin-x86_64
+            plat-name: macosx_10_9_universal2 # macosx_10_9_x86_64
 
-          #   runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
 
-          #   steps:
-          #     - name: Checkout
-          #       uses: actions/checkout@v2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-          #     - name: Set up Python 3.8
-          #       uses: actions/setup-python@v2
-          #       with:
-          #         python-version: 3.8
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
 
-          #     - name: Install dependencies
-          #       run: |
-          #         python -m pip install --upgrade pip
-          #         pip install setuptools wheel twine auditwheel
-          #     - name: Fetch library artifacts
-          #       uses: actions/download-artifact@v2
-          #       with:
-          #         name: ${{matrix.library}}
-          #         path: wrappers/python/indy_credx/
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine auditwheel
+      - name: Fetch library artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{matrix.library}}
+          path: wrappers/python/anoncreds/
 
-          #     - name: Build python package
-          #       run: |
-          #         python setup.py bdist_wheel --python-tag=py3 --plat-name=${{ matrix.plat-name }}
-          #       working-directory: wrappers/python
+      - name: Build python package
+        run: |
+          python setup.py bdist_wheel --python-tag=py3 --plat-name=${{ matrix.plat-name }}
+        working-directory: wrappers/python
 
-          #     - name: Test python package
-          #       shell: sh
-          #       run: |
-          #         cd wrappers/python
-          #         pip install --upgrade pip
-          #         pip install dist/*
-          #         python -m demo.test
-          #     - if: "runner.os == 'Linux'"
-          #       name: Auditwheel
-          #       run: auditwheel show wrappers/python/dist/*
+      - name: Test python package
+        shell: sh
+        run: |
+          cd wrappers/python
+          pip install --upgrade pip
+          pip install dist/*
+          python -m demo.test
+      - if: "runner.os == 'Linux'"
+        name: Auditwheel
+        run: auditwheel show wrappers/python/dist/*
 
-          #     - name: Upload python package
-          #       uses: actions/upload-artifact@v2
-          #       with:
-          #         name: python-${{ runner.os }}
-          #         path: wrappers/python/dist/*
+      - name: Upload python package
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-${{ runner.os }}
+          path: wrappers/python/dist/*
 
-          #     - if: |
-          #         (github.event_name == 'release' ||
-          #           (github.event_name == 'workflow_dispatch' &&
-          #            github.event.inputs.publish == 'true'))
-          #       name: Publish python package
-          #       env:
-          #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-          #       run: |
-          #         twine upload --skip-existing wrappers/python/dist/*
+      - if: |
+          (github.event_name == 'release' ||
+            (github.event_name == 'workflow_dispatch' &&
+              github.event.inputs.publish == 'true'))
+        name: Publish python package
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          twine upload --repository testpypi --skip-existing wrappers/python/dist/*
 
   build-android-libraries:
     name: Build Android Libraries
-    runs-on: ubuntu-latest
+    runs-on: anoncreds-ubuntu-latest
     strategy:
       matrix:
-        architecture:
+        target:
           [
             aarch64-linux-android,
             armv7-linux-androideabi,
@@ -291,25 +323,31 @@ jobs:
           ]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: ${{ matrix.architecture }}
-      - uses: actions-rs/cargo@v1
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo resources
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: |
+          cargo install --bins --git https://github.com/rust-embedded/cross --tag v${{ env.CROSS_VERSION }} cross
+          cross build --release --target ${{ matrix.target }} --features=vendored
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
-          use-cross: true
-          command: build
-          args: --release --target ${{matrix.architecture}} --package=anoncreds --features=vendored
-      - uses: actions/upload-artifact@v2
-        name: Save library
-        with:
-          name: ${{matrix.architecture}}
-          path: target/${{matrix.architecture}}/release/libanoncreds.so
+          name: ${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/libanoncreds.so
 
   create-android-library:
     name: Create android libraries
-    runs-on: ubuntu-latest
+    runs-on: anoncreds-ubuntu-latest
     needs: build-android-libraries
     if: |
       (github.event_name == 'release' ||
@@ -325,11 +363,13 @@ jobs:
           sudo mv i686-linux-android      ./libs/x86
           sudo mv x86_64-linux-android    ./libs/x86_64
       - name: Save Android library
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: android-libraries
           path: ./libs
-      - uses: geekyeggo/delete-artifact@v1
+
+      - name: Delete artifacts
+        uses: geekyeggo/delete-artifact@v1
         with:
           name: |
             aarch64-linux-android
@@ -347,17 +387,19 @@ jobs:
           [aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: ${{ matrix.architecture }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target ${{matrix.architecture}} --package=anoncreds --features=vendored
-      - uses: actions/upload-artifact@v2
-        name: Save library
+          targets: ${{matrix.architecture}}
+
+      - name: Build
+        run: cargo  build --release --target ${{matrix.architecture}} --features=vendored
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.architecture}}
           path: target/${{matrix.architecture}}/release/libanoncreds.dylib
@@ -371,7 +413,9 @@ jobs:
       (github.event_name == 'workflow_dispatch' &&
        github.event.inputs.publish == 'true'))
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Fetch dynamic libraries
         uses: actions/download-artifact@v3
       - run: >
@@ -379,12 +423,15 @@ jobs:
                                  aarch64-apple-ios-sim \
                                  x86_64-apple-ios \
                                  include
+
       - name: Save xcframework
         uses: actions/upload-artifact@v3
         with:
           name: anoncreds.xcframework
           path: out
-      - uses: geekyeggo/delete-artifact@v1
+
+      - name: Delete artifacts
+        uses: geekyeggo/delete-artifact@v1
         with:
           name: |
             aarch64-apple-ios
@@ -394,7 +441,7 @@ jobs:
 
   create-ios-android-release-asset:
     name: Create iOS and Android Release Assets
-    runs-on: ubuntu-latest
+    runs-on: anoncreds-ubuntu-latest
     needs:
       - create-ios-xcframework
       - create-android-library
@@ -416,7 +463,8 @@ jobs:
           name: anoncreds.xcframework
           path: mobile/ios/
 
-      - uses: a7ul/tar-action@v1.1.2
+      - name: Create archive
+        uses: a7ul/tar-action@v1.1.2
         with:
           command: c
           files: ./mobile

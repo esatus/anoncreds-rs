@@ -1,6 +1,6 @@
 """Anoncreds Python wrapper library"""
 
-from .bindings import encode_credential_attributes, generate_nonce, library_version
+from .bindings import encode_credential_attributes, generate_nonce, library_version, create_link_secret
 from .error import AnoncredsError, AnoncredsErrorCode
 from .types import (
     Credential,
@@ -12,18 +12,19 @@ from .types import (
     CredentialOffer,
     CredentialRequest,
     CredentialRequestMetadata,
-    MasterSecret,
+    NonrevokedIntervalOverride,
     PresentationRequest,
     Presentation,
     PresentCredentials,
     Schema,
     RevocationRegistry,
+    RevocationStatusList,
     RevocationRegistryDefinition,
     RevocationRegistryDefinitionPrivate,
-    RevocationRegistryDelta,
 )
 
 __all__ = (
+    "create_link_secret",
     "encode_credential_attributes",
     "generate_nonce",
     "library_version",
@@ -38,13 +39,13 @@ __all__ = (
     "CredentialOffer",
     "CredentialRequest",
     "CredentialRequestMetadata",
-    "MasterSecret",
+    "NonrevokedIntervalOverride",
     "PresentationRequest",
     "Presentation",
     "PresentCredentials",
     "RevocationRegistry",
+    "RevocationStatusList",
     "RevocationRegistryDefinition",
     "RevocationRegistryDefinitionPrivate",
-    "RevocationRegistryDelta",
     "Schema",
 )

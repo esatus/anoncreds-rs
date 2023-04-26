@@ -1,6 +1,5 @@
 import type { ObjectHandle } from '../ObjectHandle'
 import type { JsonObject } from '../types'
-import type { RevocationRegistryDelta } from './RevocationRegistryDelta'
 
 import { AnoncredsObject } from '../AnoncredsObject'
 import { anoncreds } from '../register'
@@ -14,14 +13,14 @@ export type CreateRevocationStateOptions = {
   revocationStatusList: RevocationStatusList
   revocationRegistryIndex: number
   tailsPath: string
-  oldRevocationStatusList?: RevocationRegistryDelta
-  previousRevocationState?: CredentialRevocationState
+  oldRevocationStatusList?: RevocationStatusList
+  oldRevocationState?: CredentialRevocationState
 }
 
 export type UpdateRevocationStateOptions = Required<
-  Pick<CreateRevocationStateOptions, 'oldRevocationStatusList' | 'previousRevocationState'>
+  Pick<CreateRevocationStateOptions, 'oldRevocationStatusList' | 'oldRevocationState'>
 > &
-  Omit<CreateRevocationStateOptions, 'oldRevocationStatusList' | 'previousRevocationState'>
+  Omit<CreateRevocationStateOptions, 'oldRevocationStatusList' | 'oldRevocationState'>
 
 export class CredentialRevocationState extends AnoncredsObject {
   public static create(options: CreateRevocationStateOptions) {
@@ -48,7 +47,7 @@ export class CredentialRevocationState extends AnoncredsObject {
         revocationRegistryIndex: options.revocationRegistryIndex,
         tailsPath: options.tailsPath,
         oldRevocationStatusList: undefined,
-        previousRevocationState: undefined,
+        oldRevocationState: undefined,
       }).handle
     } finally {
       objectHandles.forEach((handle) => handle.clear())
@@ -67,7 +66,7 @@ export class CredentialRevocationState extends AnoncredsObject {
       revocationRegistryIndex: options.revocationRegistryIndex,
       tailsPath: options.tailsPath,
       oldRevocationStatusList: options.oldRevocationStatusList.handle,
-      previousRevocationState: options.previousRevocationState.handle,
+      oldRevocationState: options.oldRevocationState.handle,
     })
   }
 }

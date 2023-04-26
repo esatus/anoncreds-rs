@@ -20,7 +20,11 @@ export class ReactNativeAnoncreds implements Anoncreds {
     timestamp?: number
     issuanceByDefault: boolean
   }): ObjectHandle {
-    const handle = handleError(anoncredsReactNative.createRevocationStatusList(serializeArguments(options)))
+    const handle = handleError(
+      anoncredsReactNative.createRevocationStatusList(
+        serializeArguments({ ...options, timestamp: options.timestamp ?? -1 })
+      )
+    )
     return new ObjectHandle(handle)
   }
 
@@ -140,7 +144,7 @@ export class ReactNativeAnoncreds implements Anoncreds {
   public processCredential(options: {
     credential: ObjectHandle
     credentialRequestMetadata: ObjectHandle
-    masterSecret: ObjectHandle
+    linkSecret: string
     credentialDefinition: ObjectHandle
     revocationRegistryDefinition?: ObjectHandle
   }): ObjectHandle {
@@ -161,8 +165,8 @@ export class ReactNativeAnoncreds implements Anoncreds {
     entropy?: string
     proverDid?: string
     credentialDefinition: ObjectHandle
-    masterSecret: ObjectHandle
-    masterSecretId: string
+    linkSecret: string
+    linkSecretId: string
     credentialOffer: ObjectHandle
   }): { credentialRequest: ObjectHandle; credentialRequestMetadata: ObjectHandle } {
     const { credentialRequest, credentialRequestMetadata } = handleError(
@@ -175,9 +179,8 @@ export class ReactNativeAnoncreds implements Anoncreds {
     }
   }
 
-  public createMasterSecret(): ObjectHandle {
-    const handle = handleError(anoncredsReactNative.createMasterSecret({}))
-    return new ObjectHandle(handle)
+  public createLinkSecret(): string {
+    return handleError(anoncredsReactNative.createLinkSecret({}))
   }
 
   public createPresentation(options: {
@@ -185,7 +188,7 @@ export class ReactNativeAnoncreds implements Anoncreds {
     credentials: NativeCredentialEntry[]
     credentialsProve: NativeCredentialProve[]
     selfAttest: Record<string, string>
-    masterSecret: ObjectHandle
+    linkSecret: string
     schemas: Record<string, ObjectHandle>
     credentialDefinitions: Record<string, ObjectHandle>
   }): ObjectHandle {
@@ -205,7 +208,7 @@ export class ReactNativeAnoncreds implements Anoncreds {
     const handle = handleError(
       anoncredsReactNative.createPresentation({
         presentationRequest: options.presentationRequest.handle,
-        masterSecret: options.masterSecret.handle,
+        linkSecret: options.linkSecret,
         credentialsProve: options.credentialsProve,
         selfAttestNames,
         selfAttestValues,
@@ -258,9 +261,10 @@ export class ReactNativeAnoncreds implements Anoncreds {
 
   public createOrUpdateRevocationState(options: {
     revocationRegistryDefinition: ObjectHandle
+    revocationStatusList: ObjectHandle
     revocationRegistryIndex: number
     tailsPath: string
-    revocationState?: number
+    oldRevocationState?: ObjectHandle
     oldRevocationStatusList?: ObjectHandle
   }): ObjectHandle {
     const handle = handleError(anoncredsReactNative.createOrUpdateRevocationState(serializeArguments(options)))
@@ -301,12 +305,17 @@ export class ReactNativeAnoncreds implements Anoncreds {
   }
 
   public revocationRegistryDefinitionFromJson(options: { json: string }): ObjectHandle {
-    const handle = handleError(anoncredsReactNative.revocationRegistryFromJson(serializeArguments(options)))
+    const handle = handleError(anoncredsReactNative.revocationRegistryDefinitionFromJson(serializeArguments(options)))
     return new ObjectHandle(handle)
   }
 
   public revocationRegistryFromJson(options: { json: string }): ObjectHandle {
     const handle = handleError(anoncredsReactNative.revocationRegistryFromJson(serializeArguments(options)))
+    return new ObjectHandle(handle)
+  }
+
+  public revocationStatusListFromJson(options: { json: string }): ObjectHandle {
+    const handle = handleError(anoncredsReactNative.revocationStatusListFromJson(serializeArguments(options)))
     return new ObjectHandle(handle)
   }
 
@@ -322,11 +331,6 @@ export class ReactNativeAnoncreds implements Anoncreds {
 
   public schemaFromJson(options: { json: string }): ObjectHandle {
     const handle = handleError(anoncredsReactNative.schemaFromJson(serializeArguments(options)))
-    return new ObjectHandle(handle)
-  }
-
-  public masterSecretFromJson(options: { json: string }): ObjectHandle {
-    const handle = handleError(anoncredsReactNative.masterSecretFromJson(serializeArguments(options)))
     return new ObjectHandle(handle)
   }
 
@@ -349,11 +353,6 @@ export class ReactNativeAnoncreds implements Anoncreds {
     const handle = handleError(
       anoncredsReactNative.revocationRegistryDefinitionPrivateFromJson(serializeArguments(options))
     )
-    return new ObjectHandle(handle)
-  }
-
-  public revocationRegistryDeltaFromJson(options: { json: string }): ObjectHandle {
-    const handle = handleError(anoncredsReactNative.revocationRegistryDeltaFromJson(serializeArguments(options)))
     return new ObjectHandle(handle)
   }
 
