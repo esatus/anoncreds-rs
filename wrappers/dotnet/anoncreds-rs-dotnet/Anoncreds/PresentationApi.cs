@@ -29,7 +29,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<CredentialProof> credentialProofs,
             List<string> selfAttestNames,
             List<string> selfAttestValues,
-            LinkSecret linkSecret,
+            string linkSecret,
             List<Schema> schemas,
             List<CredentialDefinition> credDefs)
         {
@@ -49,7 +49,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiCredentialProveList.Create(credentialProofs),
                 FfiStrList.Create(selfAttestNames),
                 FfiStrList.Create(selfAttestValues),
-                linkSecret.Handle,
+                FfiStr.Create(linkSecret),
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
@@ -85,7 +85,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> credentialProofJsons,
             List<string> selfAttestNames,
             List<string> selfAttestValues,
-            string linkSecretJson,
+            string linkSecret,
             List<string> schemaJsons,
             List<string> credDefJsons)
         {
@@ -93,7 +93,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<CredentialEntry> credentialEntries = new List<CredentialEntry>();
             List<CredentialProof> credentialProofs = new List<CredentialProof>();
             IntPtr presentationRequestHandle = new IntPtr();
-            IntPtr linkSecretHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
             List<string> schemaIds = new List<string>();
@@ -108,7 +107,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 credentialProofs.Add(JsonConvert.DeserializeObject<CredentialProof>(credentialProofJson));
             }
             _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
-            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretHandle);
             foreach(string schemaJson in schemaJsons)
             {
                 IntPtr newSchemaHandle = new IntPtr();
@@ -134,7 +132,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiCredentialProveList.Create(credentialProofs),
                 FfiStrList.Create(selfAttestNames),
                 FfiStrList.Create(selfAttestValues),
-                linkSecretHandle,
+                FfiStr.Create(linkSecret),
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
@@ -304,7 +302,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             foreach (string revocationStatusListJson in revocationStatusListJsons)
             {
                 IntPtr newRevStatusListHandle = new IntPtr();
-                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(revocationStatusListJson), ref newRevStatusListHandle);
+                _ = NativeMethods.anoncreds_revocation_status_list_from_json(ByteBuffer.Create(revocationStatusListJson), ref newRevStatusListHandle);
                 revocationStatusListHandles.Add(newRevStatusListHandle);
             }
             foreach(string nonrevokedIntervalOverride in nonrevokedIntervalOverrideJsons)

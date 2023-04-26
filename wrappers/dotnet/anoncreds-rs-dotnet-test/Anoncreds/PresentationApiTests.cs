@@ -24,7 +24,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             string testTailsPathForRevocation = null;
             //TODO : Test with Restrictions --> at the moment ByteBuffer "tooSmall" error in Structures
 
@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 "testSomeValue"
             };
 
-            LinkSecret linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
 
             List<Schema> schemas = new()
             {
@@ -143,7 +143,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         {
             //Arrange
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             List<AttributeInfo> requestedAttributes = new()
             {
                 new AttributeInfo { Name = "attribute1", NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To =(ulong)timestamp } },
@@ -170,7 +170,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 new List<string>(),
                 selfAttestNames,
                 selfAttestValues,
-                mockLinkSecret.JsonString,
+                mockLinkSecret,
                 new List<string>(),
                 new List<string>()
                 );
@@ -190,7 +190,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             string testTailsPathForRevocation = null;
             List<AttributeInfo> requestedAttributes = new()
             {
@@ -329,7 +329,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         //    string schemaVersion = "1.0";
         //    string testTailsPathForRevocation = null;
 
-        //    LinkSecret linkSecretObject = await LinkSecretApi.CreateLinkSecretAsync();
+        //    string linkSecretObject = await LinkSecretApi.CreateLinkSecretJsonAsync();
 
         //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
         //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
@@ -465,7 +465,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         //    string schemaVersion = "1.0";
         //    string testTailsPathForRevocation = null;
 
-        //    LinkSecret linkSecretObject = await LinkSecretApi.CreateLinkSecretAsync();
+        //    string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
 
         //    Schema schemaObject = await SchemaApi.CreateSchemaAsync(issuerDid, schemaName, schemaVersion, attrNames);
         //    (CredentialDefinition credDefObject, CredentialDefinitionPrivate credDefPvtObject, CredentialKeyCorrectnessProof keyProofObject) =
@@ -474,7 +474,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         //    string schemaId = schemaObject.IssuerId;
         //    CredentialOffer credOfferObject = await CredentialOfferApi.CreateCredentialOfferAsync(schemaId, credDefObject.IssuerId, keyProofObject);
         //    (CredentialRequest credRequestObject, _) =
-        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, linkSecretObject, "testLinkSecretName", credOfferObject);
+        //        await CredentialRequestApi.CreateCredentialRequestAsync(proverDid, credDefObject, linkSecret, "testLinkSecretName", credOfferObject);
 
         //    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(issuerDid, credDefObject, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
         //    RevocationStatusList revStatusList = await RevocationApi.CreateRevocationStatusListAsync(
@@ -561,7 +561,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             string testTailsPathForRevocation = null;
 
             //Act
@@ -622,7 +622,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 "testSomeValue"
             };
 
-            LinkSecret linkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string linkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
 
             List<Schema> schemas = new()
             {
@@ -662,7 +662,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             string testTailsPathForRevocation = null;
 
             List<AttributeInfo> requestedAttributes = new()
@@ -803,7 +803,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             /** TODO : siehe test oben
             List<AttributeInfo> requestedAttributes = new()
             {
@@ -823,8 +823,6 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Act
             (CredentialRequest mockCredRequest, CredentialRequestMetadata mockCredReqMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockLinkSecret, mockLinkSecretName, mockCredOffer);
             string testTailsPathForRevocation = null;
-
-            LinkSecret linkSecretObject = await LinkSecretApi.CreateLinkSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             RevocationStatusList revStatusListObject = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
@@ -868,7 +866,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockEntropy = "mockEntropy";
             string mockLinkSecretName = "mockLinkSecretName";
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             /** TODO : siehe test oben
             List<AttributeInfo> requestedAttributes = new()
             {
@@ -888,8 +886,6 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Act
             (CredentialRequest mockCredRequest, CredentialRequestMetadata mockCredReqMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockLinkSecret, mockLinkSecretName, mockCredOffer);
             string testTailsPathForRevocation = null;
-
-            LinkSecret linkSecretObject = await LinkSecretApi.CreateLinkSecretAsync();
 
             (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockCredDef.IssuerId, mockCredDef, "test_tag", RegistryType.CL_ACCUM, 99, testTailsPathForRevocation);
             RevocationStatusList revStatusListObject = await RevocationApi.CreateRevocationStatusListAsync(revRegDefObject.CredentialDefinitionId, revRegDefObject, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);

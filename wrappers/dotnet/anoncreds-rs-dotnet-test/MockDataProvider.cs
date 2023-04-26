@@ -144,11 +144,11 @@ namespace anoncreds_rs_dotnet_test
             return CredentialOfferJson;
         }
 
-        public static async Task<(CredentialRequest, CredentialRequestMetadata)> MockCredReq(string entropy = null, CredentialDefinition credDef = null, LinkSecret linkSecret = null, string linkSecretName = null, CredentialOffer credOffer = null)
+        public static async Task<(CredentialRequest, CredentialRequestMetadata)> MockCredReq(string entropy = null, CredentialDefinition credDef = null, string linkSecret = null, string linkSecretName = null, CredentialOffer credOffer = null)
         {
             string mockEntropy = entropy ?? "mockEntropy";
             CredentialDefinition mockCredDef = credDef ?? CredentialDefinition ??(await MockCredDef()).Item1;
-            LinkSecret mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
             string mockLinkSecretName = linkSecretName ?? "mockLinkSecretName";
             CredentialOffer mockCredOffer = credOffer ?? CredentialOffer ?? await MockCredOffer();
 
@@ -282,7 +282,7 @@ namespace anoncreds_rs_dotnet_test
             List<CredentialProof> credentialProofs = null,
             List<string> selfAttestNames = null,
             List<string> selfAttestValues = null,
-            LinkSecret linkSecret = null,
+            string linkSecret = null,
             List<Schema> schemas = null,
             List<CredentialDefinition> credentialDefinitions = null)
         {
@@ -291,7 +291,7 @@ namespace anoncreds_rs_dotnet_test
             List<CredentialProof> mockCredentialProofs = credentialProofs ?? new List<CredentialProof>() {  };
             List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { presentationRequest.RequestedAttributes.First().Key,  };
             List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "SomeValue" };
-            LinkSecret mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
             List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
             List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };
 

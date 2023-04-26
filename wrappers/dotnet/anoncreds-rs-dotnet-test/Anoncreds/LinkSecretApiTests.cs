@@ -16,24 +16,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             //Arrange
 
             //Act
-            Func<Task> act = async () => { _ = await LinkSecretApi.CreateLinkSecretAsync(); };
+            Func<Task> act = async () => { _ = await LinkSecretApi.CreateLinkSecretJsonAsync(); };
 
             //Assert
             _ = await act.Should().NotThrowAsync();
-        }
-
-        [Test]
-        [TestCase(TestName = "CreateLinkSecret works.")]
-        public async Task CreateLinkSecretWorks()
-        {
-            //Arrange
-
-            //Act
-            LinkSecret testObject = await LinkSecretApi.CreateLinkSecretAsync();
-
-            //Assert
-            _ = testObject.Should().BeOfType(typeof(LinkSecret));
-            _ = testObject.Value.Ms.Should().NotBeNull();
         }
 
         [Test]

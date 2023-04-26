@@ -170,7 +170,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsync()
         {
             //Arrange
-            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq(linkSecret: mockLinkSecret);
@@ -218,7 +218,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsyncThrowsException()
         {
             //Arrange
-            LinkSecret mockWrongLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
+            string mockWrongLinkSecret = await LinkSecretApi.CreateLinkSecretJsonAsync();
             (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq();

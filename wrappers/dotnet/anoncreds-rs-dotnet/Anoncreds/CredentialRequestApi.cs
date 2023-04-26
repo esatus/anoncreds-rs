@@ -21,7 +21,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<(CredentialRequest, CredentialRequestMetadata)> CreateCredentialRequestAsync(
             string entropy,
             CredentialDefinition credentialDefinition,
-            LinkSecret linkSecret,
+            string linkSecret,
             string linkSecretId,
             CredentialOffer credentialOffer,
             string proverDid = null)
@@ -32,7 +32,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credentialDefinition.Handle,
-                linkSecret.Handle,
+                FfiStr.Create(linkSecret),
                 FfiStr.Create(linkSecretId),
                 credentialOffer.Handle,
                 ref requestHandle,
@@ -61,17 +61,15 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<(string, string)> CreateCredentialRequestJsonAsync(
             string entropy,
             string credentialDefinitionJson,
-            string linkSecretJson,
+            string linkSecret,
             string linkSecretId,
             string credentialOfferJson,
             string proverDid = null)
         {
             IntPtr credDefObjectHandle = new IntPtr();
-            IntPtr linkSecretObjectHandle = new IntPtr();
             IntPtr credentialOfferObjectHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
-            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_offer_from_json(ByteBuffer.Create(credentialOfferJson), ref credentialOfferObjectHandle);
 
             IntPtr requestHandle = new IntPtr();
@@ -80,7 +78,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credDefObjectHandle,
-                linkSecretObjectHandle,
+                FfiStr.Create(linkSecret),
                 FfiStr.Create(linkSecretId),
                 credentialOfferObjectHandle,
                 ref requestHandle,

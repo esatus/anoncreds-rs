@@ -182,7 +182,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
                 _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref revocationRegistryDefinitionHandle);
                 _ = NativeMethods.anoncreds_revocation_registry_definition_private_from_json(ByteBuffer.Create(revocationRegistryDefinitionPrivateJson), ref revocationRegistryDefinitionPrivateHandle);
-                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(revStatusListObjectJson), ref revStatusListObjectHandle);
+                _ = NativeMethods.anoncreds_revocation_status_list_from_json(ByteBuffer.Create(revStatusListObjectJson), ref revStatusListObjectHandle);
 
                 string x = JObject.Parse(revocationRegistryDefinitionJson)["value"].ToString();
                 string tailsLocation = JObject.Parse(x)["tailsLocation"].ToString();
@@ -258,7 +258,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<Credential> ProcessCredentialAsync(
             Credential credential,
             CredentialRequestMetadata credentialRequestMetadata,
-            LinkSecret linkSecret,
+            string linkSecret,
             CredentialDefinition credentialDefinition,
             RevocationRegistryDefinition revocationRegistryDefinition = null)
         {
@@ -267,7 +267,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_process_credential(
                 credential.Handle,
                 credentialRequestMetadata.Handle,
-                linkSecret.Handle,
+                FfiStr.Create(linkSecret),
                 credentialDefinition.Handle,
                 revRegDefHandle,
                 ref credentialObjectHandle);
@@ -302,12 +302,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
         {
             IntPtr credObjectHandle = new IntPtr();
             IntPtr credReqMetadataObjectHandle = new IntPtr();
-            IntPtr linkSecretObjectHandle = new IntPtr();
             IntPtr credDefObjectHandle = new IntPtr();
             IntPtr revRegDefObjectHandle = new IntPtr();
             _ = NativeMethods.anoncreds_credential_from_json(ByteBuffer.Create(credentialJson), ref credObjectHandle);
             _ = NativeMethods.anoncreds_credential_request_metadata_from_json(ByteBuffer.Create(credentialRequestMetadataJson), ref credReqMetadataObjectHandle);
-            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
             if(revocationRegistryDefinitionJson != null)
             {
@@ -318,7 +316,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_process_credential(
                 credObjectHandle,
                 credReqMetadataObjectHandle,
-                linkSecretObjectHandle,
+                FfiStr.Create(linkSecretJson),
                 credDefObjectHandle,
                 revRegDefObjectHandle,
                 ref credentialObjectHandle);

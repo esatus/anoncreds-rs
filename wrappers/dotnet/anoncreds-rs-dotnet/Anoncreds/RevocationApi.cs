@@ -110,7 +110,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefObjectHandle);
 
-            _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(currentRevStatusListJson), ref revStatusListObjectHandle);
+            _ = NativeMethods.anoncreds_revocation_status_list_from_json(ByteBuffer.Create(currentRevStatusListJson), ref revStatusListObjectHandle);
 
             int errorCode = NativeMethods.anoncreds_update_revocation_status_list(
                 timestamp,
@@ -353,11 +353,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr oldRevStatusListHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revRegDefJson), ref revRegDefHandle);
-            _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(newRevStatusListJson), ref newRevStatusListHandle);
+            _ = NativeMethods.anoncreds_revocation_status_list_from_json(ByteBuffer.Create(newRevStatusListJson), ref newRevStatusListHandle);
             if (revStateJson != null)
                 _ = NativeMethods.anoncreds_revocation_state_from_json(ByteBuffer.Create(revStateJson), ref revStateHandle);
             if (oldRevStatusListJson != null)
-                _ = NativeMethods.anoncreds_revocation_list_from_json(ByteBuffer.Create(oldRevStatusListJson), ref oldRevStatusListHandle);
+                _ = NativeMethods.anoncreds_revocation_status_list_from_json(ByteBuffer.Create(oldRevStatusListJson), ref oldRevStatusListHandle);
 
             int errorCode = NativeMethods.anoncreds_create_or_update_revocation_state(
                 revRegDefHandle,

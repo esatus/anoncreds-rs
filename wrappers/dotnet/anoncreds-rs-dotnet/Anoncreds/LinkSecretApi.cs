@@ -1,8 +1,6 @@
 ﻿using anoncreds_rs_dotnet.Models;
 using Newtonsoft.Json;
-using System;
 using System.Threading.Tasks;
-using static anoncreds_rs_dotnet.Models.Structures;
 
 namespace anoncreds_rs_dotnet.Anoncreds
 {
@@ -24,10 +22,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 throw AnoncredsRsException.FromSdkError(error);
             }
 
-            //string linkSecret = await ObjectApi.ToJsonAsync(result.data);
             LinkSecret msObject = JsonConvert.DeserializeObject<LinkSecret>(result, Settings.JsonSettings);
             msObject.JsonString = result;
-            //msObject.Handle = result.data;
             return await Task.FromResult(msObject);
         }
         /// <summary>
@@ -37,16 +33,14 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <returns>New <see cref="LinkSecret"/> as JSON string.</returns>
         public static async Task<string> CreateLinkSecretJsonAsync()
         {
-            string result = "";
-            int errorCode = NativeMethods.anoncreds_create_link_secret(ref result);
+            string linkSecretJson = "";
+            int errorCode = NativeMethods.anoncreds_create_link_secret(ref linkSecretJson);
 
             if (errorCode != 0)
             {
                 string error = await ErrorApi.GetCurrentErrorAsync();
                 throw AnoncredsRsException.FromSdkError(error);
             }
-
-            string linkSecretJson = result;
 
             return await Task.FromResult(linkSecretJson);
         }
