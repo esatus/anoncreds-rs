@@ -2,7 +2,7 @@
 
 namespace anoncreds_rs_dotnet.Models
 {
-    public class MasterSecretBlindingData
+    public class LinkSecretBlindingData
     {
         [JsonProperty("v_prime")]
         public string VPrime { get; set; }

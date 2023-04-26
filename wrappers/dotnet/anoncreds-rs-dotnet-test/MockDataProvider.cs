@@ -144,27 +144,27 @@ namespace anoncreds_rs_dotnet_test
             return CredentialOfferJson;
         }
 
-        public static async Task<(CredentialRequest, CredentialRequestMetadata)> MockCredReq(string entropy = null, CredentialDefinition credDef = null, MasterSecret masterSecret = null, string masterSecretName = null, CredentialOffer credOffer = null)
+        public static async Task<(CredentialRequest, CredentialRequestMetadata)> MockCredReq(string entropy = null, CredentialDefinition credDef = null, LinkSecret linkSecret = null, string linkSecretName = null, CredentialOffer credOffer = null)
         {
             string mockEntropy = entropy ?? "mockEntropy";
             CredentialDefinition mockCredDef = credDef ?? CredentialDefinition ??(await MockCredDef()).Item1;
-            MasterSecret mockMasterSecret = masterSecret ?? await MasterSecretApi.CreateMasterSecretAsync();
-            string mockMasterSecretName = masterSecretName ?? "mockMasterSecretName";
+            LinkSecret mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
+            string mockLinkSecretName = linkSecretName ?? "mockLinkSecretName";
             CredentialOffer mockCredOffer = credOffer ?? CredentialOffer ?? await MockCredOffer();
 
-            (CredentialRequest, CredentialRequestMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
+            (CredentialRequest, CredentialRequestMetadata) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockLinkSecret, mockLinkSecretName, mockCredOffer);
             return (CredentialRequest, CredentialRequestMetadata);
         }
 
-        public static async Task<(string, string)> MockCredReqJson(string entropy = null, string credDefJson = null, string masterSecretJson = null, string masterSecretName = null, string credOfferJson = null)
+        public static async Task<(string, string)> MockCredReqJson(string entropy = null, string credDefJson = null, string linkSecretJson = null, string linkSecretName = null, string credOfferJson = null)
         {
             string mockEntropy = entropy ?? "mockEntropy";
             string mockCredDefJson = credDefJson ?? CredentialDefinitionJson ?? (await MockCredDefJson()).Item1;
-            string mockMasterSecretJson = masterSecretJson ?? await MasterSecretApi.CreateMasterSecretJsonAsync();
-            string mockMasterSecretName = masterSecretName ?? "mockMasterSecretName";
+            string mockLinkSecretJson = linkSecretJson ?? await LinkSecretApi.CreateLinkSecretJsonAsync();
+            string mockLinkSecretName = linkSecretName ?? "mockLinkSecretName";
             string mockCredOfferJson = credOfferJson ?? CredentialOfferJson ?? await MockCredOfferJson();
 
-            (CredentialRequestJson, CredentialRequestMetadataJson) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockMasterSecretJson, mockMasterSecretName, mockCredOfferJson);
+            (CredentialRequestJson, CredentialRequestMetadataJson) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockLinkSecretJson, mockLinkSecretName, mockCredOfferJson);
             return (CredentialRequestJson, CredentialRequestMetadataJson);
         }
 
@@ -282,7 +282,7 @@ namespace anoncreds_rs_dotnet_test
             List<CredentialProof> credentialProofs = null,
             List<string> selfAttestNames = null,
             List<string> selfAttestValues = null,
-            MasterSecret masterSecret = null,
+            LinkSecret linkSecret = null,
             List<Schema> schemas = null,
             List<CredentialDefinition> credentialDefinitions = null)
         {
@@ -291,13 +291,13 @@ namespace anoncreds_rs_dotnet_test
             List<CredentialProof> mockCredentialProofs = credentialProofs ?? new List<CredentialProof>() {  };
             List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>() { presentationRequest.RequestedAttributes.First().Key,  };
             List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>() { "SomeValue" };
-            MasterSecret mockMasterSecret = masterSecret ?? await MasterSecretApi.CreateMasterSecretAsync();
+            LinkSecret mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
             List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
             List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };
 
 
             return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
-                mockSelfAttestNames, mockSelfAttestValues, mockMasterSecret, mockSchemas, mockCredentialDefinitions);
+                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockCredentialDefinitions);
         }
 
         public static async Task<(List<string>, List<string>, List<string>)> MockAttrValues(Schema schema = null)

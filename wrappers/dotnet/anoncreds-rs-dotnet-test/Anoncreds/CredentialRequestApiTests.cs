@@ -17,11 +17,11 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             CredentialDefinition mockCredDef = (await MockDataProvider.MockCredDef()).Item1;
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             string mockEntropy = "mockEntropy";
-            string mockMasterSecretName = "mockMasterSecretName";
-            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            string mockLinkSecretName = "mockLinkSecretName";
+            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
 
             //Act
-            (CredentialRequest request, CredentialRequestMetadata metaData) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockMasterSecret, mockMasterSecretName, mockCredOffer);
+            (CredentialRequest request, CredentialRequestMetadata metaData) = await CredentialRequestApi.CreateCredentialRequestAsync(mockEntropy, mockCredDef, mockLinkSecret, mockLinkSecretName, mockCredOffer);
 
             //Assert
             _ = request.Should().NotBeNull();
@@ -37,11 +37,11 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockCredDefJson = (await MockDataProvider.MockCredDefJson()).Item1;
             string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
             string mockEntropy = "mockEntropy";
-            string mockMasterSecretName = "mockMasterSecretName";
-            string mockMasterSecretJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            string mockLinkSecretName = "mockLinkSecretName";
+            string mockLinkSecretJson = await LinkSecretApi.CreateLinkSecretJsonAsync();
 
             //Act
-            (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockMasterSecretJson, mockMasterSecretName, mockCredOfferJson);
+            (string request, string metaData) = await CredentialRequestApi.CreateCredentialRequestJsonAsync(mockEntropy, mockCredDefJson, mockLinkSecretJson, mockLinkSecretName, mockCredOfferJson);
 
             //Assert
             _ = request.Should().NotBeNullOrEmpty();

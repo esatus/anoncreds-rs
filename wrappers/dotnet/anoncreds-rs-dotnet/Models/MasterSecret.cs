@@ -3,7 +3,7 @@ using System;
 
 namespace anoncreds_rs_dotnet.Models
 {
-    public class MasterSecret
+    public class LinkSecret
     {
         [JsonProperty("value")]
         public SecretValue Value { get; set; }

@@ -13,16 +13,16 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="proverDid">Prover DID.</param>
         /// <param name="credentialDefinition">Credential definition.</param>
-        /// <param name="masterSecretId">Id of master secret.</param>
-        /// <param name="masterSecret">New master secret.</param>
+        /// <param name="linkSecretId">Id of master secret.</param>
+        /// <param name="linkSecret">New master secret.</param>
         /// <param name="credentialOffer">Credential offer.</param>
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/>.</returns>
         public static async Task<(CredentialRequest, CredentialRequestMetadata)> CreateCredentialRequestAsync(
             string entropy,
             CredentialDefinition credentialDefinition,
-            MasterSecret masterSecret,
-            string masterSecretId,
+            LinkSecret linkSecret,
+            string linkSecretId,
             CredentialOffer credentialOffer,
             string proverDid = null)
         {
@@ -32,8 +32,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credentialDefinition.Handle,
-                masterSecret.Handle,
-                FfiStr.Create(masterSecretId),
+                linkSecret.Handle,
+                FfiStr.Create(linkSecretId),
                 credentialOffer.Handle,
                 ref requestHandle,
                 ref metadataHandle);
@@ -53,25 +53,25 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="proverDid">Prover DID.</param>
         /// <param name="credentialDefinitionJson">Credential definition as JSON string.</param>
-        /// <param name="masterSecretJson">Master secret as JSON string.</param>
-        /// <param name="masterSecretId">Id of master secret.</param>
+        /// <param name="linkSecretJson">Master secret as JSON string.</param>
+        /// <param name="linkSecretId">Id of master secret.</param>
         /// <param name="credentialOfferJson">Credential offer as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if any argument is invalid.</exception>
         /// <returns>New <see cref="CredentialRequest"/> and its <see cref="CredentialRequestMetadata"/> as JSON strings.</returns>
         public static async Task<(string, string)> CreateCredentialRequestJsonAsync(
             string entropy,
             string credentialDefinitionJson,
-            string masterSecretJson,
-            string masterSecretId,
+            string linkSecretJson,
+            string linkSecretId,
             string credentialOfferJson,
             string proverDid = null)
         {
             IntPtr credDefObjectHandle = new IntPtr();
-            IntPtr masterSecretObjectHandle = new IntPtr();
+            IntPtr linkSecretObjectHandle = new IntPtr();
             IntPtr credentialOfferObjectHandle = new IntPtr();
 
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
-            _ = NativeMethods.anoncreds_master_secret_from_json(ByteBuffer.Create(masterSecretJson), ref masterSecretObjectHandle);
+            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_offer_from_json(ByteBuffer.Create(credentialOfferJson), ref credentialOfferObjectHandle);
 
             IntPtr requestHandle = new IntPtr();
@@ -80,8 +80,8 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiStr.Create(entropy),
                 FfiStr.Create(proverDid),
                 credDefObjectHandle,
-                masterSecretObjectHandle,
-                FfiStr.Create(masterSecretId),
+                linkSecretObjectHandle,
+                FfiStr.Create(linkSecretId),
                 credentialOfferObjectHandle,
                 ref requestHandle,
                 ref metadataHandle);

@@ -6,7 +6,7 @@ namespace anoncreds_rs_dotnet.Models
     public class CredentialRequestMetadata
     {
         [JsonProperty("master_secret_blinding_data")]
-        public MasterSecretBlindingData MsBlindingData { get; set; }
+        public LinkSecretBlindingData MsBlindingData { get; set; }
         [JsonProperty("nonce")]
         public string Nonce { get; set; }
 

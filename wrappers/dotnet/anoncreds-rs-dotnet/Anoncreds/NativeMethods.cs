@@ -51,7 +51,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
         #region CredentialRequest
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_credential_request(FfiStr entropy, FfiStr proverDid, IntPtr credDefObjectHandle, IntPtr masterSecretObjectHandle, FfiStr masterSecretId, IntPtr credOfferObjectHandle, ref IntPtr credReqObjectHandle, ref IntPtr credReqMetaObjectHandle);
+        internal static extern int anoncreds_create_credential_request(FfiStr entropy, FfiStr proverDid, IntPtr credDefObjectHandle, IntPtr linkSecretObjectHandle, FfiStr linkSecretId, IntPtr credOfferObjectHandle, ref IntPtr credReqObjectHandle, ref IntPtr credReqMetaObjectHandle);
         
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern int anoncreds_credential_request_from_json(ByteBuffer credReqJson, ref IntPtr credReqObjectHandle);
@@ -96,7 +96,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         internal static extern int anoncreds_process_credential(
             IntPtr credObjectHandle, 
             IntPtr credReqObjectHandle, 
-            IntPtr masterSecretObjectHandle, 
+            IntPtr linkSecretObjectHandle, 
             IntPtr credDefObjectHandle, 
             IntPtr revRegDefObjectHandle, 
             ref IntPtr newCredObjectHandle);
@@ -108,12 +108,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
         internal static extern int anoncreds_credential_get_attribute(IntPtr credObjectHandle, FfiStr attributeName, ref string result);
         #endregion
 
-        #region MasterSecret
+        #region LinkSecret
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_create_master_secret(ref IntPtr masterSecretObjectHandle);
+        internal static extern int anoncreds_create_link_secret(ref IntPtr linkSecretObjectHandle);
 
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_master_secret_from_json(ByteBuffer masterSecretJson, ref IntPtr masterSecretObjectHandle);
+        internal static extern int anoncreds_link_secret_from_json(ByteBuffer linkSecretJson, ref IntPtr linkSecretObjectHandle);
         #endregion
 
         #region Presentation
@@ -124,7 +124,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             FfiCredentialProveList credentialsProve,
             FfiStrList selfAttestNames,
             FfiStrList selfAttestValues,
-            IntPtr masterSecret,
+            IntPtr linkSecret,
             FfiUIntList schemas,
             FfiStrList schemaIds,
             FfiUIntList credDefs,

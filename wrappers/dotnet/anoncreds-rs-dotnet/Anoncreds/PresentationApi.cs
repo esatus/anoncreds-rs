@@ -18,7 +18,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="credentialProofs">Credential proofs.</param>
         /// <param name="selfAttestNames">Names of self attested attributes.</param>
         /// <param name="selfAttestValues">Values of self attested attributes.</param>
-        /// <param name="masterSecret">Master secret.</param>
+        /// <param name="linkSecret">Master secret.</param>
         /// <param name="schemas">Corresponding schemas.</param>
         /// <param name="credDefs">Credential definitions.</param>
         /// <exception cref="AnoncredsRsException">Throws when any parameters are invalid.</exception>
@@ -29,7 +29,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<CredentialProof> credentialProofs,
             List<string> selfAttestNames,
             List<string> selfAttestValues,
-            MasterSecret masterSecret,
+            LinkSecret linkSecret,
             List<Schema> schemas,
             List<CredentialDefinition> credDefs)
         {
@@ -49,7 +49,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiCredentialProveList.Create(credentialProofs),
                 FfiStrList.Create(selfAttestNames),
                 FfiStrList.Create(selfAttestValues),
-                masterSecret.Handle,
+                linkSecret.Handle,
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
@@ -74,7 +74,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// <param name="credentialProofJsons">Credential proof as JSON strings.</param>
         /// <param name="selfAttestNames">Names of self attested attributes.</param>
         /// <param name="selfAttestValues">Values of self attested attributes.</param>
-        /// <param name="masterSecretJson">Master secret as JSON string.</param>
+        /// <param name="linkSecretJson">Master secret as JSON string.</param>
         /// <param name="schemaJsons">Corresponding schema as JSON strings.</param>
         /// <param name="credDefJsons">Credential definition as JSON strings.</param>
         /// <exception cref="AnoncredsRsException">Throws when any parameters are invalid.</exception>
@@ -85,7 +85,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> credentialProofJsons,
             List<string> selfAttestNames,
             List<string> selfAttestValues,
-            string masterSecretJson,
+            string linkSecretJson,
             List<string> schemaJsons,
             List<string> credDefJsons)
         {
@@ -93,7 +93,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<CredentialEntry> credentialEntries = new List<CredentialEntry>();
             List<CredentialProof> credentialProofs = new List<CredentialProof>();
             IntPtr presentationRequestHandle = new IntPtr();
-            IntPtr masterSecretHandle = new IntPtr();
+            IntPtr linkSecretHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
             List<string> schemaIds = new List<string>();
@@ -108,7 +108,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 credentialProofs.Add(JsonConvert.DeserializeObject<CredentialProof>(credentialProofJson));
             }
             _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
-            _ = NativeMethods.anoncreds_master_secret_from_json(ByteBuffer.Create(masterSecretJson), ref masterSecretHandle);
+            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretHandle);
             foreach(string schemaJson in schemaJsons)
             {
                 IntPtr newSchemaHandle = new IntPtr();
@@ -134,7 +134,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiCredentialProveList.Create(credentialProofs),
                 FfiStrList.Create(selfAttestNames),
                 FfiStrList.Create(selfAttestValues),
-                masterSecretHandle,
+                linkSecretHandle,
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),

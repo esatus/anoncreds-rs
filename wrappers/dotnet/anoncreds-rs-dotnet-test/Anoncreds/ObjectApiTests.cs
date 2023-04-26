@@ -14,13 +14,13 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task GetTypeNameWorks()
         {
             //Arrange
-            MasterSecret secretObject = await MasterSecretApi.CreateMasterSecretAsync();
+            LinkSecret secretObject = await LinkSecretApi.CreateLinkSecretAsync();
 
             //Act
             string actual = await ObjectApi.GetTypeNameAsync(secretObject.Handle);
 
             //Assert
-            _ = actual.Should().Be("MasterSecret");
+            _ = actual.Should().Be("LinkSecret");
 
         }
 
@@ -42,7 +42,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task FreeObjectAsyncWorks()
         {
             //Arrange
-            MasterSecret secretObject = await MasterSecretApi.CreateMasterSecretAsync();
+            LinkSecret secretObject = await LinkSecretApi.CreateLinkSecretAsync();
             string testJson = await ObjectApi.ToJsonAsync(secretObject.Handle);
             //Act
             await ObjectApi.FreeObjectAsync(secretObject.Handle);

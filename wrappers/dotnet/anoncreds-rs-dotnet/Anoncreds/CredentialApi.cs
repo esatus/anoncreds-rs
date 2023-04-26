@@ -250,7 +250,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="credential">Credential to be processed.</param>
         /// <param name="credentialRequestMetadata">Metadata of the credential request.</param>
-        /// <param name="masterSecret">Used master secret.</param>
+        /// <param name="linkSecret">Used master secret.</param>
         /// <param name="credentialDefinition">Credential definition of the processed credential.</param>
         /// <param name="revocationRegistryDefinition">Revocation registry definition for the processed credential.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
@@ -258,7 +258,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<Credential> ProcessCredentialAsync(
             Credential credential,
             CredentialRequestMetadata credentialRequestMetadata,
-            MasterSecret masterSecret,
+            LinkSecret linkSecret,
             CredentialDefinition credentialDefinition,
             RevocationRegistryDefinition revocationRegistryDefinition = null)
         {
@@ -267,7 +267,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_process_credential(
                 credential.Handle,
                 credentialRequestMetadata.Handle,
-                masterSecret.Handle,
+                linkSecret.Handle,
                 credentialDefinition.Handle,
                 revRegDefHandle,
                 ref credentialObjectHandle);
@@ -288,7 +288,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         /// </summary>
         /// <param name="credentialJson"><see cref="Credential"/> to be processed as JSON string.</param>
         /// <param name="credentialRequestMetadataJson"><see cref="CredentialRequestMetadata"/> as JSON string.</param>
-        /// <param name="masterSecretJson">Used <see cref="MasterSecret"/> as JSON string.</param>
+        /// <param name="linkSecretJson">Used <see cref="LinkSecret"/> as JSON string.</param>
         /// <param name="credentialDefinitionJson"><see cref="CredentialDefinition"/> of the processed credential as JSON string.</param>
         /// <param name="revocationRegistryDefinitionJson"><see cref="RevocationRegistryDefinition"/> for the processed credential as JSON string.</param>
         /// <exception cref="AnoncredsRsException">Throws if any parameters are invalid.</exception>
@@ -296,18 +296,18 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<string> ProcessCredentialAsync(
             string credentialJson,
             string credentialRequestMetadataJson,
-            string masterSecretJson,
+            string linkSecretJson,
             string credentialDefinitionJson,
             string revocationRegistryDefinitionJson = null)
         {
             IntPtr credObjectHandle = new IntPtr();
             IntPtr credReqMetadataObjectHandle = new IntPtr();
-            IntPtr masterSecretObjectHandle = new IntPtr();
+            IntPtr linkSecretObjectHandle = new IntPtr();
             IntPtr credDefObjectHandle = new IntPtr();
             IntPtr revRegDefObjectHandle = new IntPtr();
             _ = NativeMethods.anoncreds_credential_from_json(ByteBuffer.Create(credentialJson), ref credObjectHandle);
             _ = NativeMethods.anoncreds_credential_request_metadata_from_json(ByteBuffer.Create(credentialRequestMetadataJson), ref credReqMetadataObjectHandle);
-            _ = NativeMethods.anoncreds_master_secret_from_json(ByteBuffer.Create(masterSecretJson), ref masterSecretObjectHandle);
+            _ = NativeMethods.anoncreds_link_secret_from_json(ByteBuffer.Create(linkSecretJson), ref linkSecretObjectHandle);
             _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref credDefObjectHandle);
             if(revocationRegistryDefinitionJson != null)
             {
@@ -318,7 +318,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
             int errorCode = NativeMethods.anoncreds_process_credential(
                 credObjectHandle,
                 credReqMetadataObjectHandle,
-                masterSecretObjectHandle,
+                linkSecretObjectHandle,
                 credDefObjectHandle,
                 revRegDefObjectHandle,
                 ref credentialObjectHandle);

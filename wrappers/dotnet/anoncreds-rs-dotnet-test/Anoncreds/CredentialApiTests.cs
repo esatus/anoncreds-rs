@@ -170,16 +170,16 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsync()
         {
             //Arrange
-            MasterSecret mockMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            LinkSecret mockLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
-            (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq(masterSecret: mockMasterSecret);
+            (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq(linkSecret: mockLinkSecret);
             (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
 
             Credential mockCredential = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc);
 
             //Act
-            Credential credObjectProcessed = await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockMasterSecret, mockCredDef);
+            Credential credObjectProcessed = await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockLinkSecret, mockCredDef);
 
             //Assert
             _ = credObjectProcessed.Should().BeOfType(typeof(Credential));
@@ -189,11 +189,11 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsyncJson()
         {
             //Arrange
-            string masterSecretJson = await MasterSecretApi.CreateMasterSecretJsonAsync();
+            string linkSecretJson = await LinkSecretApi.CreateLinkSecretJsonAsync();
             (string mockCredDefJson, string mockCredDefPrivJson, _) = await MockDataProvider.MockCredDefJson();
             (CredentialDefinition mockCredDef, _, _) = await MockDataProvider.MockCredDef();
             string mockCredOfferJson = await MockDataProvider.MockCredOfferJson();
-            (string mockCredReqJson, string mockMetaDataJson) = await MockDataProvider.MockCredReqJson(masterSecretJson: masterSecretJson);
+            (string mockCredReqJson, string mockMetaDataJson) = await MockDataProvider.MockCredReqJson(linkSecretJson: linkSecretJson);
             string testTailsPathForRevocation = null;
 
             (List<string> names, List<string> raw, List<string> enc) = await MockDataProvider.MockAttrValues();
@@ -208,7 +208,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             string mockCredentialJson = await CredentialApi.CreateCredentialAsync(mockCredDefJson, mockCredDefPrivJson, mockCredOfferJson, mockCredReqJson,
                 names, raw, enc, revStatusListJson, null, revRegDefJson, revRegDefPvtJson, 1);
             //Act
-            string credObjectProcessedJson = await CredentialApi.ProcessCredentialAsync(mockCredentialJson, mockMetaDataJson, masterSecretJson, mockCredDefJson);
+            string credObjectProcessedJson = await CredentialApi.ProcessCredentialAsync(mockCredentialJson, mockMetaDataJson, linkSecretJson, mockCredDefJson);
 
             //Assert
             _ = credObjectProcessedJson.Should().NotBeNullOrEmpty();
@@ -218,7 +218,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         public async Task ProcessCredentialAsyncThrowsException()
         {
             //Arrange
-            MasterSecret mockWrongMasterSecret = await MasterSecretApi.CreateMasterSecretAsync();
+            LinkSecret mockWrongLinkSecret = await LinkSecretApi.CreateLinkSecretAsync();
             (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
             CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
             (CredentialRequest mockCredReq, CredentialRequestMetadata mockMetaData) = await MockDataProvider.MockCredReq();
@@ -227,7 +227,7 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             Credential mockCredential = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, enc);
 
             //Act
-            Func<Task> act = async () => await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockWrongMasterSecret, mockCredDef);
+            Func<Task> act = async () => await CredentialApi.ProcessCredentialAsync(mockCredential, mockMetaData, mockWrongLinkSecret, mockCredDef);
 
             //Assert
             _ = await act.Should().ThrowAsync<AnoncredsRsException>();
