@@ -173,108 +173,51 @@ namespace anoncreds_rs_dotnet_test
             string nonce = await PresentationRequestApi.GenerateNonceAsync();
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             
-            string requestedAttributesString =
-                "\"attributeKey1\": " +
-                    "{" +
-                        "\"name\":\"attribute1\"," +
-                        "\"value\":\"value1\"," +
-                        "\"names\": [], " +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}" +
-                    "}";
-            //TODO : fix for PresentationApiTests to test with restrictions and predicates with $or, $and combination.
-            /**
+            Dictionary<string, AttributeInfo> attr = new();
             if (requestedAttributes != null)
             {
-                requestedAttributesString = "";
                 int i = 1;
-                foreach (var attribute in requestedAttributes)
+                foreach (AttributeInfo attribute in requestedAttributes)
                 {
-                    if (i > 1)
-                    {
-                        requestedAttributesString += ", ";
-                    }
-                    requestedAttributesString += $"\"attributeKey{i}\": ";
-                    if (attribute.Name != null)
-                    {
-                        requestedAttributesString += $"{{\"name\":\"{attribute.Name}\",";
-                    }
-                    if (attribute.Names != null)
-                    {
-                        requestedAttributesString += $"\"names\": [";
-                        foreach (var ele in attribute.Names)
-                        {
-                            requestedAttributesString += $"{JsonConvert.SerializeObject(ele, settings)},";
-                        }
-                        requestedAttributesString += "],";
-                    }
-                    if (attribute.NonRevoked != null)
-                    {
-                        requestedAttributesString += $"\"non_revoked\": {{\"from\": {attribute.NonRevoked.From}, \"to\":{attribute.NonRevoked.To} }},";
-                    }
-                    if (attribute.Restrictions != null)
-                    {
-                        requestedAttributesString += "\"restrictions\":{\"$or\":";
-                        foreach (var ele in attribute.Restrictions)
-                        {
-                            requestedAttributesString += $"[{JsonConvert.SerializeObject(ele, settings)}]";
-                        }
-                        requestedAttributesString += "}}";
-                    }
-                    i += 1;
+                    attr[$"attributeKey{i}"] = attribute;
+                    i++;
                 }
-            }**/
-            if (requestedAttributes != null)
+            }
+            else
             {
-                requestedAttributesString = "";
-                int i = 1;
-                foreach (var attribute in requestedAttributes)
+                attr["attributeKey1"] = new AttributeInfo
                 {
-                    if (i > 1)
-                    {
-                        requestedAttributesString += ", ";
-                    }
-                    requestedAttributesString += $"\"attributeKey{i}\": ";
-                    requestedAttributesString += JsonConvert.SerializeObject(attribute);
-                    i += 1;
+                    Name = "attribute1",
+                    Names = null,
+                    NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp },
+                    Restrictions = null
+                };
+            }
+
+            Dictionary<string, PredicateInfo> pred = new Dictionary<string, PredicateInfo>();
+            if (requestedPredicates != null)
+            {
+                int i = 1;
+                foreach (PredicateInfo predicate in requestedPredicates)
+                {
+                    pred[$"predicateKey{i}"] = predicate;
+                    i++;
                 }
             }
 
-            string requestedPredicatesString;
-            if (requestedPredicates != null)
+            PresentationRequest request = new()
             {
-                requestedPredicatesString = "";
-                int i = 1;
-                foreach (var predicate in requestedPredicates)
-                {
-                    if (i > 1)
-                    {
-                        requestedPredicatesString += ", ";
-                    }
-                    requestedPredicatesString += $"\"predicateKey{i}\": ";
-                    requestedPredicatesString += JsonConvert.SerializeObject(predicate);
-                    i += 1;
-                }
-            }
-            string presReqJson = "{" +
-                $"\"name\": \"{name}\", " +
-                $"\"version\": \"{version}\", " +
-                $"\"nonce\": \"{nonce}\", " +
-                "\"requested_attributes\": {" +
-                $"{requestedAttributesString}" +
-                "}, \"revealed_attrs_groups\": {}," +
-                "\"requested_predicates\": {}, " +
-                "\"non_revoked\": " +
-                "{ " +
-                    $"\"from\": {timestamp}," +
-                    $"\"to\": {timestamp}" +
-                "}," +
-                "\"ver\": \"1.0\"" +
-                "}";
-            return await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
+                Name = name,
+                Version = version,
+                Nonce = nonce,
+                NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp },
+                RequestedAttributes = attr,
+                RequestedPredicates = pred,
+            };
+
+            string requestJson = JsonConvert.SerializeObject(request);
+
+            return await PresentationRequestApi.CreatePresReqFromJsonAsync(requestJson);
         }
 
         public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest,

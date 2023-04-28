@@ -132,26 +132,40 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
         #endregion
 
         #region Tests for UpdateRevocationStatusListAsync
-        //[Test, TestCase(TestName = "UpdateRevocationStatusListAsync() works.")]
-        //public async Task UpdateRevocationStatusListAsyncWorks()
-        //{
-        //    //Arrange
-        //    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-        //    (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
-        //    CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
-        //    (CredentialRequest mockCredReq, _) = await MockDataProvider.MockCredReq();
-        //    (List<string> names, List<string> raw, List<string> encoded) = await MockDataProvider.MockAttrValues();
-        //    (RevocationRegistryDefinition mockRevRegDef, RevocationRegistryDefinitionPrivate mockRegRevDefPriv) = await MockDataProvider.MockRevRegDef(credDef: mockCredDef);
-        //    RevocationStatusList mockRevRegStatList = await RevocationApi.CreateRevocationStatusListAsync(mockRevRegDef.IssuerId, mockRevRegDef, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
-        //    Credential mockCred = await MockDataProvider.MockCredential(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, encoded,
-        //        mockRevRegStatList, null, mockRevRegDef, mockRegRevDefPriv, 0);
+        [Test, TestCase(TestName = "UpdateRevocationStatusListAsync() works.")]
+        public async Task UpdateRevocationStatusListAsyncWorks()
+        {
+            //Arrange
+            long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            (CredentialDefinition mockCredDef, CredentialDefinitionPrivate mockCredDefPriv, _) = await MockDataProvider.MockCredDef();
+            CredentialOffer mockCredOffer = await MockDataProvider.MockCredOffer();
+            (CredentialRequest mockCredReq, _) = await MockDataProvider.MockCredReq();
+            (List<string> names, List<string> raw, List<string> encoded) = await MockDataProvider.MockAttrValues();
 
-        //    //Act
-        //    RevocationStatusList actual = await RevocationApi.UpdateRevocationStatusListAsync(timestamp, new List<long>() { 1 }, new List<long>() { 1 }, mockRevRegDef, mockRevRegStatList);
+            (RevocationRegistryDefinition mockRevRegDef, RevocationRegistryDefinitionPrivate mockRegRevDefPriv) = await MockDataProvider.MockRevRegDef(credDef: mockCredDef);
+            RevocationStatusList mockRevRegStatList = await RevocationApi.CreateRevocationStatusListAsync(mockRevRegDef.IssuerId, mockRevRegDef, mockCredDef.IssuerId, timestamp, IssuerType.ISSUANCE_BY_DEFAULT);
+            
+            Credential mockCred = await MockDataProvider.MockCredential(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, encoded,
+                mockRevRegStatList, null, mockRevRegDef, mockRegRevDefPriv, 0);
+            Credential mockCred2 = await MockDataProvider.MockCredential(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, encoded,
+                mockRevRegStatList, null, mockRevRegDef, mockRegRevDefPriv, 1);
+            Credential mockCred3 = await MockDataProvider.MockCredential(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, names, raw, encoded,
+                mockRevRegStatList, null, mockRevRegDef, mockRegRevDefPriv, 2);
 
-        //    //Assert
-        //    _ = actual.RevocationList[0].Should().BeTrue();
-        //}
+            _ = mockRevRegStatList.RevocationList[0].Should().BeFalse();
+            _ = mockRevRegStatList.RevocationList[1].Should().BeFalse();
+
+            //Act
+            long timestamp2 = DateTimeOffset.Now.AddHours(1).ToUnixTimeSeconds();
+            RevocationStatusList actual = await RevocationApi.UpdateRevocationStatusListAsync(timestamp2, new List<long>() { 0 }, new List<long>() { 0 }, mockRevRegDef, mockRevRegStatList);
+            long timestamp3 = DateTimeOffset.Now.AddHours(2).ToUnixTimeSeconds();
+            RevocationStatusList actual2 = await RevocationApi.UpdateRevocationStatusListAsync(timestamp3, new List<long>() { 0 }, new List<long>() { 0 }, mockRevRegDef, actual);
+            //Assert
+            _ = actual2.RevocationList[0].Should().BeTrue();
+            _ = actual2.RevocationList[1].Should().BeFalse();
+            _ = actual2.RevocationList[2].Should().BeTrue();
+            _ = actual2.RevocationList.Count.Should().Be(100);
+        }
 
         //[Test, TestCase(TestName = "UpdateRevocationRegistryAsync() throws AnoncredsRsException when revocation registry is invalid.")]
         //public async Task UpdateRevocationRegistryThrowsException()
