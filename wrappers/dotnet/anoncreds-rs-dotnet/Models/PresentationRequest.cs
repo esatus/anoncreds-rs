@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace anoncreds_rs_dotnet.Models
 {
@@ -108,10 +109,11 @@ namespace anoncreds_rs_dotnet.Models
         [JsonProperty("cred_def_id", NullValueHandling = NullValueHandling.Ignore)]
         public string CredentialDefinitionId { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public AttributeValue AttributeValue { get; set; }
     }
 
-    internal static class RequestExtensions
+    public static class RequestExtensions
     {
         internal static PresentationRequest ToPresentationRequest(this QueryRequest request)
         {
@@ -205,9 +207,141 @@ namespace anoncreds_rs_dotnet.Models
             return presentationRequest;
         }
 
-        internal static void FromPresentationRequest(this QueryRequest queryRequest, PresentationRequest presentationRequest)
+        public static string ToQueryRequestJson(this PresentationRequest presentationRequest)
         {
+            QueryRequest queryRequest = new QueryRequest();
+            Dictionary<string, QueryAttributeInfo> reqAttrs = new Dictionary<string, QueryAttributeInfo>();
+            Dictionary<string, QueryPredicateInfo> reqPreds = new Dictionary<string, QueryPredicateInfo>();
 
+            foreach(KeyValuePair<string, AttributeInfo> keyValuePair in presentationRequest.RequestedAttributes)
+            {
+                AttributeInfo attributeInfo = keyValuePair.Value;
+                OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+
+                foreach(AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                {
+                    List<PartialFilter> partialFilters = new List<PartialFilter>();
+
+                    if (attributeFilter.SchemaId != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaId  = attributeFilter.SchemaId });
+                    }
+                    if (attributeFilter.SchemaIssuerDid != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
+                    }
+                    if (attributeFilter.SchemaName != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
+                    }
+                    if (attributeFilter.SchemaVersion != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
+                    }
+                    if (attributeFilter.IssuerDid != null)
+                    {
+                        partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
+                    }
+                    if (attributeFilter.CredentialDefinitionId != null)
+                    {
+                        partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
+                    }
+                    if (attributeFilter.AttributeValue != null)
+                    {
+                        partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                    }
+
+                    if(partialFilters.Count > 1)
+                    {
+                        outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
+                    }
+                    else if(partialFilters.Count == 1)
+                    {
+                        outerRestriction.Inners.Add(partialFilters.First());
+                    }
+                }
+
+                QueryAttributeInfo queryAttributeInfo = new QueryAttributeInfo()
+                {
+                    Name = attributeInfo.Name,
+                    Names = attributeInfo.Names,
+                    NonRevoked = attributeInfo.NonRevoked,
+                    Restrictions = outerRestriction
+                };
+
+                reqAttrs.Add(keyValuePair.Key, queryAttributeInfo);
+            }
+
+            foreach (KeyValuePair<string, PredicateInfo> keyValuePair in presentationRequest.RequestedPredicates)
+            {
+                PredicateInfo predicateInfo = keyValuePair.Value;
+                OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+
+                foreach (AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                {
+                    List<PartialFilter> partialFilters = new List<PartialFilter>();
+
+                    if (attributeFilter.SchemaId != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaId = attributeFilter.SchemaId });
+                    }
+                    if (attributeFilter.SchemaIssuerDid != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
+                    }
+                    if (attributeFilter.SchemaName != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
+                    }
+                    if (attributeFilter.SchemaVersion != null)
+                    {
+                        partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
+                    }
+                    if (attributeFilter.IssuerDid != null)
+                    {
+                        partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
+                    }
+                    if (attributeFilter.CredentialDefinitionId != null)
+                    {
+                        partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
+                    }
+                    if (attributeFilter.AttributeValue != null)
+                    {
+                        partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                    }
+
+                    if (partialFilters.Count > 1)
+                    {
+                        outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
+                    }
+                    else if (partialFilters.Count == 1)
+                    {
+                        outerRestriction.Inners.Add(partialFilters.First());
+                    }
+                }
+
+                QueryPredicateInfo queryPredicateInfo = new QueryPredicateInfo()
+                {
+                    Name = predicateInfo.Name,
+                    NonRevoked = predicateInfo.NonRevoked,
+                    Restrictions = outerRestriction,
+                    PredicateType = predicateInfo.PredicateType,
+                    PredicateValue = predicateInfo.PredicateValue
+                };
+
+                reqPreds.Add(keyValuePair.Key, queryPredicateInfo);
+            }
+
+            queryRequest.Nonce = presentationRequest.Nonce;
+            queryRequest.Name = presentationRequest.Name;
+            queryRequest.Version = presentationRequest.Version;
+            queryRequest.JsonString = presentationRequest.JsonString;
+            queryRequest.NonRevoked = presentationRequest.NonRevoked;
+            queryRequest.Handle = presentationRequest.Handle;
+            queryRequest.RequestedAttributes = reqAttrs;
+            queryRequest.RequestedPredicates = reqPreds;
+
+            return JsonConvert.SerializeObject(queryRequest);
         }
 
         internal static void FromPartialFilters(this AttributeFilter filter, List<PartialFilter> partialFilters)

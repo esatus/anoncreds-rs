@@ -215,9 +215,9 @@ namespace anoncreds_rs_dotnet_test
                 RequestedPredicates = pred,
             };
 
-            string requestJson = JsonConvert.SerializeObject(request);
+            string queryRequestJson = request.ToQueryRequestJson();
 
-            return await PresentationRequestApi.CreatePresReqFromJsonAsync(requestJson);
+            return await PresentationRequestApi.CreatePresReqFromJsonAsync(queryRequestJson);
         }
 
         public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest,
