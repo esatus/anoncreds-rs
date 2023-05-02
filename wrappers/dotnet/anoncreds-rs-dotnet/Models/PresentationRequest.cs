@@ -119,77 +119,83 @@ namespace anoncreds_rs_dotnet.Models
         {
             Dictionary<string, AttributeInfo> reqAttrs = new Dictionary<string, AttributeInfo>();
 
-            foreach (KeyValuePair<string, QueryAttributeInfo> keyValuePair in request.RequestedAttributes)
+            if(request.RequestedAttributes != null)
             {
-                string key = keyValuePair.Key;
-                QueryAttributeInfo queryAttributeInfo = keyValuePair.Value;
-                List<AttributeFilter> attributeFilters = new List<AttributeFilter>();
-
-                foreach (InnerRestriction innerRestriction in queryAttributeInfo.Restrictions.Inners)
+                foreach (KeyValuePair<string, QueryAttributeInfo> keyValuePair in request.RequestedAttributes)
                 {
-                    if (innerRestriction is PartialFilter partialFilter)
-                    {
-                        AttributeFilter newFilter = new AttributeFilter();
-                        newFilter.FromPartialFilters(new List<PartialFilter>() { partialFilter });
+                    string key = keyValuePair.Key;
+                    QueryAttributeInfo queryAttributeInfo = keyValuePair.Value;
+                    List<AttributeFilter> attributeFilters = new List<AttributeFilter>();
 
-                        attributeFilters.Add(newFilter);
-                    }
-                    else if (innerRestriction is InnerResWithQuery innerResWithQuery)
+                    foreach (InnerRestriction innerRestriction in queryAttributeInfo.Restrictions.Inners)
                     {
-                        AttributeFilter newFilter = new AttributeFilter();
-                        newFilter.FromPartialFilters(innerResWithQuery.PartialFilters);
+                        if (innerRestriction is PartialFilter partialFilter)
+                        {
+                            AttributeFilter newFilter = new AttributeFilter();
+                            newFilter.FromPartialFilters(new List<PartialFilter>() { partialFilter });
 
-                        attributeFilters.Add(newFilter);
+                            attributeFilters.Add(newFilter);
+                        }
+                        else if (innerRestriction is InnerResWithQuery innerResWithQuery)
+                        {
+                            AttributeFilter newFilter = new AttributeFilter();
+                            newFilter.FromPartialFilters(innerResWithQuery.PartialFilters);
+
+                            attributeFilters.Add(newFilter);
+                        }
                     }
+
+                    AttributeInfo attributeInfo = new AttributeInfo()
+                    {
+                        Name = queryAttributeInfo.Name,
+                        Names = queryAttributeInfo.Names,
+                        NonRevoked = queryAttributeInfo.NonRevoked,
+                        Restrictions = attributeFilters
+                    };
+
+                    reqAttrs.Add(key, attributeInfo);
                 }
-
-                AttributeInfo attributeInfo = new AttributeInfo()
-                {
-                    Name = queryAttributeInfo.Name,
-                    Names = queryAttributeInfo.Names,
-                    NonRevoked = queryAttributeInfo.NonRevoked,
-                    Restrictions = attributeFilters
-                };
-
-                reqAttrs.Add(key, attributeInfo);
             }
 
             Dictionary<string, PredicateInfo> reqPreds = new Dictionary<string, PredicateInfo>();
 
-            foreach (KeyValuePair<string, QueryPredicateInfo> keyValuePair in request.RequestedPredicates)
+            if(request.RequestedPredicates != null)
             {
-                string key = keyValuePair.Key;
-                QueryPredicateInfo queryPredicateInfo = keyValuePair.Value;
-                List<AttributeFilter> attributeFilters = new List<AttributeFilter>();
-
-                foreach (InnerRestriction innerRestriction in queryPredicateInfo.Restrictions.Inners)
+                foreach (KeyValuePair<string, QueryPredicateInfo> keyValuePair in request.RequestedPredicates)
                 {
-                    if (innerRestriction is PartialFilter partialFilter)
-                    {
-                        AttributeFilter newFilter = new AttributeFilter();
-                        newFilter.FromPartialFilters(new List<PartialFilter>() { partialFilter });
+                    string key = keyValuePair.Key;
+                    QueryPredicateInfo queryPredicateInfo = keyValuePair.Value;
+                    List<AttributeFilter> attributeFilters = new List<AttributeFilter>();
 
-                        attributeFilters.Add(newFilter);
-                    }
-                    else if (innerRestriction is InnerResWithQuery innerResWithQuery)
+                    foreach (InnerRestriction innerRestriction in queryPredicateInfo.Restrictions.Inners)
                     {
-                        AttributeFilter newFilter = new AttributeFilter();
-                        newFilter.FromPartialFilters(innerResWithQuery.PartialFilters);
+                        if (innerRestriction is PartialFilter partialFilter)
+                        {
+                            AttributeFilter newFilter = new AttributeFilter();
+                            newFilter.FromPartialFilters(new List<PartialFilter>() { partialFilter });
 
-                        attributeFilters.Add(newFilter);
+                            attributeFilters.Add(newFilter);
+                        }
+                        else if (innerRestriction is InnerResWithQuery innerResWithQuery)
+                        {
+                            AttributeFilter newFilter = new AttributeFilter();
+                            newFilter.FromPartialFilters(innerResWithQuery.PartialFilters);
+
+                            attributeFilters.Add(newFilter);
+                        }
                     }
+
+                    PredicateInfo predicateInfo = new PredicateInfo()
+                    {
+                        Name = queryPredicateInfo.Name,
+                        NonRevoked = queryPredicateInfo.NonRevoked,
+                        Restrictions = attributeFilters,
+                        PredicateType = queryPredicateInfo.PredicateType,
+                        PredicateValue = queryPredicateInfo.PredicateValue
+                    };
+
+                    reqPreds.Add(key, predicateInfo);
                 }
-
-                PredicateInfo predicateInfo = new PredicateInfo()
-                {
-                    Name = queryPredicateInfo.Name,
-                    NonRevoked = queryPredicateInfo.NonRevoked,
-                    Restrictions = attributeFilters,
-                    PredicateType = queryPredicateInfo.PredicateType,
-                    PredicateValue = queryPredicateInfo.PredicateValue
-                };
-
-                reqPreds.Add(key, predicateInfo);
             }
 
             PresentationRequest presentationRequest = new PresentationRequest
@@ -213,123 +219,135 @@ namespace anoncreds_rs_dotnet.Models
             Dictionary<string, QueryAttributeInfo> reqAttrs = new Dictionary<string, QueryAttributeInfo>();
             Dictionary<string, QueryPredicateInfo> reqPreds = new Dictionary<string, QueryPredicateInfo>();
 
-            foreach(KeyValuePair<string, AttributeInfo> keyValuePair in presentationRequest.RequestedAttributes)
+            if(presentationRequest.RequestedAttributes != null)
             {
-                AttributeInfo attributeInfo = keyValuePair.Value;
-                OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                foreach(AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                foreach (KeyValuePair<string, AttributeInfo> keyValuePair in presentationRequest.RequestedAttributes)
                 {
-                    List<PartialFilter> partialFilters = new List<PartialFilter>();
+                    AttributeInfo attributeInfo = keyValuePair.Value;
+                    OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
 
-                    if (attributeFilter.SchemaId != null)
+                    if(keyValuePair.Value.Restrictions != null)
                     {
-                        partialFilters.Add(new PartialFilter { SchemaId  = attributeFilter.SchemaId });
-                    }
-                    if (attributeFilter.SchemaIssuerDid != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
-                    }
-                    if (attributeFilter.SchemaName != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
-                    }
-                    if (attributeFilter.SchemaVersion != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
-                    }
-                    if (attributeFilter.IssuerDid != null)
-                    {
-                        partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
-                    }
-                    if (attributeFilter.CredentialDefinitionId != null)
-                    {
-                        partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
-                    }
-                    if (attributeFilter.AttributeValue != null)
-                    {
-                        partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                        foreach (AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                        {
+                            List<PartialFilter> partialFilters = new List<PartialFilter>();
+
+                            if (attributeFilter.SchemaId != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaId = attributeFilter.SchemaId });
+                            }
+                            if (attributeFilter.SchemaIssuerDid != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
+                            }
+                            if (attributeFilter.SchemaName != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
+                            }
+                            if (attributeFilter.SchemaVersion != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
+                            }
+                            if (attributeFilter.IssuerDid != null)
+                            {
+                                partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
+                            }
+                            if (attributeFilter.CredentialDefinitionId != null)
+                            {
+                                partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
+                            }
+                            if (attributeFilter.AttributeValue != null)
+                            {
+                                partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                            }
+
+                            if (partialFilters.Count > 1)
+                            {
+                                outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
+                            }
+                            else if (partialFilters.Count == 1)
+                            {
+                                outerRestriction.Inners.Add(partialFilters.First());
+                            }
+                        }
                     }
 
-                    if(partialFilters.Count > 1)
+                    QueryAttributeInfo queryAttributeInfo = new QueryAttributeInfo()
                     {
-                        outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
-                    }
-                    else if(partialFilters.Count == 1)
-                    {
-                        outerRestriction.Inners.Add(partialFilters.First());
-                    }
+                        Name = attributeInfo.Name,
+                        Names = attributeInfo.Names,
+                        NonRevoked = attributeInfo.NonRevoked,
+                        Restrictions = outerRestriction
+                    };
+
+                    reqAttrs.Add(keyValuePair.Key, queryAttributeInfo);
                 }
-
-                QueryAttributeInfo queryAttributeInfo = new QueryAttributeInfo()
-                {
-                    Name = attributeInfo.Name,
-                    Names = attributeInfo.Names,
-                    NonRevoked = attributeInfo.NonRevoked,
-                    Restrictions = outerRestriction
-                };
-
-                reqAttrs.Add(keyValuePair.Key, queryAttributeInfo);
             }
 
-            foreach (KeyValuePair<string, PredicateInfo> keyValuePair in presentationRequest.RequestedPredicates)
+            if(presentationRequest.RequestedPredicates != null)
             {
-                PredicateInfo predicateInfo = keyValuePair.Value;
-                OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                foreach (AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                foreach (KeyValuePair<string, PredicateInfo> keyValuePair in presentationRequest.RequestedPredicates)
                 {
-                    List<PartialFilter> partialFilters = new List<PartialFilter>();
+                    PredicateInfo predicateInfo = keyValuePair.Value;
+                    OuterRestriction outerRestriction = new OuterRestriction() { Inners = new List<InnerRestriction>() };
 
-                    if (attributeFilter.SchemaId != null)
+                    if(keyValuePair.Value.Restrictions != null)
                     {
-                        partialFilters.Add(new PartialFilter { SchemaId = attributeFilter.SchemaId });
-                    }
-                    if (attributeFilter.SchemaIssuerDid != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
-                    }
-                    if (attributeFilter.SchemaName != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
-                    }
-                    if (attributeFilter.SchemaVersion != null)
-                    {
-                        partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
-                    }
-                    if (attributeFilter.IssuerDid != null)
-                    {
-                        partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
-                    }
-                    if (attributeFilter.CredentialDefinitionId != null)
-                    {
-                        partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
-                    }
-                    if (attributeFilter.AttributeValue != null)
-                    {
-                        partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                        foreach (AttributeFilter attributeFilter in keyValuePair.Value.Restrictions)
+                        {
+                            List<PartialFilter> partialFilters = new List<PartialFilter>();
+
+                            if (attributeFilter.SchemaId != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaId = attributeFilter.SchemaId });
+                            }
+                            if (attributeFilter.SchemaIssuerDid != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaIssuerDid = attributeFilter.SchemaIssuerDid });
+                            }
+                            if (attributeFilter.SchemaName != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaName = attributeFilter.SchemaName });
+                            }
+                            if (attributeFilter.SchemaVersion != null)
+                            {
+                                partialFilters.Add(new PartialFilter { SchemaVersion = attributeFilter.SchemaVersion });
+                            }
+                            if (attributeFilter.IssuerDid != null)
+                            {
+                                partialFilters.Add(new PartialFilter { IssuerDid = attributeFilter.IssuerDid });
+                            }
+                            if (attributeFilter.CredentialDefinitionId != null)
+                            {
+                                partialFilters.Add(new PartialFilter { CredentialDefinitionId = attributeFilter.CredentialDefinitionId });
+                            }
+                            if (attributeFilter.AttributeValue != null)
+                            {
+                                partialFilters.Add(new PartialFilter { AttributeValue = attributeFilter.AttributeValue });
+                            }
+
+                            if (partialFilters.Count > 1)
+                            {
+                                outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
+                            }
+                            else if (partialFilters.Count == 1)
+                            {
+                                outerRestriction.Inners.Add(partialFilters.First());
+                            }
+                        }
                     }
 
-                    if (partialFilters.Count > 1)
+                    QueryPredicateInfo queryPredicateInfo = new QueryPredicateInfo()
                     {
-                        outerRestriction.Inners.Add(new InnerResWithQuery { PartialFilters = partialFilters });
-                    }
-                    else if (partialFilters.Count == 1)
-                    {
-                        outerRestriction.Inners.Add(partialFilters.First());
-                    }
+                        Name = predicateInfo.Name,
+                        NonRevoked = predicateInfo.NonRevoked,
+                        Restrictions = outerRestriction,
+                        PredicateType = predicateInfo.PredicateType,
+                        PredicateValue = predicateInfo.PredicateValue
+                    };
+
+                    reqPreds.Add(keyValuePair.Key, queryPredicateInfo);
                 }
-
-                QueryPredicateInfo queryPredicateInfo = new QueryPredicateInfo()
-                {
-                    Name = predicateInfo.Name,
-                    NonRevoked = predicateInfo.NonRevoked,
-                    Restrictions = outerRestriction,
-                    PredicateType = predicateInfo.PredicateType,
-                    PredicateValue = predicateInfo.PredicateValue
-                };
-
-                reqPreds.Add(keyValuePair.Key, queryPredicateInfo);
             }
 
             queryRequest.Nonce = presentationRequest.Nonce;
@@ -426,56 +444,74 @@ namespace anoncreds_rs_dotnet.Models
             foreach(var keyValuePair in attrJObject)
             {
                 QueryAttributeInfo queryAttributeInfo = JsonConvert.DeserializeObject<QueryAttributeInfo>(keyValuePair.Value.ToString(), Settings.JsonSettings);
-                queryAttributeInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                var restrictions = JObject.Parse(JObject.Parse(keyValuePair.Value.ToString())["restrictions"].ToString())["$or"].ToArray();
-                foreach(var token in restrictions)
+                JObject attrInfoJObject = JObject.Parse(keyValuePair.Value.ToString());
+                if (attrInfoJObject.ContainsKey("restrictions"))
                 {
-                    try
-                    {
-                        var e = JObject.Parse(token.ToString());
-                        if (e.ContainsKey("$and"))
-                        {
-                            queryAttributeInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<InnerResWithQuery>(token.ToString()));
-                        }
-                        else
-                        {
-                            queryAttributeInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<PartialFilter>(token.ToString()));
-                        }
-                    }
-                    catch(Exception ex)
-                    {
+                    queryAttributeInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+                    JObject restrictionsJObject = JObject.Parse(attrInfoJObject["restrictions"].ToString());
 
+                    if (restrictionsJObject.ContainsKey("$or"))
+                    {
+                        var restrictions = restrictionsJObject["$or"].ToArray();
+                        foreach (var token in restrictions)
+                        {
+                            try
+                            {
+                                var e = JObject.Parse(token.ToString());
+                                if (e.ContainsKey("$and"))
+                                {
+                                    queryAttributeInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<InnerResWithQuery>(token.ToString()));
+                                }
+                                else
+                                {
+                                    queryAttributeInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<PartialFilter>(token.ToString()));
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
                     }
                 }
+                    
                 request.RequestedAttributes.Add(keyValuePair.Key, queryAttributeInfo);
             }
             JObject predJObject = JObject.Parse(requestJObject["requested_predicates"].ToString());
             foreach (var keyValuePair in predJObject)
             {
                 QueryPredicateInfo queryPredicateInfo = JsonConvert.DeserializeObject<QueryPredicateInfo>(keyValuePair.Value.ToString(), Settings.JsonSettings);
-                queryPredicateInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                var restrictions = JObject.Parse(JObject.Parse(keyValuePair.Value.ToString())["restrictions"].ToString())["$or"].ToArray();
-                foreach (var token in restrictions)
+                JObject predInfoJObject = JObject.Parse(keyValuePair.Value.ToString());
+                if (predInfoJObject.ContainsKey("restrictions"))
                 {
-                    try
-                    {
-                        var e = JObject.Parse(token.ToString());
-                        if (e.ContainsKey("$and"))
-                        {
-                            queryPredicateInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<InnerResWithQuery>(token.ToString()));
-                        }
-                        else
-                        {
-                            queryPredicateInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<PartialFilter>(token.ToString()));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
+                    queryPredicateInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+                    JObject restrictionsJObject = JObject.Parse(predInfoJObject["restrictions"].ToString());
 
+                    if (restrictionsJObject.ContainsKey("$or"))
+                    {
+                        var restrictions = JObject.Parse(predInfoJObject["restrictions"].ToString())["$or"].ToArray();
+                        foreach (var token in restrictions)
+                        {
+                            try
+                            {
+                                var e = JObject.Parse(token.ToString());
+                                if (e.ContainsKey("$and"))
+                                {
+                                    queryPredicateInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<InnerResWithQuery>(token.ToString()));
+                                }
+                                else
+                                {
+                                    queryPredicateInfo.Restrictions.Inners.Add(JsonConvert.DeserializeObject<PartialFilter>(token.ToString()));
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
                     }
                 }
+                
                 request.RequestedPredicates.Add(keyValuePair.Key, queryPredicateInfo);
             }
 
