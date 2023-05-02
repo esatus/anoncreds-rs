@@ -40,10 +40,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
             {
                 new AttributeInfo { Name = "attribute1", 
                     NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp }, 
-                    Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Personalausweis" }, new AttributeFilter { CredentialDefinitionId = "Bücherweiausweis" } } },
+                    Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein" }, new AttributeFilter { CredentialDefinitionId = "Bcherweiausweis" } } },
                 new AttributeInfo { Names = new List<string>(){ "attribute2", "attribute3" }, 
                     NonRevoked = new NonRevokedInterval { From = (ulong) timestamp, To = (ulong) timestamp }, 
-                    Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Führerschein", SchemaId = "EU-Führerschein" } } }
+                    Restrictions = new List<AttributeFilter>() { new AttributeFilter { CredentialDefinitionId = "DE-Fhrerschein", SchemaId = "EU-Fhrerschein" } } }
             };
 
             List<AttributeInfo> requestedAttributes3 = new()

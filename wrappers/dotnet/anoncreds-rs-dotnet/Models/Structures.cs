@@ -85,9 +85,9 @@ namespace anoncreds_rs_dotnet.Models
                 if (!string.IsNullOrEmpty(json))
                 {
                     UTF8Encoding decoder = new UTF8Encoding(true, true);
-                    byte[] bytes = new byte[json.Length];
-                    _ = decoder.GetBytes(json, 0, json.Length, bytes, 0);
-                    buffer.len = json.Length;
+                    var byteCount = decoder.GetByteCount(json);
+                    byte[] bytes = new byte[byteCount];
+                    buffer.len = decoder.GetBytes(json, 0, json.Length, bytes, 0);
                     fixed (byte* bytebuffer_p = &bytes[0])
                     {
                         buffer.value = new IntPtr(bytebuffer_p);
