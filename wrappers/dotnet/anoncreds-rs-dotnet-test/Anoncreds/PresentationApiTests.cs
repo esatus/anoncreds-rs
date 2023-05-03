@@ -224,6 +224,14 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             Credential credObject = await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPrivate, mockCredOffer, mockCredRequest, attrNames, attrNamesRaw, attrNamesEnc, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
 
+
+            string TESTcredRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                revRegDefObject.JsonString,
+                revStatusList.JsonString,
+                credObject.Signature.RCredential.I,
+                revRegDefObject.Value.TailsLocation
+                );
+
             CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
             CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
                 revRegDefObject,

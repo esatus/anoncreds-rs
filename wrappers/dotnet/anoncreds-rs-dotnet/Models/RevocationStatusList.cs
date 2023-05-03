@@ -19,7 +19,7 @@ namespace anoncreds_rs_dotnet.Models
         public string RevocationRegistryDefinitionId { get; set; }
 
         [JsonProperty("revocationList")]
-        public List<bool> RevocationList { get; set; }
+        public List<byte> RevocationList { get; set; }
 
         [JsonProperty("currentAccumulator")]
         //public RevocationRegistry RevocationRegistry { get; set; }
