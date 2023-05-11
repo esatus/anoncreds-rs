@@ -267,11 +267,11 @@ namespace anoncreds_rs_dotnet_test
                 $"{requestedAttributesString}" +
                 "}, \"revealed_attrs_groups\": {}," +
                 "\"requested_predicates\": {}, " +
-                "\"non_revoked\": " +
-                "{ " +
-                    $"\"from\": {timestamp}," +
-                    $"\"to\": {timestamp}" +
-                "}," +
+                //"\"non_revoked\": " +
+                //"{ " +
+                //    $"\"from\": {timestamp}," +
+                //    $"\"to\": {timestamp}" +
+                //"}," +
                 "\"ver\": \"1.0\"" +
                 "}";
             return await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
@@ -300,6 +300,29 @@ namespace anoncreds_rs_dotnet_test
                 mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockCredentialDefinitions);
         }
 
+        public static async Task<string> MockPresentationJson(string presentationRequest,
+            List<string> credentialEntries = null,
+            List<string> credentialProofs = null,
+            List<string> selfAttestNames = null,
+            List<string> selfAttestValues = null,
+            string linkSecret = null,
+            List<string> schemas = null,
+            List<string> credentialDefinitions = null)
+        {
+            string mockPresentationRequest = presentationRequest;
+            List<string> mockCredentialEntries = credentialEntries ?? new List<string>() { };
+            List<string> mockCredentialProofs = credentialProofs ?? new List<string>() { };
+            List<string> mockSelfAttestNames = selfAttestNames ?? new List<string>();
+            List<string> mockSelfAttestValues = selfAttestValues ?? new List<string>();
+            string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
+            List<string> mockSchemas = schemas ?? new List<string>() { };
+            List<string> mockCredentialDefinitions = credentialDefinitions ?? new List<string>() { };
+
+
+            return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
+                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockCredentialDefinitions);
+        }
+
         public static async Task<(List<string>, List<string>, List<string>)> MockAttrValues(Schema schema = null)
         {
             Schema mockSchema = schema ?? await MockSchema();
@@ -320,7 +343,7 @@ namespace anoncreds_rs_dotnet_test
             return(attrNames, attrValuesRaw, attrValuesEncoded);
         }
 
-        public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate)> MockRevRegDef(CredentialDefinition credDef = null,
+        public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate)> MockRevRegDef(CredentialDefinition credDef = null, string credDefId = null,
             RegistryType registryType = RegistryType.CL_ACCUM,
             int maxCredNumber = 100,
             string tailsPath = null)
@@ -328,11 +351,12 @@ namespace anoncreds_rs_dotnet_test
             CredentialDefinition mockCredDef = credDef ?? (await MockCredDef()).Item1;
             string mockUri = mockCredDef.IssuerId;
             string mockCredDefTag = mockCredDef.Tag;
+            string mockCredDefId = credDefId ?? "mock:credDefId";
 
-            return await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, mockCredDef, mockCredDefTag, registryType, maxCredNumber, tailsPath);
+            return await RevocationApi.CreateRevocationRegistryDefinitionAsync(mockUri, mockCredDef, mockCredDefId, mockCredDefTag, registryType, maxCredNumber, tailsPath);
         }
 
-        public static async Task<(string, string)> MockRevRegDefJson(string credDef = null,
+        public static async Task<(string, string)> MockRevRegDefJson(string credDef = null, string credDefId = null,
             RegistryType registryType = RegistryType.CL_ACCUM,
             int maxCredNumber = 100,
             string tailsPath = null)
@@ -340,8 +364,9 @@ namespace anoncreds_rs_dotnet_test
             string mockCredDef = credDef ?? (await MockCredDefJson()).Item1;
             string mockUri = JObject.Parse(mockCredDef)["issuerId"].ToString();
             string mockCredDefTag = JObject.Parse(mockCredDef)["tag"].ToString();
+            string mockCredDefId = credDefId ?? "mock:credDefId";
 
-            return await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockUri, mockCredDef, mockCredDefTag, registryType, maxCredNumber, tailsPath);
+            return await RevocationApi.CreateRevocationRegistryDefinitionJsonAsync(mockUri, mockCredDef, mockCredDefId, mockCredDefTag, registryType, maxCredNumber, tailsPath);
         }
 
         public static async Task<RevocationStatusList> MockRevStatusList(RevocationRegistryDefinition revRegDef = null,
@@ -387,13 +412,14 @@ namespace anoncreds_rs_dotnet_test
             RevocationRegistryDefinitionPrivate mockRevRegDefPriv = null;
             long mockRegId = -1;
 
-            if(revocationStatusList != null && regIdX != -1
+            if(revocationStatusList != null && regIdX != -1 && revocationRegistryId != null
                 && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
             {
                 mockRevStatList = revocationStatusList;
                 mockRevRegDef = revocationRegistryDefinition;
                 mockRevRegDefPriv= revocationRegistryDefinitionPrivate;
                 mockRegId = regIdX;
+                mockRevRegId = revocationRegistryId;
             }
             else if(revocationRegistryId != null && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
             {

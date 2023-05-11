@@ -165,6 +165,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<(RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate)> CreateRevocationRegistryDefinitionAsync(
             string originDid,
             CredentialDefinition credDefObject,
+            string credDefId,
             string tag,
             RegistryType revRegType,
             long maxCredNumber,
@@ -175,7 +176,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObject.Handle,
-                FfiStr.Create(credDefObject.IssuerId),
+                FfiStr.Create(credDefId),
                 FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),
@@ -209,6 +210,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         public static async Task<(string, string)> CreateRevocationRegistryDefinitionJsonAsync(
             string originDid,
             string credDefJson,
+            string credDefId,
             string tag,
             RegistryType revRegType,
             long maxCredNumber,
@@ -224,7 +226,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             int errorCode = NativeMethods.anoncreds_create_revocation_registry_def(
                 credDefObjectHandle,
-                FfiStr.Create(credDefObject.IssuerId),
+                FfiStr.Create(credDefId),
                 FfiStr.Create(originDid),
                 FfiStr.Create(tag),
                 FfiStr.Create(revRegType.ToString()),
