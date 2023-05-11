@@ -56,7 +56,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestValues,
                 await LinkSecretApi.CreateLinkSecretAsync(),
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -104,6 +106,8 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestNames,
                 selfAttestValues,
                 mockLinkSecret,
+                new List<string>(),
+                new List<string>(),
                 new List<string>(),
                 new List<string>()
                 );
@@ -213,7 +217,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 null,
                 linkSecret,
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -331,7 +337,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestValues,
                 linkSecret,
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -465,7 +473,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestValues,
                 linkSecret,
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -565,7 +575,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestValues,
                 linkSecret,
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -665,7 +677,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestValues,
                 linkSecret,
                 schemas,
-                credentialDefinitions
+                new List<string>() { "mock:schemaId"},
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" }
                 );
 
             //Assert
@@ -805,8 +819,11 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 presentationObject,
                 presReqObject,
                 schemas,
+                new List<string>() { "mock:schemaId"},
                 credentialDefinitions,
+                new List<string>() { "mock:credDefId" },
                 revRegDefinitions,
+                new List<string>() { "mock:revRegDefId" },
                 revStatusLists,
                 new List<NonrevokedIntervalOverride>());
 
@@ -910,6 +927,10 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             List<string> schemaJsons = new List<string> { mockSchema.JsonString };
             List<string> credentialDefinitionJsons = new List<string> { mockCredDef.JsonString };
+            List<string> schemaIds = new List<string> { mockSchemaId };
+            List<string> credentialDefinitionIds = new List<string> { mockCredDefId };
+            List<string> revocationRegistryDefinitionIds = new List<string> { mockRevRegDefIssuerUri };
+
             string presentationJson = await MockDataProvider.MockPresentationJson(
                 presReqObject.JsonString, 
                 credentialEntries: credentialEntryJsons, 
@@ -917,25 +938,23 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 selfAttestNames: new List<string>(), 
                 selfAttestValues: new List<string>(),
                 schemas: schemaJsons, 
-                credentialDefinitions: credentialDefinitionJsons);
+                schemaIds: schemaIds,
+                credentialDefinitions: credentialDefinitionJsons,
+                credentialDefinitionIds: credentialDefinitionIds);
 
-            List<Schema> schemas = new()
-            {
-                mockSchema
-            };
-
-            List<CredentialDefinition> credentialDefinitions = new()
-            {
-                mockCredDef
-            };
+            List<Schema> schemas = new() { mockSchema };
+            List<CredentialDefinition> credentialDefinitions = new() { mockCredDef };
 
             //Act
             bool actual = await PresentationApi.VerifyPresentationAsync(
                 presentationJson,
                 presReqObject.JsonString,
                 schemaJsons: new List<string> { mockSchema.JsonString },
+                schemaIds: schemaIds,
                 credentialDefinitionJsons: new List<string> { mockCredDef.JsonString },
+                credentialDefinitionIds: credentialDefinitionIds,
                 revocationRegistryDefinitionJsons: new List<string> { revRegDefObject.JsonString },
+                revocationRegistryDefinitionIds: revocationRegistryDefinitionIds,
                 revocationStatusListJsons: new List<string> { updatedRevStatusListObject.JsonString });
 
             //Assert
@@ -996,7 +1015,9 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
                 presentationObject,
                 presReqObject,
                 schemas,
-                credentialDefinitions);
+                new List<string>() { "mock:schemaId" },
+                credentialDefinitions,
+                new List<string>() { "mock:credDefId" });
 
             //Assert
             _ = actual.Should().BeTrue();

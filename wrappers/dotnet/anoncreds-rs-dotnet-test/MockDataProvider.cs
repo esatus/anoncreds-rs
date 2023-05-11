@@ -228,7 +228,9 @@ namespace anoncreds_rs_dotnet_test
             List<string> selfAttestValues = null,
             string linkSecret = null,
             List<Schema> schemas = null,
-            List<CredentialDefinition> credentialDefinitions = null)
+            List<string> schemaIds = null,
+            List<CredentialDefinition> credentialDefinitions = null,
+            List<string> credentialDefinitionIds = null)
         {
             PresentationRequest mockPresentationRequest = presentationRequest;
             List<CredentialEntry> mockCredentialEntries = credentialEntries ?? new List<CredentialEntry>() {  };
@@ -238,10 +240,11 @@ namespace anoncreds_rs_dotnet_test
             string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
             List<Schema> mockSchemas = schemas ?? new List<Schema>() { };
             List<CredentialDefinition> mockCredentialDefinitions = credentialDefinitions ?? new List<CredentialDefinition>() { };
-
+            List<string> mockCredentialDefinitionIds = credentialDefinitionIds ?? new List<string>() { };
+            List<string> mockSchemaIds = schemaIds ?? new List<string>() { };
 
             return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
-                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockCredentialDefinitions);
+                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockSchemaIds, mockCredentialDefinitions, mockCredentialDefinitionIds);
         }
 
         public static async Task<string> MockPresentationJson(string presentationRequest,
@@ -251,7 +254,9 @@ namespace anoncreds_rs_dotnet_test
             List<string> selfAttestValues = null,
             string linkSecret = null,
             List<string> schemas = null,
-            List<string> credentialDefinitions = null)
+            List<string> schemaIds = null,
+            List<string> credentialDefinitions = null,
+            List<string> credentialDefinitionIds = null)
         {
             string mockPresentationRequest = presentationRequest;
             List<string> mockCredentialEntries = credentialEntries ?? new List<string>() { };
@@ -261,10 +266,12 @@ namespace anoncreds_rs_dotnet_test
             string mockLinkSecret = linkSecret ?? await LinkSecretApi.CreateLinkSecretAsync();
             List<string> mockSchemas = schemas ?? new List<string>() { };
             List<string> mockCredentialDefinitions = credentialDefinitions ?? new List<string>() { };
-
+            List<string> mockCredentialDefinitionIds = credentialDefinitionIds ?? new List<string>() { };
+            List<string> mockSchemaIds = schemaIds ?? new List<string>() { };
+ 
 
             return await PresentationApi.CreatePresentationAsync(mockPresentationRequest, mockCredentialEntries, mockCredentialProofs,
-                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockCredentialDefinitions);
+                mockSelfAttestNames, mockSelfAttestValues, mockLinkSecret, mockSchemas, mockSchemaIds, mockCredentialDefinitions, mockCredentialDefinitionIds);
         }
 
         public static async Task<(List<string>, List<string>, List<string>)> MockAttrValues(Schema schema = null)

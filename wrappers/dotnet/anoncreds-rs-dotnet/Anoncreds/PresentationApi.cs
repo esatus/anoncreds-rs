@@ -31,17 +31,16 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> selfAttestValues,
             string linkSecret,
             List<Schema> schemas,
-            List<CredentialDefinition> credDefs)
+            List<string> schemaIds,
+            List<CredentialDefinition> credDefs,
+            List<string> credDefIds)
         {
             IntPtr presentationObjectHandle = new IntPtr();
             List<IntPtr> schemaHandles = (from schema in schemas
                                         select schema.Handle).ToList();
-            List<string> schemaIds = (from schema in schemas
-                                          select schema.IssuerId).ToList();
+
             List<IntPtr> credDefHandles = (from credDef in credDefs
                                          select credDef.Handle).ToList();
-            List<string> credDefIds = (from credDef in credDefs
-                                           select credDef.IssuerId).ToList();
 
             int errorCode = NativeMethods.anoncreds_create_presentation(
                 presentationRequest.Handle,
@@ -87,7 +86,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<string> selfAttestValues,
             string linkSecret,
             List<string> schemaJsons,
-            List<string> credDefJsons)
+            List<string> schemaIds,
+            List<string> credDefJsons,
+            List<string> credDefIds)
         {
             IntPtr presentationObjectHandle = new IntPtr();
             List<CredentialEntry> credentialEntries = new List<CredentialEntry>();
@@ -95,8 +96,6 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr presentationRequestHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
-            List<string> schemaIds = new List<string>();
-            List<string> credDefIds = new List<string>();
 
             foreach (string credentialEntryJson in credentialEntryJsons)
             {
@@ -112,18 +111,12 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 IntPtr newSchemaHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaJson), ref newSchemaHandle);
                 schemaHandles.Add(newSchemaHandle);
-
-                Schema newSchema = JsonConvert.DeserializeObject<Schema>(schemaJson,Settings.JsonSettings);
-                schemaIds.Add(newSchema.IssuerId);
             }
             foreach (string credDefJson in credDefJsons)
             {
                 IntPtr newCredDefHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credDefJson), ref newCredDefHandle);
                 credDefHandles.Add(newCredDefHandle);
-
-                CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credDefJson, Settings.JsonSettings);
-                credDefIds.Add(newCredDef.IssuerId);
             }
             
             int errorCode = NativeMethods.anoncreds_create_presentation(
@@ -185,8 +178,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             Presentation presentation,
             PresentationRequest presentationRequest,
             List<Schema> schemas,
+            List<string> schemaIds,
             List<CredentialDefinition> credentialDefinitions,
+             List<string> credentialDefinitionIds,
             List<RevocationRegistryDefinition> revocationRegistryDefinitions = null,
+             List<string> revocationRegistryDefinitionIds = null,
             List<RevocationStatusList> revocationStatusList = null,
             List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = null)
         {
@@ -194,20 +190,16 @@ namespace anoncreds_rs_dotnet.Anoncreds
 
             revocationRegistryDefinitions = revocationRegistryDefinitions == null ? new List<RevocationRegistryDefinition>() : revocationRegistryDefinitions;
             revocationStatusList = revocationStatusList == null ? new List<RevocationStatusList>() : revocationStatusList;
+            revocationRegistryDefinitionIds = revocationRegistryDefinitionIds == null ? new List<string>() : revocationRegistryDefinitionIds;
             List<IntPtr> schemaHandles =
                 (from schema in schemas select schema.Handle).ToList();
-            List<string> schemaIds =
-                (from schema in schemas select schema.IssuerId).ToList();
 
             List<IntPtr> credDefHandles =
                 (from credDef in credentialDefinitions select credDef.Handle).ToList();
-            List<string> credDefIds =
-                (from credDef in credentialDefinitions select credDef.IssuerId).ToList();
 
             List<IntPtr> revRegDefHandles =
                 (from revRegDef in revocationRegistryDefinitions select revRegDef.Handle).ToList();
-            List<string> revRegDefIds =
-                (from revRegDef in revocationRegistryDefinitions select revRegDef.IssuerId).ToList();
+
             List<IntPtr> revStatusHandles =
                 (from revStatus in revocationStatusList select revStatus.Handle).ToList();
 
@@ -217,9 +209,9 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
-                FfiStrList.Create(credDefIds),
+                FfiStrList.Create(credentialDefinitionIds),
                 FfiUIntList.Create(revRegDefHandles),
-                FfiStrList.Create(revRegDefIds),
+                FfiStrList.Create(revocationRegistryDefinitionIds),
                 FfiUIntList.Create(revStatusHandles),
                 FfiNonrevokedIntervalOverrideList.Create(nonrevokedIntervalOverrides),
                 ref verify);
@@ -249,8 +241,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
             string presentationJson,
             string presentationRequestJson,
             List<string> schemaJsons,
+            List<string> schemaIds,
             List<string> credentialDefinitionJsons,
+            List<string> credentialDefinitionIds,
             List<string> revocationRegistryDefinitionJsons = null,
+            List<string> revocationRegistryDefinitionIds = null,
             List<string> revocationStatusListJsons = null,
             List<string> nonrevokedIntervalOverrideJsons = null)
         {
@@ -259,12 +254,10 @@ namespace anoncreds_rs_dotnet.Anoncreds
             IntPtr presentationHandle = new IntPtr();
             IntPtr presentationRequestHandle = new IntPtr();
             List<IntPtr> schemaHandles = new List<IntPtr>();
-            List<string> schemaIds = new List<string>();
             List<IntPtr> credDefHandles = new List<IntPtr>();
-            List<string> credDefIds = new List<string>();
             revocationRegistryDefinitionJsons = revocationRegistryDefinitionJsons == null ? new List<string>() : revocationRegistryDefinitionJsons;
             List<IntPtr> revRegDefHandles = new List<IntPtr>();
-            List<string> revRegDefIds = new List<string>();
+            List<string> revRegDefIds = revocationRegistryDefinitionIds == null ? new List<string>(): revocationRegistryDefinitionIds;
             revocationStatusListJsons = revocationStatusListJsons == null ? new List<string>() : revocationStatusListJsons;
             List<IntPtr> revocationStatusListHandles = new List<IntPtr>();
             nonrevokedIntervalOverrideJsons = nonrevokedIntervalOverrideJsons == null? new List<string>() : nonrevokedIntervalOverrideJsons;
@@ -277,27 +270,18 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 IntPtr newSchemaHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaJson), ref newSchemaHandle);
                 schemaHandles.Add(newSchemaHandle);
-
-                Schema newSchema = JsonConvert.DeserializeObject<Schema>(schemaJson, Settings.JsonSettings);
-                schemaIds.Add(newSchema.IssuerId);
             }
             foreach (string credentialDefinitionJson in credentialDefinitionJsons)
             {
                 IntPtr newCredentialDefinitionHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_credential_definition_from_json(ByteBuffer.Create(credentialDefinitionJson), ref newCredentialDefinitionHandle);
                 credDefHandles.Add(newCredentialDefinitionHandle);
-
-                CredentialDefinition newCredDef = JsonConvert.DeserializeObject<CredentialDefinition>(credentialDefinitionJson, Settings.JsonSettings);
-                credDefIds.Add(newCredDef.IssuerId);
             }
             foreach (string revocationRegistryDefinitionJson in revocationRegistryDefinitionJsons)
             {
                 IntPtr newRevocationRegistryDefinitionHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_revocation_registry_definition_from_json(ByteBuffer.Create(revocationRegistryDefinitionJson), ref newRevocationRegistryDefinitionHandle);
                 revRegDefHandles.Add(newRevocationRegistryDefinitionHandle);
-
-                RevocationRegistryDefinition newRevRegDef = JsonConvert.DeserializeObject<RevocationRegistryDefinition>(revocationRegistryDefinitionJson, Settings.JsonSettings);
-                revRegDefIds.Add(newRevRegDef.IssuerId);
             }
             foreach (string revocationStatusListJson in revocationStatusListJsons)
             {
@@ -316,7 +300,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
                 FfiUIntList.Create(schemaHandles),
                 FfiStrList.Create(schemaIds),
                 FfiUIntList.Create(credDefHandles),
-                FfiStrList.Create(credDefIds),
+                FfiStrList.Create(credentialDefinitionIds),
                 FfiUIntList.Create(revRegDefHandles),
                 FfiStrList.Create(revRegDefIds),
                 FfiUIntList.Create(revocationStatusListHandles),
