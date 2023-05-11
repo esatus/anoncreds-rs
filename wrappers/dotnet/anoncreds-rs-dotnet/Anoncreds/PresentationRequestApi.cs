@@ -56,70 +56,11 @@ namespace anoncreds_rs_dotnet.Anoncreds
         private static async Task<PresentationRequest> CreatePresentationRequestObject(IntPtr objectHandle)
         {
             string presReqJson = await ObjectApi.ToJsonAsync(objectHandle);
-            PresentationRequest presentationRequestObject = JsonConvert.DeserializeObject<PresentationRequest>(presReqJson, Settings.JsonSettings);
+            QueryRequest queryRequest = presReqJson.ToQueryRequest();
+            PresentationRequest presentationRequestObject = queryRequest.ToPresentationRequest();
             presentationRequestObject.JsonString = presReqJson;
-
-            presentationRequestObject.RequestedAttributes = new Dictionary<string, AttributeInfo>();
-            presentationRequestObject.RequestedPredicates = new Dictionary<string, PredicateInfo>();
-
-            JObject presReqJObject = JObject.Parse(presReqJson);
-
-            JToken requestedAttributes = presReqJObject["requested_attributes"];
-            foreach (JToken attribute in requestedAttributes)
-            {
-                string key = attribute.Path.Split('.')[1];
-                foreach (JToken element in attribute)
-                {
-                    try
-                    {
-                        AttributeInfo info = new AttributeInfo()
-                        {
-                            Name = element["name"].Value<string>()
-                        };
-                        if (element["names"] != null)
-                        {
-                            info.Names = element["names"].ToObject<List<string>>();
-                        }
-                        info.Restrictions = CreateAttributeFilterList(element["restrictions"]);
-                        info.NonRevoked = element["non_revoked"].ToObject<NonRevokedInterval>(); ;
-                        presentationRequestObject.RequestedAttributes.Add(key, info);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                }
-            }
-
-            JToken requestedPredicates = presReqJObject["requested_predicates"];
-            foreach (JToken predicate in requestedPredicates)
-            {
-                string key = predicate.Path.Split('.')[1];
-                foreach (JToken element in predicate)
-                {
-                    try
-                    {
-                        PredicateInfo info = new PredicateInfo()
-                        {
-                            Name = element["name"].Value<string>(),
-                            PredicateType = ParsePredicateType(element["p_type"].Value<string>()),
-                            PredicateValue = element["p_value"].Value<int>()
-                        };
-                        if (element["non_revoked"] != null)
-                        {
-                            info.NonRevoked = element["non_revoked"].ToObject<NonRevokedInterval>();
-                        }
-                        info.Restrictions = CreateAttributeFilterList(element["restrictions"]);
-                        presentationRequestObject.RequestedPredicates.Add(key, info);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                }
-            }
-
             presentationRequestObject.Handle = objectHandle;
+
             return await Task.FromResult(presentationRequestObject);
         }
 

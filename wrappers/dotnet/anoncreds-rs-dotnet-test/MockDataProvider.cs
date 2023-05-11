@@ -6,6 +6,7 @@ using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting;
 using System.Threading.Tasks;
 
 namespace anoncreds_rs_dotnet_test
@@ -173,108 +174,51 @@ namespace anoncreds_rs_dotnet_test
             string nonce = await PresentationRequestApi.GenerateNonceAsync();
             long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             
-            string requestedAttributesString =
-                "\"attributeKey1\": " +
-                    "{" +
-                        "\"name\":\"attribute1\"," +
-                        "\"value\":\"value1\"," +
-                        "\"names\": [], " +
-                        "\"non_revoked\":" +
-                        "{ " +
-                            $"\"from\": {timestamp}, " +
-                            $"\"to\": {timestamp}" +
-                        "}" +
-                    "}";
-            //TODO : fix for PresentationApiTests to test with restrictions and predicates with $or, $and combination.
-            /**
+            Dictionary<string, AttributeInfo> attr = new();
             if (requestedAttributes != null)
             {
-                requestedAttributesString = "";
                 int i = 1;
-                foreach (var attribute in requestedAttributes)
+                foreach (AttributeInfo attribute in requestedAttributes)
                 {
-                    if (i > 1)
-                    {
-                        requestedAttributesString += ", ";
-                    }
-                    requestedAttributesString += $"\"attributeKey{i}\": ";
-                    if (attribute.Name != null)
-                    {
-                        requestedAttributesString += $"{{\"name\":\"{attribute.Name}\",";
-                    }
-                    if (attribute.Names != null)
-                    {
-                        requestedAttributesString += $"\"names\": [";
-                        foreach (var ele in attribute.Names)
-                        {
-                            requestedAttributesString += $"{JsonConvert.SerializeObject(ele, settings)},";
-                        }
-                        requestedAttributesString += "],";
-                    }
-                    if (attribute.NonRevoked != null)
-                    {
-                        requestedAttributesString += $"\"non_revoked\": {{\"from\": {attribute.NonRevoked.From}, \"to\":{attribute.NonRevoked.To} }},";
-                    }
-                    if (attribute.Restrictions != null)
-                    {
-                        requestedAttributesString += "\"restrictions\":{\"$or\":";
-                        foreach (var ele in attribute.Restrictions)
-                        {
-                            requestedAttributesString += $"[{JsonConvert.SerializeObject(ele, settings)}]";
-                        }
-                        requestedAttributesString += "}}";
-                    }
-                    i += 1;
+                    attr[$"attributeKey{i}"] = attribute;
+                    i++;
                 }
-            }**/
-            if (requestedAttributes != null)
+            }
+            else
             {
-                requestedAttributesString = "";
-                int i = 1;
-                foreach (var attribute in requestedAttributes)
+                attr["attributeKey1"] = new AttributeInfo
                 {
-                    if (i > 1)
-                    {
-                        requestedAttributesString += ", ";
-                    }
-                    requestedAttributesString += $"\"attributeKey{i}\": ";
-                    requestedAttributesString += JsonConvert.SerializeObject(attribute);
-                    i += 1;
+                    Name = "attribute1",
+                    Names = null,
+                    NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp },
+                    Restrictions = null
+                };
+            }
+
+            Dictionary<string, PredicateInfo> pred = new Dictionary<string, PredicateInfo>();
+            if (requestedPredicates != null)
+            {
+                int i = 1;
+                foreach (PredicateInfo predicate in requestedPredicates)
+                {
+                    pred[$"predicateKey{i}"] = predicate;
+                    i++;
                 }
             }
 
-            string requestedPredicatesString;
-            if (requestedPredicates != null)
+            PresentationRequest request = new()
             {
-                requestedPredicatesString = "";
-                int i = 1;
-                foreach (var predicate in requestedPredicates)
-                {
-                    if (i > 1)
-                    {
-                        requestedPredicatesString += ", ";
-                    }
-                    requestedPredicatesString += $"\"predicateKey{i}\": ";
-                    requestedPredicatesString += JsonConvert.SerializeObject(predicate);
-                    i += 1;
-                }
-            }
-            string presReqJson = "{" +
-                $"\"name\": \"{name}\", " +
-                $"\"version\": \"{version}\", " +
-                $"\"nonce\": \"{nonce}\", " +
-                "\"requested_attributes\": {" +
-                $"{requestedAttributesString}" +
-                "}, \"revealed_attrs_groups\": {}," +
-                "\"requested_predicates\": {}, " +
-                //"\"non_revoked\": " +
-                //"{ " +
-                //    $"\"from\": {timestamp}," +
-                //    $"\"to\": {timestamp}" +
-                //"}," +
-                "\"ver\": \"1.0\"" +
-                "}";
-            return await PresentationRequestApi.CreatePresReqFromJsonAsync(presReqJson);
+                Name = name,
+                Version = version,
+                Nonce = nonce,
+                NonRevoked = new NonRevokedInterval { From = (ulong)timestamp, To = (ulong)timestamp },
+                RequestedAttributes = attr,
+                RequestedPredicates = pred,
+            };
+
+            string queryRequestJson = request.ToQueryRequestJson();
+
+            return await PresentationRequestApi.CreatePresReqFromJsonAsync(queryRequestJson);
         }
 
         public static async Task<Presentation> MockPresentation(PresentationRequest presentationRequest,
@@ -475,6 +419,103 @@ namespace anoncreds_rs_dotnet_test
 
             return await CredentialApi.CreateCredentialAsync(mockCredDef, mockCredDefPriv, mockCredOffer, mockCredReq, mockNames, mockRaws, mockEncodeds,
                 mockRevStatList, mockRevRegId, mockRevRegDef, mockRevRegDefPriv, mockRegId);
+        }
+
+        public static async Task<List<CredentialEntry>> MockCredentialEntries(long timestamp, List<CredentialDefinition> credentialDefinitions = null)
+        {
+            List<CredentialEntry> credentialEntries = new();
+
+            if(credentialDefinitions == null || credentialDefinitions.Count == 0)
+            {
+                Credential credObject = await MockCredential();
+
+                (RevocationRegistryDefinition revRegDefObject, _) = await MockRevRegDef();
+                RevocationStatusList revStatusList = await MockRevStatusList();
+
+                CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+                CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                    revRegDefObject,
+                    revStatusList,
+                    credObject.Signature.RCredential.I,
+                    revRegDefObject.Value.TailsLocation,
+                    emptyRevocationState);
+                credentialEntries.Add(new CredentialEntry { CredentialObjectHandle = credObject.Handle, Timestamp = timestamp, RevStateObjectHandle = credRevRegState.Handle });
+            }
+            else
+            {
+                foreach(CredentialDefinition credDef in credentialDefinitions)
+                {
+                    (RevocationRegistryDefinition revRegDefObject, RevocationRegistryDefinitionPrivate revRegDefPvtObject) = await MockRevRegDef(credDef);
+                    RevocationStatusList revStatusList = await MockRevStatusList(revRegDefObject);
+                    Credential credObject = await MockCredential(credDef, null, null, null, null, null, null, revStatusList, null, revRegDefObject, revRegDefPvtObject, 1);
+
+                    CredentialRevocationState emptyRevocationState = new() { Handle = new IntPtr() };
+                    CredentialRevocationState credRevRegState = await RevocationApi.CreateOrUpdateRevocationStateAsync(
+                        revRegDefObject,
+                        revStatusList,
+                        credObject.Signature.RCredential.I,
+                        revRegDefObject.Value.TailsLocation,
+                        emptyRevocationState);
+                    credentialEntries.Add(new CredentialEntry { CredentialObjectHandle = credObject.Handle, Timestamp = timestamp, RevStateObjectHandle = credRevRegState.Handle });
+                }
+            }
+
+            return credentialEntries;
+        }
+
+        public static async Task<List<CredentialProof>> MockCredentialProofs(PresentationRequest presentationRequest, List<long> indices)
+        {
+            List<CredentialProof> credentialProofs = new();
+            int index = 0;
+            foreach (KeyValuePair<string, AttributeInfo> keyValuePair in presentationRequest.RequestedAttributes)
+            {
+                if (keyValuePair.Value.Restrictions != null && keyValuePair.Value.Restrictions.Count > 0)
+                {
+                    credentialProofs.Add(
+                        new CredentialProof
+                        {
+                            IsPredicate = Convert.ToByte(false),
+                            Reveal = Convert.ToByte(true),
+                            Referent = keyValuePair.Key,
+                            EntryIndex = indices[index]
+                        }
+                    );
+                    index++;
+                }
+            }
+            foreach (KeyValuePair<string, PredicateInfo> keyValuePair in presentationRequest.RequestedPredicates)
+            {
+                if (keyValuePair.Value.Restrictions != null && keyValuePair.Value.Restrictions.Count > 0)
+                {
+                    credentialProofs.Add(
+                        new CredentialProof
+                        {
+                            IsPredicate = Convert.ToByte(true),
+                            Reveal = Convert.ToByte(true),
+                            Referent = keyValuePair.Key,
+                            EntryIndex = indices[index]
+                        }
+                    );
+                    index++;
+                }
+            }
+
+            return (credentialProofs);
+        }
+
+        public static async Task<List<string>> GetSelfAttestNames(PresentationRequest presentationRequest)
+        {
+            List<string> selfAttestNames = new();
+
+            foreach(KeyValuePair<string, AttributeInfo> keyValuePair in presentationRequest.RequestedAttributes)
+            {
+                if(keyValuePair.Value.Restrictions == null || keyValuePair.Value.Restrictions.Count == 0)
+                {
+                    selfAttestNames.Add(keyValuePair.Key);
+                }
+            }
+
+            return (selfAttestNames);
         }
     }
 }
