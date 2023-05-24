@@ -448,6 +448,10 @@ namespace anoncreds_rs_dotnet.Models
                 if (attrInfoJObject.ContainsKey("restrictions"))
                 {
                     queryAttributeInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+
+                    if (attrInfoJObject["restrictions"] == null)
+                        continue;
+
                     JObject restrictionsJObject = JObject.Parse(attrInfoJObject["restrictions"].ToString());
 
                     if (restrictionsJObject.ContainsKey("$or"))
@@ -469,7 +473,7 @@ namespace anoncreds_rs_dotnet.Models
                             }
                             catch (Exception ex)
                             {
-
+                                
                             }
                         }
                     }
@@ -485,6 +489,10 @@ namespace anoncreds_rs_dotnet.Models
                 if (predInfoJObject.ContainsKey("restrictions"))
                 {
                     queryPredicateInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+
+                    if (predInfoJObject["restrictions"] == null)
+                        continue;
+
                     JObject restrictionsJObject = JObject.Parse(predInfoJObject["restrictions"].ToString());
 
                     if (restrictionsJObject.ContainsKey("$or"))
