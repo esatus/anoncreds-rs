@@ -95,25 +95,5 @@ namespace anoncreds_rs_dotnet.Anoncreds
             }
             return filterList;
         }
-
-        /// <summary>
-        /// Parses the <see cref="PredicateTypes"/>.
-        /// </summary>
-        /// <param name="type">The predicate type as string.</param>
-        /// <returns>The <see cref="PredicateTypes"/>.</returns>
-        private static PredicateTypes ParsePredicateType(string type)
-        {
-            switch (type)
-            {
-                case "<":
-                    return PredicateTypes.LT;
-                case "<=":
-                    return PredicateTypes.LE;
-                case ">":
-                    return PredicateTypes.GT;
-                default:
-                    return PredicateTypes.GE;
-            }
-        }
     }
 }

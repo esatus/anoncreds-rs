@@ -38,7 +38,7 @@ namespace anoncreds_rs_dotnet_test
             string mockSchemaIssuerUri = issuerUri ?? "mock:SchemaIssuerUri";
             string mockSchemaName = schemaName ?? "mockSchemaName";
             string mockSchemaVersion = schemaVersion ?? "mockSchemaVersion";
-            List<string> mockSchemaAttrNames = attrNames ?? new() { "attribute1", "attribute2", "attribute3" };
+            List<string> mockSchemaAttrNames = attrNames ?? new() { "attribute1", "attribute2", "attribute3", "attribute4" };
 
             Schema = await SchemaApi.CreateSchemaAsync(mockSchemaIssuerUri, mockSchemaName, mockSchemaVersion, mockSchemaAttrNames);
             return Schema;
@@ -49,7 +49,7 @@ namespace anoncreds_rs_dotnet_test
             string mockSchemaIssuerUri = issuerUri ?? "mock:SchemaIssuerUri";
             string mockSchemaName = schemaName ?? "mockSchemaName";
             string mockSchemaVersion = schemaVersion ?? "mockSchemaVersion";
-            List<string> mockSchemaAttrNames = attrNames ?? new() { "attribute1", "attribute2", "attribute3" };
+            List<string> mockSchemaAttrNames = attrNames ?? new() { "attribute1", "attribute2", "attribute3", "attribute4" };
 
             SchemaJson = await SchemaApi.CreateSchemaJsonAsync(mockSchemaIssuerUri, mockSchemaName, mockSchemaVersion, mockSchemaAttrNames);
             return SchemaJson;
@@ -65,7 +65,7 @@ namespace anoncreds_rs_dotnet_test
             string mockSchemaIssuerUri = "mock:SchemaIssuerUri";
             string mockSchemaName = "mockSchemaName";
             string mockSchemaVersion = "mockSchemaVersion";
-            List<string> mockSchemaAttrNames = new() { "attribute1", "attribute2", "attribute3" };
+            List<string> mockSchemaAttrNames = new() { "attribute1", "attribute2", "attribute3", "attribute4" };
             if (schema != null)
             {
                 mockSchemaIssuerUri = schema.IssuerId;
@@ -100,7 +100,7 @@ namespace anoncreds_rs_dotnet_test
             string mockSchemaIssuerUri = "mock:SchemaIssuerUri";
             string mockSchemaName = "mockSchemaName";
             string mockSchemaVersion = "mockSchemaVersion";
-            List<string> mockSchemaAttrNames = new() { "attribute1", "attribute2", "attribute3" };
+            List<string> mockSchemaAttrNames = new() { "attribute1", "attribute2", "attribute3", "attribute4" };
             if (schema != null)
             {
                 mockSchemaIssuerUri = schema.IssuerId;
@@ -285,7 +285,14 @@ namespace anoncreds_rs_dotnet_test
             foreach (string attr in mockSchema.AttrNames)
             {
                 attrNames.Add(attr);
-                attrValuesRaw.Add($"value{i}");
+                if(attr == "attribute4")
+                {
+                    attrValuesRaw.Add($"10");
+                }
+                else
+                {
+                    attrValuesRaw.Add($"value{i}");
+                }
                 i += 1;
             }
 
@@ -363,7 +370,7 @@ namespace anoncreds_rs_dotnet_test
             RevocationRegistryDefinitionPrivate mockRevRegDefPriv = null;
             long mockRegId = -1;
 
-            if(revocationStatusList != null && regIdX != -1 && revocationRegistryId != null
+            if(revocationStatusList != null && regIdX != -1
                 && revocationRegistryDefinition != null && revocationRegistryDefinitionPrivate != null)
             {
                 mockRevStatList = revocationStatusList;

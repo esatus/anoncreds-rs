@@ -7,8 +7,9 @@ namespace anoncreds_rs_dotnet.Models
     {
         [JsonProperty("name")]
         public string Name { get; set; }
+        //PredicateType must be one of these: `>=`, `<=`, `>`, `<`
         [JsonProperty("p_type")]
-        public PredicateTypes PredicateType { get; set; }
+        public string PredicateType { get; set; }
         [JsonProperty("p_value")]
         public int PredicateValue { get; set; }
         [JsonProperty("restrictions")]
