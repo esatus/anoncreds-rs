@@ -42,6 +42,23 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<IntPtr> credDefHandles = (from credDef in credDefs
                                          select credDef.Handle).ToList();
 
+            //If presentationRequestJson contains more than 1 restriction, a conversion in a format that the underlying rust code understands is needed i.e.:
+            /**
+            ...
+            \"restrictions\":
+             {\"$or\":
+                 [{\"$and\":
+                     [
+                      {\"schema_id\":\"EU-Führerschein\"},
+                      {\"cred_def_id\":\"DE-Führerschein\"}
+                     ]
+                 }]
+             },
+            ...
+            **/
+            string convertedPresReqJson = presentationRequest.ToQueryRequestJson();
+            presentationRequest = await PresentationRequestApi.CreatePresReqFromJsonAsync(convertedPresReqJson);
+
             int errorCode = NativeMethods.anoncreds_create_presentation(
                 presentationRequest.Handle,
                 FfiCredentialEntryList.Create(credentialEntries),
@@ -105,8 +122,25 @@ namespace anoncreds_rs_dotnet.Anoncreds
             {
                 credentialProofs.Add(JsonConvert.DeserializeObject<CredentialProof>(credentialProofJson));
             }
-            _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
-            foreach(string schemaJson in schemaJsons)
+
+            //If presentationRequestJson contains more than 1 restriction, a conversion in a format that the underlying rust code understands is needed i.e.:
+            /**
+            ...
+            \"restrictions\":
+             {\"$or\":
+                 [{\"$and\":
+                     [
+                      {\"schema_id\":\"EU-Führerschein\"},
+                      {\"cred_def_id\":\"DE-Führerschein\"}
+                     ]
+                 }]
+             },
+            ...
+            **/
+            string convertedPresReqJson = (await PresentationRequestApi.CreatePresReqFromJsonAsync(presentationRequestJson)).ToQueryRequestJson();
+            _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(convertedPresReqJson), ref presentationRequestHandle);
+
+            foreach (string schemaJson in schemaJsons)
             {
                 IntPtr newSchemaHandle = new IntPtr();
                 _ = NativeMethods.anoncreds_schema_from_json(ByteBuffer.Create(schemaJson), ref newSchemaHandle);
@@ -203,6 +237,23 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<IntPtr> revStatusHandles =
                 (from revStatus in revocationStatusList select revStatus.Handle).ToList();
 
+            //If presentationRequestJson contains more than 1 restriction, a conversion in a format that the underlying rust code understands is needed i.e.:
+            /**
+            ...
+            \"restrictions\":
+             {\"$or\":
+                 [{\"$and\":
+                     [
+                      {\"schema_id\":\"EU-Führerschein\"},
+                      {\"cred_def_id\":\"DE-Führerschein\"}
+                     ]
+                 }]
+             },
+            ...
+            **/
+            string convertedPresReqJson = presentationRequest.ToQueryRequestJson();
+            presentationRequest = await PresentationRequestApi.CreatePresReqFromJsonAsync(convertedPresReqJson);
+
             int errorCode = NativeMethods.anoncreds_verify_presentation(
                 presentation.Handle,
                 presentationRequest.Handle,
@@ -264,7 +315,24 @@ namespace anoncreds_rs_dotnet.Anoncreds
             List<NonrevokedIntervalOverride> nonrevokedIntervalOverrides = new List<NonrevokedIntervalOverride>();
 
             _ = NativeMethods.anoncreds_presentation_from_json(ByteBuffer.Create(presentationJson), ref presentationHandle);
-            _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(presentationRequestJson), ref presentationRequestHandle);
+
+            //If presentationRequestJson contains more than 1 restriction, a conversion in a format that the underlying rust code understands is needed i.e.:
+            /**
+            ...
+            \"restrictions\":
+             {\"$or\":
+                 [{\"$and\":
+                     [
+                      {\"schema_id\":\"EU-Führerschein\"},
+                      {\"cred_def_id\":\"DE-Führerschein\"}
+                     ]
+                 }]
+             },
+            ...
+            **/
+            string convertedPresReqJson = (await PresentationRequestApi.CreatePresReqFromJsonAsync(presentationRequestJson)).ToQueryRequestJson();
+            _ = NativeMethods.anoncreds_presentation_request_from_json(ByteBuffer.Create(convertedPresReqJson), ref presentationRequestHandle);
+
             foreach (string schemaJson in schemaJsons)
             {
                 IntPtr newSchemaHandle = new IntPtr();
