@@ -3,7 +3,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace anoncreds_rs_dotnet.Models
 {
@@ -445,13 +444,10 @@ namespace anoncreds_rs_dotnet.Models
             {
                 QueryAttributeInfo queryAttributeInfo = JsonConvert.DeserializeObject<QueryAttributeInfo>(keyValuePair.Value.ToString(), Settings.JsonSettings);
                 JObject attrInfoJObject = JObject.Parse(keyValuePair.Value.ToString());
-                if (attrInfoJObject.ContainsKey("restrictions"))
+
+                queryAttributeInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+                if (attrInfoJObject.ContainsKey("restrictions") && attrInfoJObject["restrictions"].HasValues)
                 {
-                    queryAttributeInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                    if (attrInfoJObject["restrictions"] == null)
-                        continue;
-
                     JObject restrictionsJObject = JObject.Parse(attrInfoJObject["restrictions"].ToString());
 
                     if (restrictionsJObject.ContainsKey("$or"))
@@ -486,13 +482,10 @@ namespace anoncreds_rs_dotnet.Models
             {
                 QueryPredicateInfo queryPredicateInfo = JsonConvert.DeserializeObject<QueryPredicateInfo>(keyValuePair.Value.ToString(), Settings.JsonSettings);
                 JObject predInfoJObject = JObject.Parse(keyValuePair.Value.ToString());
-                if (predInfoJObject.ContainsKey("restrictions"))
+
+                queryPredicateInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
+                if (predInfoJObject.ContainsKey("restrictions") && predInfoJObject["restrictions"].HasValues)
                 {
-                    queryPredicateInfo.Restrictions = new OuterRestriction() { Inners = new List<InnerRestriction>() };
-
-                    if (predInfoJObject["restrictions"] == null)
-                        continue;
-
                     JObject restrictionsJObject = JObject.Parse(predInfoJObject["restrictions"].ToString());
 
                     if (restrictionsJObject.ContainsKey("$or"))
