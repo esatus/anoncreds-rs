@@ -1,5 +1,3 @@
-from time import time
-
 from anoncreds import (
     generate_nonce,
     create_link_secret,
@@ -14,62 +12,46 @@ from anoncreds import (
     PresentCredentials,
     RevocationRegistryDefinition,
     RevocationStatusList,
-    NonrevokedIntervalOverride,
     Schema,
 )
 
-issuer_id   = "mock:uri"
-schema_id   = "mock:uri"
+issuer_id = "mock:uri"
+schema_id = "mock:uri"
 cred_def_id = "mock:uri"
-rev_reg_id  = "mock:uri:revregid"
-entropy     = "entropy"
+rev_reg_id = "mock:uri:revregid"
+entropy = "entropy"
 rev_idx = 1
 
-schema = Schema.create("schema name", "schema version", issuer_id, ["name","age","sex","height"])
+schema = Schema.create(
+    "schema name", "schema version", issuer_id, ["name", "age", "sex", "height"]
+)
 
 cred_def_pub, cred_def_priv, cred_def_correctness = CredentialDefinition.create(
-    schema_id,
-    schema,
-    issuer_id,
-    "tag",
-    "CL",
-    support_revocation=True
+    schema_id, schema, issuer_id, "tag", "CL", support_revocation=True
 )
 
 (rev_reg_def_pub, rev_reg_def_private) = RevocationRegistryDefinition.create(
-    cred_def_id,
-    cred_def_pub,
-    issuer_id,
-    "some_tag",
-    "CL_ACCUM",
-    10
+    cred_def_id, cred_def_pub, issuer_id, "some_tag", "CL_ACCUM", 10
 )
 
 time_create_rev_status_list = 12
 revocation_status_list = RevocationStatusList.create(
+    cred_def_pub,
     rev_reg_id,
     rev_reg_def_pub,
+    rev_reg_def_private,
     issuer_id,
+    True,
     time_create_rev_status_list,
-    True
 )
 
 link_secret = create_link_secret()
 link_secret_id = "default"
 
-cred_offer = CredentialOffer.create(
-    schema_id,
-    cred_def_id,
-    cred_def_correctness
-)
+cred_offer = CredentialOffer.create(schema_id, cred_def_id, cred_def_correctness)
 
 cred_request, cred_request_metadata = CredentialRequest.create(
-    entropy,
-    None,
-    cred_def_pub,
-    link_secret,
-    link_secret_id,
-    cred_offer
+    entropy, None, cred_def_pub, link_secret, link_secret_id, cred_offer
 )
 
 issue_cred = Credential.create(
@@ -77,61 +59,46 @@ issue_cred = Credential.create(
     cred_def_priv,
     cred_offer,
     cred_request,
-    {
-        "sex": "male",
-        "name": "Alex",
-        "height": "175",
-        "age": "28"
-    },
+    {"sex": "male", "name": "Alex", "height": "175", "age": "28"},
     None,
-    rev_reg_id,
-    revocation_status_list,
     CredentialRevocationConfig(
         rev_reg_def_pub,
         rev_reg_def_private,
+        revocation_status_list,
         rev_idx,
-        rev_reg_def_pub.tails_location,
     ),
 )
 
 recv_cred = issue_cred.process(
-    cred_request_metadata,
-    link_secret,
-    cred_def_pub,
-    rev_reg_def_pub
+    cred_request_metadata, link_secret, cred_def_pub, rev_reg_def_pub
 )
 
 time_after_creating_cred = time_create_rev_status_list + 1
 issued_rev_status_list = revocation_status_list.update(
-    time_after_creating_cred,
+    cred_def_pub,
+    rev_reg_def_pub,
+    rev_reg_def_private,
     [rev_idx],
     None,
-    rev_reg_def_pub
+    time_after_creating_cred,
 )
 
 nonce = generate_nonce()
 pres_req = PresentationRequest.load(
     {
         "nonce": nonce,
-        "name":"pres_req_1",
-        "version":"0.1",
-        "requested_attributes":{
-            "attr1_referent":{
-                "name":"name",
-                "issuer_id": issuer_id
-            },
-            "attr2_referent":{
-                "name":"sex"
-            },
-            "attr3_referent":{"name":"phone"},
-            "attr4_referent":{
-                "names": ["name", "height"]
-            }
+        "name": "pres_req_1",
+        "version": "0.1",
+        "requested_attributes": {
+            "attr1_referent": {"name": "name", "issuer_id": issuer_id},
+            "attr2_referent": {"name": "sex"},
+            "attr3_referent": {"name": "phone"},
+            "attr4_referent": {"names": ["name", "height"]},
         },
-        "requested_predicates":{
-            "predicate1_referent":{"name":"age","p_type":">=","p_value":18}
+        "requested_predicates": {
+            "predicate1_referent": {"name": "age", "p_type": ">=", "p_value": 18}
         },
-        "non_revoked": {"from": 10, "to": 200}
+        "non_revoked": {"from": 10, "to": 200},
     }
 )
 
@@ -142,9 +109,9 @@ rev_state = CredentialRevocationState.create(
     rev_reg_def_pub.tails_location,
 )
 
-schemas = { schema_id: schema }
-cred_defs = { cred_def_id: cred_def_pub }
-rev_reg_defs = { rev_reg_id: rev_reg_def_pub }
+schemas = {schema_id: schema}
+cred_defs = {cred_def_id: cred_def_pub}
+rev_reg_defs = {rev_reg_id: rev_reg_def_pub}
 rev_status_lists = [issued_rev_status_list]
 
 present = PresentCredentials()
@@ -154,7 +121,7 @@ present.add_attributes(
     "attr1_referent",
     reveal=True,
     timestamp=time_after_creating_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_attributes(
@@ -162,7 +129,7 @@ present.add_attributes(
     "attr2_referent",
     reveal=False,
     timestamp=time_after_creating_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_attributes(
@@ -170,14 +137,14 @@ present.add_attributes(
     "attr4_referent",
     reveal=True,
     timestamp=time_after_creating_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_predicates(
     recv_cred,
     "predicate1_referent",
     timestamp=time_after_creating_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 presentation = Presentation.create(
@@ -190,11 +157,7 @@ presentation = Presentation.create(
 )
 
 verified = presentation.verify(
-    pres_req,
-    schemas,
-    cred_defs,
-    rev_reg_defs,
-    rev_status_lists
+    pres_req, schemas, cred_defs, rev_reg_defs, rev_status_lists
 )
 assert verified
 
@@ -202,10 +165,12 @@ assert verified
 
 time_revoke_cred = time_after_creating_cred + 1
 revoked_status_list = issued_rev_status_list.update(
-    time_revoke_cred,
+    cred_def_pub,
+    rev_reg_def_pub,
+    rev_reg_def_private,
     None,
     [rev_idx],
-    rev_reg_def_pub
+    time_revoke_cred,
 )
 
 rev_status_lists.append(revoked_status_list)
@@ -224,7 +189,7 @@ present.add_attributes(
     "attr1_referent",
     reveal=True,
     timestamp=time_revoke_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_attributes(
@@ -232,7 +197,7 @@ present.add_attributes(
     "attr2_referent",
     reveal=False,
     timestamp=time_revoke_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_attributes(
@@ -240,23 +205,15 @@ present.add_attributes(
     "attr4_referent",
     reveal=True,
     timestamp=time_revoke_cred,
-    rev_state=rev_state
+    rev_state=rev_state,
 )
 
 present.add_predicates(
-    recv_cred,
-    "predicate1_referent",
-    timestamp=time_revoke_cred,
-    rev_state=rev_state
+    recv_cred, "predicate1_referent", timestamp=time_revoke_cred, rev_state=rev_state
 )
 
 presentation = Presentation.create(
-    pres_req,
-    present,
-    {"attr3_referent": "8-800-300"},
-    link_secret,
-    schemas,
-    cred_defs
+    pres_req, present, {"attr3_referent": "8-800-300"}, link_secret, schemas, cred_defs
 )
 
 verified = presentation.verify(
@@ -266,7 +223,6 @@ verified = presentation.verify(
     rev_reg_defs,
     rev_status_lists,
 )
-
 assert not verified
 
 print("ok")

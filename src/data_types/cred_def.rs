@@ -1,5 +1,10 @@
 use std::str::FromStr;
 
+use crate::cl::{
+    CredentialKeyCorrectnessProof as CryptoCredentialKeyCorrectnessProof,
+    CredentialPrimaryPublicKey, CredentialPrivateKey, CredentialPublicKey,
+    CredentialRevocationPublicKey,
+};
 use crate::{error::ConversionError, impl_anoncreds_object_identifier};
 
 use super::{issuer_id::IssuerId, schema::SchemaId};
@@ -26,9 +31,9 @@ impl FromStr for SignatureType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CredentialDefinitionData {
-    pub primary: ursa::cl::CredentialPrimaryPublicKey,
+    pub primary: CredentialPrimaryPublicKey,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub revocation: Option<ursa::cl::CredentialRevocationPublicKey>,
+    pub revocation: Option<CredentialRevocationPublicKey>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,13 +48,28 @@ pub struct CredentialDefinition {
 }
 
 impl CredentialDefinition {
-    pub fn get_public_key(&self) -> Result<ursa::cl::CredentialPublicKey, ConversionError> {
-        let key = ursa::cl::CredentialPublicKey::build_from_parts(
+    pub fn get_public_key(&self) -> Result<CredentialPublicKey, ConversionError> {
+        let key = CredentialPublicKey::build_from_parts(
             &self.value.primary,
             self.value.revocation.as_ref(),
         )
         .map_err(|e| e.to_string())?;
         Ok(key)
+    }
+
+    pub fn try_clone(&self) -> Result<Self, crate::Error> {
+        let cred_data = CredentialDefinitionData {
+            primary: self.value.primary.try_clone()?,
+            revocation: self.value.revocation.clone(),
+        };
+
+        Ok(Self {
+            schema_id: self.schema_id.clone(),
+            signature_type: self.signature_type,
+            tag: self.tag.clone(),
+            value: cred_data,
+            issuer_id: self.issuer_id.clone(),
+        })
     }
 }
 
@@ -64,13 +84,13 @@ impl Validatable for CredentialDefinition {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialDefinitionPrivate {
-    pub value: ursa::cl::CredentialPrivateKey,
+    pub value: CredentialPrivateKey,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct CredentialKeyCorrectnessProof {
-    pub value: ursa::cl::CredentialKeyCorrectnessProof,
+    pub value: CryptoCredentialKeyCorrectnessProof,
 }
 
 impl CredentialKeyCorrectnessProof {
@@ -92,7 +112,7 @@ mod test_cred_def {
         issuer::create_schema(
             "name",
             "1.0",
-            "did:example",
+            "did:example".try_into().unwrap(),
             vec!["name".to_owned(), "age".to_owned()].into(),
         )
         .expect("Unable to create Schema")
@@ -105,9 +125,9 @@ mod test_cred_def {
     ) {
         let schema = schema();
         issuer::create_credential_definition(
-            "did:example/schema",
+            "did:example/schema".try_into().unwrap(),
             &schema,
-            "did:exampple",
+            "did:exampple".try_into().unwrap(),
             "default-tag",
             SignatureType::CL,
             CredentialDefinitionConfig::default(),
@@ -119,9 +139,9 @@ mod test_cred_def {
     fn should_create_credential_definition() {
         let schema = schema();
         let result = issuer::create_credential_definition(
-            "did:example/schema",
+            "did:example/schema".try_into().unwrap(),
             &schema,
-            "did:exampple",
+            "did:exampple".try_into().unwrap(),
             "default-tag",
             SignatureType::CL,
             CredentialDefinitionConfig::default(),

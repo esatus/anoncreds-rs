@@ -1,22 +1,25 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
 use crate::error::{ConversionError, ValidationError};
 use crate::utils::validation::Validatable;
 
-use super::{cred_def::CredentialDefinitionId, rev_reg::RevocationRegistryId, schema::SchemaId};
+use super::rev_reg_def::RevocationRegistryDefinitionId;
+use super::{cred_def::CredentialDefinitionId, schema::SchemaId};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Credential {
     pub schema_id: SchemaId,
     pub cred_def_id: CredentialDefinitionId,
-    pub rev_reg_id: Option<RevocationRegistryId>,
+    pub rev_reg_id: Option<RevocationRegistryDefinitionId>,
     pub values: CredentialValues,
-    pub signature: ursa::cl::CredentialSignature,
-    pub signature_correctness_proof: ursa::cl::SignatureCorrectnessProof,
-    pub rev_reg: Option<ursa::cl::RevocationRegistry>,
-    pub witness: Option<ursa::cl::Witness>,
+    pub signature: CredentialSignature,
+    pub signature_correctness_proof: SignatureCorrectnessProof,
+    pub rev_reg: Option<RevocationRegistry>,
+    pub witness: Option<Witness>,
 }
 
 impl Credential {
@@ -73,7 +76,7 @@ pub struct CredentialInfo {
     pub attrs: ShortCredentialValues,
     pub schema_id: SchemaId,
     pub cred_def_id: CredentialDefinitionId,
-    pub rev_reg_id: Option<RevocationRegistryId>,
+    pub rev_reg_id: Option<RevocationRegistryDefinitionId>,
     pub cred_rev_id: Option<String>,
 }
 
@@ -82,6 +85,7 @@ pub type ShortCredentialValues = HashMap<String, String>;
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CredentialValues(pub HashMap<String, AttributeValues>);
 
+#[cfg(feature = "zeroize")]
 impl Drop for CredentialValues {
     fn drop(&mut self) {
         self.zeroize();
@@ -98,6 +102,7 @@ impl Validatable for CredentialValues {
     }
 }
 
+#[cfg(feature = "zeroize")]
 impl Zeroize for CredentialValues {
     fn zeroize(&mut self) {
         for attr in self.0.values_mut() {
@@ -106,7 +111,8 @@ impl Zeroize for CredentialValues {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Zeroize, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[cfg_attr(feature = "zeroize", derive(Zeroize))]
 pub struct AttributeValues {
     pub raw: String,
     pub encoded: String,

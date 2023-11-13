@@ -1,17 +1,13 @@
 use anoncreds::data_types::cred_def::CredentialDefinitionId;
-use anoncreds::data_types::rev_reg::RevocationRegistryId;
 use anoncreds::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 use anoncreds::data_types::schema::SchemaId;
 use anoncreds::issuer;
 use anoncreds::prover;
-use anoncreds::tails::{TailsFileReader, TailsFileWriter};
+use anoncreds::tails::TailsFileWriter;
 use anoncreds::types::{CredentialRevocationConfig, PresentCredentials};
 use anoncreds::verifier;
 use serde_json::json;
-use std::{
-    collections::{BTreeSet, HashMap},
-    fs::create_dir,
-};
+use std::collections::{BTreeSet, HashMap};
 
 use utils::*;
 mod utils;
@@ -30,8 +26,8 @@ fn anoncreds_demo_works_for_single_issuer_single_prover() {
 
     // Issuer creates a Credential Offer
     let cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Error creating credential offer");
@@ -55,8 +51,6 @@ fn anoncreds_demo_works_for_single_issuer_single_prover() {
         &cred_offer,
         &cred_request,
         cred_values.into(),
-        None,
-        None,
         None,
     )
     .expect("Error creating credential");
@@ -118,11 +112,11 @@ fn anoncreds_demo_works_for_single_issuer_single_prover() {
 
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
 
     let presentation = prover::create_presentation(
         &pres_request,
@@ -203,35 +197,26 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
     let ((gvt_cred_def, gvt_cred_def_priv, gvt_cred_key_correctness_proof), gvt_cred_def_id) =
         fixtures::create_cred_def(&gvt_schema, true);
 
-    // This will create a tails file locally in the .tmp dir
-    let tf_path = "../.tmp";
-    create_dir(tf_path)
-        .or_else(|e| -> Result<(), std::io::Error> {
-            println!(
-                "Tail file path creation error but test can still proceed {}",
-                e
-            );
-            Ok(())
-        })
-        .unwrap();
-
-    let mut tf = TailsFileWriter::new(Some(tf_path.to_owned()));
+    // Create tails file writer
+    let mut tf = TailsFileWriter::new(None);
 
     let ((gvt_rev_reg_def, gvt_rev_reg_def_priv), gvt_rev_reg_def_id) =
         fixtures::create_rev_reg_def(&gvt_cred_def, &mut tf);
 
-    // Issuer creates reovcation status list - to be put on the ledger
+    // Issuer creates revocation status list - to be put on the ledger
     let time_create_rev_status_list = 12;
     let gvt_revocation_status_list = fixtures::create_revocation_status_list(
+        &gvt_cred_def,
         &gvt_rev_reg_def,
+        &gvt_rev_reg_def_priv,
         Some(time_create_rev_status_list),
         true,
     );
 
     // Issuer creates a Credential Offer
     let cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Error creating credential offer");
@@ -251,11 +236,9 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
     let cred_values = fixtures::credential_values("GVT");
 
     let gvt_rev_reg_def_id = RevocationRegistryDefinitionId::new_unchecked(gvt_rev_reg_def_id);
-    let gvt_rev_reg_id = RevocationRegistryId::new_unchecked(gvt_rev_reg_def_id.clone());
 
     // Get the location of the tails_file so it can be read
-    let location = gvt_rev_reg_def.clone().value.tails_location;
-    let tr = TailsFileReader::new_tails_reader(location.as_str());
+    let tails_location = gvt_rev_reg_def.value.tails_location.clone();
 
     let issue_cred = issuer::create_credential(
         &gvt_cred_def,
@@ -263,24 +246,24 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
         &cred_offer,
         &cred_request,
         cred_values.into(),
-        Some(gvt_rev_reg_id),
-        Some(&gvt_revocation_status_list),
         Some(CredentialRevocationConfig {
             reg_def: &gvt_rev_reg_def,
             reg_def_private: &gvt_rev_reg_def_priv,
             registry_idx: fixtures::GVT_REV_IDX,
-            tails_reader: tr,
+            status_list: &gvt_revocation_status_list,
         }),
     )
     .expect("Error creating credential");
 
     let time_after_creating_cred = time_create_rev_status_list + 1;
     let issued_rev_status_list = issuer::update_revocation_status_list(
-        Some(time_after_creating_cred),
+        &gvt_cred_def,
+        &gvt_rev_reg_def,
+        &gvt_rev_reg_def_priv,
+        &gvt_revocation_status_list,
         Some(BTreeSet::from([fixtures::GVT_REV_IDX])),
         None,
-        &gvt_rev_reg_def,
-        &gvt_revocation_status_list,
+        Some(time_after_creating_cred),
     )
     .unwrap();
 
@@ -327,7 +310,7 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
     .expect("Error creating proof request");
 
     let rev_state = prover::create_or_update_revocation_state(
-        &gvt_rev_reg_def.value.tails_location,
+        &tails_location,
         &gvt_rev_reg_def,
         &gvt_revocation_status_list,
         fixtures::GVT_REV_IDX,
@@ -338,13 +321,13 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
 
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
 
-    let mut rev_status_list = vec![&issued_rev_status_list];
+    let mut rev_status_list = vec![issued_rev_status_list.clone()];
 
     // Prover creates presentation
     let presentation = fixtures::create_presentation(
@@ -357,7 +340,7 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
     );
 
     // Verifier verifies presentation of not Revoked rev_state
-    let rev_reg_def_map = HashMap::from([(&gvt_rev_reg_def_id, &gvt_rev_reg_def)]);
+    let rev_reg_def_map = HashMap::from([(gvt_rev_reg_def_id, gvt_rev_reg_def.clone())]);
     let valid = verifier::verify_presentation(
         &presentation,
         &pres_request,
@@ -373,21 +356,23 @@ fn anoncreds_demo_works_with_revocation_for_single_issuer_single_prover() {
     //  ===================== Issuer revokes credential ================
     let time_revoke_cred = time_after_creating_cred + 1;
     let revoked_status_list = issuer::update_revocation_status_list(
-        Some(time_revoke_cred),
+        &gvt_cred_def,
+        &gvt_rev_reg_def,
+        &gvt_rev_reg_def_priv,
+        &issued_rev_status_list,
         None,
         Some(BTreeSet::from([fixtures::GVT_REV_IDX])),
-        &gvt_rev_reg_def,
-        &issued_rev_status_list,
+        Some(time_revoke_cred),
     )
     .unwrap();
 
     // update rev_status_lists
-    rev_status_list.push(&revoked_status_list);
+    rev_status_list.push(revoked_status_list.clone());
 
     let rev_state = prover::create_or_update_revocation_state(
-        &gvt_rev_reg_def.value.tails_location,
+        &tails_location,
         &gvt_rev_reg_def,
-        &gvt_revocation_status_list,
+        &revoked_status_list,
         fixtures::GVT_REV_IDX,
         Some(&rev_state),
         Some(&issued_rev_status_list),
@@ -436,8 +421,8 @@ fn anoncreds_demo_works_for_multiple_issuer_single_prover() {
         fixtures::create_cred_def(&emp_schema, false);
 
     let gvt_cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Unable to create credential offer");
@@ -462,8 +447,6 @@ fn anoncreds_demo_works_for_multiple_issuer_single_prover() {
         &gvt_cred_request,
         gvt_cred_values.into(),
         None,
-        None,
-        None,
     )
     .expect("Error creating credential");
 
@@ -479,8 +462,8 @@ fn anoncreds_demo_works_for_multiple_issuer_single_prover() {
     prover_wallet.credentials.push(gvt_recv_cred);
 
     let emp_cred_offer = issuer::create_credential_offer(
-        emp_schema_id,
-        emp_cred_def_id,
+        emp_schema_id.try_into().unwrap(),
+        emp_cred_def_id.try_into().unwrap(),
         &emp_cred_key_correctness_proof,
     )
     .expect("Unable to create credential offer");
@@ -503,8 +486,6 @@ fn anoncreds_demo_works_for_multiple_issuer_single_prover() {
         &emp_cred_offer,
         &emp_cred_request,
         emp_cred_values.into(),
-        None,
-        None,
         None,
     )
     .expect("Error creating credential");
@@ -553,14 +534,14 @@ fn anoncreds_demo_works_for_multiple_issuer_single_prover() {
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
     let emp_schema_id = SchemaId::new_unchecked(emp_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
-    schemas.insert(&emp_schema_id, &emp_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
+    schemas.insert(emp_schema_id, emp_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
     let emp_cred_def_id = CredentialDefinitionId::new_unchecked(emp_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
-    cred_defs.insert(&emp_cred_def_id, &emp_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
+    cred_defs.insert(emp_cred_def_id, emp_cred_def.try_clone().unwrap());
 
     let mut present = PresentCredentials::default();
     let mut gvt_cred = present.add_credential(&prover_wallet.credentials[0], None, None);
@@ -608,8 +589,8 @@ fn anoncreds_demo_proof_does_not_verify_with_wrong_attr_and_predicates() {
 
     // Issuer creates a Credential Offer
     let cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Error creating credential offer");
@@ -633,8 +614,6 @@ fn anoncreds_demo_proof_does_not_verify_with_wrong_attr_and_predicates() {
         &cred_offer,
         &cred_request,
         cred_values.into(),
-        None,
-        None,
         None,
     )
     .expect("Error creating credential");
@@ -694,11 +673,11 @@ fn anoncreds_demo_proof_does_not_verify_with_wrong_attr_and_predicates() {
 
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
 
     let presentation = prover::create_presentation(
         &pres_request,
@@ -737,8 +716,8 @@ fn anoncreds_demo_works_for_requested_attribute_in_upper_case() {
 
     // Issuer creates a Credential Offer
     let cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Error creating credential offer");
@@ -762,8 +741,6 @@ fn anoncreds_demo_works_for_requested_attribute_in_upper_case() {
         &cred_offer,
         &cred_request,
         cred_values.into(),
-        None,
-        None,
         None,
     )
     .expect("Error creating credential");
@@ -823,11 +800,11 @@ fn anoncreds_demo_works_for_requested_attribute_in_upper_case() {
 
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
 
     let presentation = prover::create_presentation(
         &pres_request,
@@ -915,8 +892,8 @@ fn anoncreds_demo_works_for_twice_entry_of_attribute_from_different_credential()
         fixtures::create_cred_def(&emp_schema, false);
 
     let gvt_cred_offer = issuer::create_credential_offer(
-        gvt_schema_id,
-        gvt_cred_def_id,
+        gvt_schema_id.try_into().unwrap(),
+        gvt_cred_def_id.try_into().unwrap(),
         &gvt_cred_key_correctness_proof,
     )
     .expect("Unable to create credential offer");
@@ -941,8 +918,6 @@ fn anoncreds_demo_works_for_twice_entry_of_attribute_from_different_credential()
         &gvt_cred_request,
         gvt_cred_values.into(),
         None,
-        None,
-        None,
     )
     .expect("Error creating credential");
 
@@ -958,8 +933,8 @@ fn anoncreds_demo_works_for_twice_entry_of_attribute_from_different_credential()
     prover_wallet.credentials.push(gvt_recv_cred);
 
     let emp_cred_offer = issuer::create_credential_offer(
-        emp_schema_id,
-        emp_cred_def_id,
+        emp_schema_id.try_into().unwrap(),
+        emp_cred_def_id.try_into().unwrap(),
         &emp_cred_key_correctness_proof,
     )
     .expect("Unable to create credential offer");
@@ -982,8 +957,6 @@ fn anoncreds_demo_works_for_twice_entry_of_attribute_from_different_credential()
         &emp_cred_offer,
         &emp_cred_request,
         emp_cred_values.into(),
-        None,
-        None,
         None,
     )
     .expect("Error creating credential");
@@ -1036,14 +1009,14 @@ fn anoncreds_demo_works_for_twice_entry_of_attribute_from_different_credential()
     let mut schemas = HashMap::new();
     let gvt_schema_id = SchemaId::new_unchecked(gvt_schema_id);
     let emp_schema_id = SchemaId::new_unchecked(emp_schema_id);
-    schemas.insert(&gvt_schema_id, &gvt_schema);
-    schemas.insert(&emp_schema_id, &emp_schema);
+    schemas.insert(gvt_schema_id, gvt_schema.clone());
+    schemas.insert(emp_schema_id, emp_schema.clone());
 
     let mut cred_defs = HashMap::new();
     let gvt_cred_def_id = CredentialDefinitionId::new_unchecked(gvt_cred_def_id);
     let emp_cred_def_id = CredentialDefinitionId::new_unchecked(emp_cred_def_id);
-    cred_defs.insert(&gvt_cred_def_id, &gvt_cred_def);
-    cred_defs.insert(&emp_cred_def_id, &emp_cred_def);
+    cred_defs.insert(gvt_cred_def_id, gvt_cred_def.try_clone().unwrap());
+    cred_defs.insert(emp_cred_def_id, emp_cred_def.try_clone().unwrap());
 
     let mut present = PresentCredentials::default();
     let mut gvt_cred = present.add_credential(&prover_wallet.credentials[0], None, None);

@@ -1,7 +1,10 @@
 use super::issuer_id::IssuerId;
-use super::rev_reg::{RevocationRegistry, UrsaRevocationRegistry};
+use super::rev_reg::RevocationRegistry;
 use super::rev_reg_def::RevocationRegistryDefinitionId;
+
+use crate::cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry};
 use crate::{Error, Result};
+
 use std::collections::BTreeSet;
 
 /// Data model for the revocation status list as defined in the [Anoncreds V1.0
@@ -14,39 +17,27 @@ pub struct RevocationStatusList {
     issuer_id: IssuerId,
     #[serde(with = "serde_revocation_list")]
     revocation_list: bitvec::vec::BitVec,
-    #[serde(rename = "currentAccumulator", skip_serializing_if = "Option::is_none")]
-    registry: Option<UrsaRevocationRegistry>,
+    #[serde(
+        rename = "currentAccumulator",
+        alias = "accum",
+        skip_serializing_if = "Option::is_none"
+    )]
+    accum: Option<Accumulator>,
     #[serde(skip_serializing_if = "Option::is_none")]
     timestamp: Option<u64>,
 }
 
-impl TryFrom<&RevocationStatusList> for Option<ursa::cl::RevocationRegistry> {
-    type Error = Error;
-
-    fn try_from(value: &RevocationStatusList) -> std::result::Result<Self, Self::Error> {
-        value.registry.map(TryInto::try_into).transpose()
+impl From<&RevocationStatusList> for Option<CryptoRevocationRegistry> {
+    fn from(value: &RevocationStatusList) -> Self {
+        value.accum.map(From::from)
     }
 }
 
-impl From<&RevocationStatusList> for Option<UrsaRevocationRegistry> {
-    fn from(rev_status_list: &RevocationStatusList) -> Self {
-        rev_status_list.registry.map(Into::into)
-    }
-}
-
-impl TryFrom<&RevocationStatusList> for Option<RevocationRegistry> {
-    type Error = Error;
-
-    fn try_from(value: &RevocationStatusList) -> std::result::Result<Self, Self::Error> {
-        let value = match value.registry {
-            Some(registry) => {
-                let reg: ursa::cl::RevocationRegistry = registry.try_into()?;
-                Some(RevocationRegistry { value: reg })
-            }
-            None => None,
-        };
-
-        Ok(value)
+impl From<&RevocationStatusList> for Option<RevocationRegistry> {
+    fn from(value: &RevocationStatusList) -> Self {
+        value.accum.map(|registry| RevocationRegistry {
+            value: registry.into(),
+        })
     }
 }
 
@@ -67,8 +58,8 @@ impl RevocationStatusList {
         self.revocation_list.clone()
     }
 
-    pub fn set_registry(&mut self, registry: ursa::cl::RevocationRegistry) -> Result<()> {
-        self.registry = Some(registry.try_into()?);
+    pub fn set_registry(&mut self, registry: CryptoRevocationRegistry) -> Result<()> {
+        self.accum = Some(registry.accum);
         Ok(())
     }
 
@@ -78,39 +69,44 @@ impl RevocationStatusList {
 
     pub(crate) fn update(
         &mut self,
-        registry: Option<ursa::cl::RevocationRegistry>,
+        registry: Option<CryptoRevocationRegistry>,
         issued: Option<BTreeSet<u32>>,
         revoked: Option<BTreeSet<u32>>,
         timestamp: Option<u64>,
     ) -> Result<()> {
         // only update if input is Some
         if let Some(reg) = registry {
-            self.registry = Some(reg.try_into()?);
+            self.accum = Some(reg.accum);
         }
+        let slots_count = self.revocation_list.len();
         if let Some(issued) = issued {
+            if let Some(max_idx) = issued.iter().last().copied() {
+                if max_idx as usize >= slots_count {
+                    return Err(Error::from_msg(
+                        crate::ErrorKind::Unexpected,
+                        "Update Revocation List Index Out of Range",
+                    ));
+                }
+            }
             // issued credentials are assigned `false`
             // i.e. NOT revoked
             for i in issued {
-                let mut bit = self.revocation_list.get_mut(i as usize).ok_or_else(|| {
-                    Error::from_msg(
-                        crate::ErrorKind::Unexpected,
-                        "Update Revocation List Index Out of Range",
-                    )
-                })?;
-                *bit = false;
+                self.revocation_list.set(i as usize, false);
             }
         }
         if let Some(revoked) = revoked {
+            if let Some(max_idx) = revoked.iter().last().copied() {
+                if max_idx as usize >= slots_count {
+                    return Err(Error::from_msg(
+                        crate::ErrorKind::Unexpected,
+                        "Update Revocation List Index Out of Range",
+                    ));
+                }
+            }
             // revoked credentials are assigned `true`
             // i.e. IS revoked
             for i in revoked {
-                let mut bit = self.revocation_list.get_mut(i as usize).ok_or_else(|| {
-                    Error::from_msg(
-                        crate::ErrorKind::Unexpected,
-                        "Update Revocation List Index Out of Range",
-                    )
-                })?;
-                *bit = true;
+                self.revocation_list.set(i as usize, true);
             }
         }
         // only update if input is Some
@@ -120,11 +116,11 @@ impl RevocationStatusList {
         Ok(())
     }
 
-    pub fn new(
+    pub(crate) fn new(
         rev_reg_def_id: Option<&str>,
         issuer_id: IssuerId,
         revocation_list: bitvec::vec::BitVec,
-        registry: Option<UrsaRevocationRegistry>,
+        registry: Option<CryptoRevocationRegistry>,
         timestamp: Option<u64>,
     ) -> Result<Self> {
         Ok(Self {
@@ -133,7 +129,7 @@ impl RevocationStatusList {
                 .transpose()?,
             issuer_id,
             revocation_list,
-            registry,
+            accum: registry.map(|r| r.accum),
             timestamp,
         })
     }
@@ -141,10 +137,8 @@ impl RevocationStatusList {
 
 pub mod serde_revocation_list {
     use bitvec::vec::BitVec;
-    use serde::de::Error as DeError;
-    use serde::de::SeqAccess;
     use serde::{
-        de::{Deserializer, Visitor},
+        de::{Deserializer, Error as DeError, SeqAccess, Visitor},
         ser::{SerializeSeq, Serializer},
     };
 
@@ -251,7 +245,7 @@ mod rev_reg_tests {
 
         list.update(None, Some(BTreeSet::from([0u32])), None, Some(1245))
             .unwrap();
-        assert_eq!(list.get(0usize).unwrap(), false);
+        assert!(!list.get(0usize).unwrap());
         assert_eq!(list.timestamp().unwrap(), 1245);
     }
 }

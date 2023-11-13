@@ -16,7 +16,7 @@ use anoncreds::{
 
 use super::storage::ProverWallet;
 
-// Goverment credential related fixtures
+// Government credential related fixtures
 pub const GVT_SCHEMA_NAME: &str = "Government Schema";
 pub const GVT_SCHEMA_ID: &str = "schema:government";
 pub const GVT_SCHEMA_VERSION: &str = "1.0";
@@ -55,7 +55,7 @@ pub fn create_schema(name: &str) -> (Schema, &str) {
             issuer::create_schema(
                 GVT_SCHEMA_NAME,
                 GVT_SCHEMA_VERSION,
-                GVT_ISSUER_ID,
+                GVT_ISSUER_ID.try_into().unwrap(),
                 GVT_SCHEMA_ATTRIBUTES[..].into(),
             )
             .expect("error while creating GVT schema"),
@@ -65,7 +65,7 @@ pub fn create_schema(name: &str) -> (Schema, &str) {
             issuer::create_schema(
                 EMP_SCHEMA_NAME,
                 EMP_SCHEMA_VERSION,
-                EMP_ISSUER_ID,
+                EMP_ISSUER_ID.try_into().unwrap(),
                 EMP_SCHEMA_ATTRIBUTES[..].into(),
             )
             .expect("error while creating EMP schema"),
@@ -89,9 +89,9 @@ pub fn create_cred_def(
     match schema.name.as_str() {
         GVT_SCHEMA_NAME => (
             issuer::create_credential_definition(
-                GVT_SCHEMA_ID,
+                GVT_SCHEMA_ID.try_into().unwrap(),
                 schema,
-                GVT_ISSUER_ID,
+                GVT_ISSUER_ID.try_into().unwrap(),
                 GVT_CRED_DEF_TAG,
                 anoncreds::types::SignatureType::CL,
                 anoncreds::types::CredentialDefinitionConfig { support_revocation },
@@ -101,9 +101,9 @@ pub fn create_cred_def(
         ),
         EMP_SCHEMA_NAME => (
             issuer::create_credential_definition(
-                EMP_SCHEMA_ID,
+                EMP_SCHEMA_ID.try_into().unwrap(),
                 schema,
-                EMP_ISSUER_ID,
+                EMP_ISSUER_ID.try_into().unwrap(),
                 EMP_CRED_DEF_TAG,
                 anoncreds::types::SignatureType::CL,
                 anoncreds::types::CredentialDefinitionConfig { support_revocation },
@@ -129,8 +129,7 @@ pub fn create_rev_reg_def<'a>(
         GVT_CRED_DEF_TAG => (
             issuer::create_revocation_registry_def(
                 cred_def,
-                GVT_CRED_DEF_ID,
-                GVT_ISSUER_ID,
+                GVT_CRED_DEF_ID.try_into().unwrap(),
                 GVT_REV_REG_TAG,
                 anoncreds::types::RegistryType::CL_ACCUM,
                 GVT_REV_MAX_CRED_NUM,
@@ -142,8 +141,7 @@ pub fn create_rev_reg_def<'a>(
         EMP_CRED_DEF_TAG => (
             issuer::create_revocation_registry_def(
                 cred_def,
-                EMP_CRED_DEF_ID,
-                EMP_ISSUER_ID,
+                EMP_CRED_DEF_ID.try_into().unwrap(),
                 EMP_REV_REG_TAG,
                 anoncreds::types::RegistryType::CL_ACCUM,
                 EMP_REV_MAX_CRED_NUM,
@@ -157,25 +155,29 @@ pub fn create_rev_reg_def<'a>(
 }
 
 pub fn create_revocation_status_list(
+    cred_def: &CredentialDefinition,
     rev_reg_def: &RevocationRegistryDefinition,
+    rev_reg_priv: &RevocationRegistryDefinitionPrivate,
     time: Option<u64>,
     issuance_by_default: bool,
 ) -> RevocationStatusList {
     match rev_reg_def.tag.as_str() {
         GVT_REV_REG_TAG => issuer::create_revocation_status_list(
-            GVT_REV_REG_DEF_ID,
+            cred_def,
+            GVT_REV_REG_DEF_ID.try_into().unwrap(),
             rev_reg_def,
-            GVT_ISSUER_ID,
-            time,
+            rev_reg_priv,
             issuance_by_default,
+            time,
         )
         .expect("Error while creating GVT rev status list"),
         EMP_REV_REG_TAG => issuer::create_revocation_status_list(
-            EMP_REV_REG_DEF_ID,
+            cred_def,
+            EMP_REV_REG_DEF_ID.try_into().unwrap(),
             rev_reg_def,
-            EMP_ISSUER_ID,
-            time,
+            rev_reg_priv,
             issuance_by_default,
+            time,
         )
         .expect("Error while creating EMP rev status list"),
         unsupported => panic!("Unsupported rev reg def. {unsupported}"),
@@ -183,8 +185,8 @@ pub fn create_revocation_status_list(
 }
 
 pub fn create_presentation(
-    schemas: &HashMap<&SchemaId, &Schema>,
-    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
+    schemas: &HashMap<SchemaId, Schema>,
+    cred_defs: &HashMap<CredentialDefinitionId, CredentialDefinition>,
     pres_request: &PresentationRequest,
     prover_wallet: &ProverWallet,
     rev_state_timestamp: Option<u64>,

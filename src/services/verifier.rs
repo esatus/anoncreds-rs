@@ -4,6 +4,7 @@ use super::types::Presentation;
 use super::types::PresentationRequest;
 use super::types::RevocationRegistryDefinition;
 use super::types::RevocationStatusList;
+use crate::cl::{CredentialPublicKey, RevocationRegistry, Verifier};
 use crate::data_types::cred_def::CredentialDefinition;
 use crate::data_types::cred_def::CredentialDefinitionId;
 use crate::data_types::issuer_id::IssuerId;
@@ -21,11 +22,9 @@ use crate::services::helpers::build_non_credential_schema;
 use crate::services::helpers::build_sub_proof_request;
 use crate::services::helpers::get_predicates_for_credential;
 use crate::services::helpers::get_revealed_attributes_for_credential;
-use crate::ursa::cl::verifier::Verifier as CryptoVerifier;
-use crate::ursa::cl::CredentialPublicKey;
-use crate::ursa::cl::RevocationRegistry as CryptoRevocationRegistry;
 use crate::utils::query::Query;
 use crate::utils::validation::LEGACY_DID_IDENTIFIER;
+
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -47,12 +46,12 @@ static INTERNAL_TAG_MATCHER: Lazy<Regex> =
 pub fn verify_presentation(
     presentation: &Presentation,
     pres_req: &PresentationRequest,
-    schemas: &HashMap<&SchemaId, &Schema>,
-    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
-    rev_reg_defs: Option<&HashMap<&RevocationRegistryDefinitionId, &RevocationRegistryDefinition>>,
-    rev_status_lists: Option<Vec<&RevocationStatusList>>,
+    schemas: &HashMap<SchemaId, Schema>,
+    cred_defs: &HashMap<CredentialDefinitionId, CredentialDefinition>,
+    rev_reg_defs: Option<&HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>>,
+    rev_status_lists: Option<Vec<RevocationStatusList>>,
     nonrevoke_interval_override: Option<
-        &HashMap<&RevocationRegistryDefinitionId, HashMap<u64, u64>>,
+        &HashMap<RevocationRegistryDefinitionId, HashMap<u64, u64>>,
     >,
 ) -> Result<bool> {
     trace!("verify >>> presentation: {:?}, pres_req: {:?}, schemas: {:?}, cred_defs: {:?}, rev_reg_defs: {:?} rev_status_lists: {:?}",
@@ -92,7 +91,7 @@ pub fn verify_presentation(
         &received_self_attested_attrs,
     )?;
 
-    let mut proof_verifier = CryptoVerifier::new_proof_verifier()?;
+    let mut proof_verifier = Verifier::new_proof_verifier()?;
     let non_credential_schema = build_non_credential_schema()?;
 
     for sub_proof_index in 0..presentation.identifiers.len() {
@@ -110,13 +109,11 @@ pub fn verify_presentation(
             )
         })?;
 
-        let rev_reg_map = if let Some(ref lists) = rev_status_lists {
-            let mut map: HashMap<
-                RevocationRegistryDefinitionId,
-                HashMap<u64, CryptoRevocationRegistry>,
-            > = HashMap::new();
+        let rev_reg_map = if let Some(lists) = rev_status_lists.clone() {
+            let mut map: HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>> =
+                HashMap::new();
 
-            for list in lists.iter() {
+            for list in lists {
                 let id = list
                     .id()
                     .ok_or_else(|| err_msg!(Unexpected, "RevStatusList missing Id"))?;
@@ -125,7 +122,7 @@ pub fn verify_presentation(
                     .timestamp()
                     .ok_or_else(|| err_msg!(Unexpected, "RevStatusList missing timestamp"))?;
 
-                let rev_reg: Option<ursa::cl::RevocationRegistry> = (*list).try_into()?;
+                let rev_reg: Option<RevocationRegistry> = (&list).into();
                 let rev_reg = rev_reg.ok_or_else(|| {
                     err_msg!(Unexpected, "Revocation status list missing accumulator")
                 })?;
@@ -148,9 +145,9 @@ pub fn verify_presentation(
         let (predicates_for_credential, pred_nonrevoked_interval) =
             get_predicates_for_credential(sub_proof_index, &presentation.requested_proof, pres_req);
 
-        // Collaspe to the most stringent local interval for the attributes / predicates,
+        // Collapse to the most stringent local interval for the attributes / predicates,
         // we can do this because there is only 1 revocation status list for this credential
-        // if it satsifies the most stringent interval, it will satisfy all intervals
+        // if it satisfies the most stringent interval, it will satisfy all intervals
         let mut cred_nonrevoked_interval: Option<NonRevokedInterval> =
             match (attrs_nonrevoked_interval, pred_nonrevoked_interval) {
                 (Some(attr), None) => Some(attr),
@@ -220,7 +217,6 @@ pub fn verify_presentation(
 
             let rev_reg_def = Some(
                 rev_reg_defs
-                    .as_ref()
                     .ok_or_else(|| err_msg!("Could not load the Revocation Registry Definition"))?
                     .get(&rev_reg_def_id)
                     .ok_or_else(|| {
@@ -454,15 +450,19 @@ fn verify_revealed_attribute_values(
     Ok(())
 }
 
+fn normalize_encoded_attr(attr: &str) -> String {
+    attr.parse::<i32>()
+        .map(|a| a.to_string())
+        .unwrap_or(attr.to_owned())
+}
+
 fn verify_revealed_attribute_value(
     attr_name: &str,
     proof: &Presentation,
     attr_info: &RevealedAttributeInfo,
 ) -> Result<()> {
-    let reveal_attr_encoded = attr_info.encoded.to_string();
-    let reveal_attr_encoded = Regex::new("^0*")
-        .unwrap()
-        .replace_all(&reveal_attr_encoded, "");
+    let reveal_attr_encoded = normalize_encoded_attr(&attr_info.encoded);
+
     let sub_proof_index = attr_info.sub_proof_index as usize;
 
     let crypto_proof_encoded = proof
@@ -499,8 +499,8 @@ fn verify_revealed_attribute_value(
 #[allow(clippy::too_many_arguments)]
 fn verify_requested_restrictions(
     pres_req: &PresentationRequestPayload,
-    schemas: &HashMap<&SchemaId, &Schema>,
-    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
+    schemas: &HashMap<SchemaId, Schema>,
+    cred_defs: &HashMap<CredentialDefinitionId, CredentialDefinition>,
     requested_proof: &RequestedProof,
     received_revealed_attrs: &HashMap<String, Identifier>,
     received_unrevealed_attrs: &HashMap<String, Identifier>,
@@ -667,8 +667,8 @@ fn is_self_attested(
 fn gather_filter_info(
     referent: &str,
     identifiers: &HashMap<String, Identifier>,
-    schemas: &HashMap<&SchemaId, &Schema>,
-    cred_defs: &HashMap<&CredentialDefinitionId, &CredentialDefinition>,
+    schemas: &HashMap<SchemaId, Schema>,
+    cred_defs: &HashMap<CredentialDefinitionId, CredentialDefinition>,
 ) -> Result<Filter> {
     let identifier = identifiers.get(referent).ok_or_else(|| {
         err_msg!(
@@ -867,7 +867,6 @@ fn is_attr_operator(key: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data_types::rev_reg::RevocationRegistryId;
 
     pub const SCHEMA_ID: &str = "123";
     pub const SCHEMA_NAME: &str = "Schema Name";
@@ -1184,7 +1183,7 @@ mod tests {
                 timestamp: Some(1234),
                 schema_id: SchemaId::default(),
                 cred_def_id: CredentialDefinitionId::default(),
-                rev_reg_id: Some(RevocationRegistryId::default()),
+                rev_reg_id: Some(RevocationRegistryDefinitionId::default()),
             },
         );
         res.insert(
@@ -1193,9 +1192,21 @@ mod tests {
                 timestamp: None,
                 schema_id: SchemaId::default(),
                 cred_def_id: CredentialDefinitionId::default(),
-                rev_reg_id: Some(RevocationRegistryId::default()),
+                rev_reg_id: Some(RevocationRegistryDefinitionId::default()),
             },
         );
         res
+    }
+
+    #[test]
+    fn format_attribute() {
+        assert_eq!(normalize_encoded_attr(""), "");
+        assert_eq!(normalize_encoded_attr("abc"), "abc");
+        assert_eq!(normalize_encoded_attr("0"), "0");
+        assert_eq!(normalize_encoded_attr("01"), "1");
+        assert_eq!(normalize_encoded_attr("01.0"), "01.0");
+        assert_eq!(normalize_encoded_attr("0abc"), "0abc");
+        assert_eq!(normalize_encoded_attr("-100"), "-100");
+        assert_eq!(normalize_encoded_attr("-0100"), "-100");
     }
 }

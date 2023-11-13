@@ -1,3 +1,7 @@
+use crate::cl::{
+    BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof,
+    CredentialSecretsBlindingFactors,
+};
 use crate::error::{Result, ValidationError};
 use crate::invalid;
 use crate::utils::validation::{Validatable, LEGACY_DID_IDENTIFIER};
@@ -11,8 +15,8 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     prover_did: Option<String>,
     cred_def_id: CredentialDefinitionId,
-    pub blinded_ms: ursa::cl::BlindedCredentialSecrets,
-    pub blinded_ms_correctness_proof: ursa::cl::BlindedCredentialSecretsCorrectnessProof,
+    pub blinded_ms: BlindedCredentialSecrets,
+    pub blinded_ms_correctness_proof: BlindedCredentialSecretsCorrectnessProof,
     pub nonce: Nonce,
 }
 
@@ -55,8 +59,8 @@ impl CredentialRequest {
         entropy: Option<&str>,
         prover_did: Option<&str>,
         cred_def_id: CredentialDefinitionId,
-        blinded_ms: ursa::cl::BlindedCredentialSecrets,
-        blinded_ms_correctness_proof: ursa::cl::BlindedCredentialSecretsCorrectnessProof,
+        blinded_ms: BlindedCredentialSecrets,
+        blinded_ms_correctness_proof: BlindedCredentialSecretsCorrectnessProof,
         nonce: Nonce,
     ) -> Result<Self> {
         let s = Self {
@@ -85,7 +89,7 @@ impl CredentialRequest {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRequestMetadata {
-    pub link_secret_blinding_data: ursa::cl::CredentialSecretsBlindingFactors,
+    pub link_secret_blinding_data: CredentialSecretsBlindingFactors,
     pub nonce: Nonce,
     pub link_secret_name: String,
 }
@@ -118,12 +122,14 @@ mod cred_req_tests {
     const LINK_SECRET_ID: &str = "link:secret:id";
 
     fn cred_def() -> Result<(CredentialDefinition, CredentialKeyCorrectnessProof)> {
-        let credential_definition_issuer_id = "sample:id";
-
+        let issuer_id = "sample:uri".try_into()?;
+        let schema_id = "schema:id".try_into()?;
+        let credential_definition_issuer_id = "sample:id".try_into()?;
         let attr_names = AttributeNames::from(vec!["name".to_owned(), "age".to_owned()]);
-        let schema = create_schema("schema:name", "1.0", "sample:uri", attr_names)?;
+
+        let schema = create_schema("schema:name", "1.0", issuer_id, attr_names)?;
         let cred_def = create_credential_definition(
-            "schema:id",
+            schema_id,
             &schema,
             credential_definition_issuer_id,
             "default",
@@ -146,12 +152,16 @@ mod cred_req_tests {
     ) -> Result<CredentialOffer> {
         if is_legacy {
             create_credential_offer(
-                LEGACY_SCHEMA_IDENTIFIER,
-                LEGACY_CRED_DEF_IDENTIFIER,
+                LEGACY_SCHEMA_IDENTIFIER.try_into()?,
+                LEGACY_CRED_DEF_IDENTIFIER.try_into()?,
                 &correctness_proof,
             )
         } else {
-            create_credential_offer(NEW_IDENTIFIER, NEW_IDENTIFIER, &correctness_proof)
+            create_credential_offer(
+                NEW_IDENTIFIER.try_into()?,
+                NEW_IDENTIFIER.try_into()?,
+                &correctness_proof,
+            )
         }
     }
 

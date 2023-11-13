@@ -1,8 +1,8 @@
-name: 'Anoncreds'
+name: "Anoncreds"
 
 env:
-  RUST_VERSION: '1.63.0'
-  CROSS_VERSION: '0.2.4'
+  RUST_VERSION: "1.65.0"
+  CROSS_VERSION: "0.2.4"
 
 on:
   push:
@@ -14,12 +14,12 @@ on:
   workflow_dispatch:
     inputs:
       publish-binaries:
-        description: 'Publish Binaries to Release (will create a release if no release exits for branch or tag)'
+        description: "Publish Binaries to Release (will create a release if no release exits for branch or tag)"
         required: true
         default: false
         type: boolean
       publish-wrappers:
-        description: 'Publish Wrappers to Registries'
+        description: "Publish Wrappers to Registries"
         required: true
         default: false
         type: boolean
@@ -71,11 +71,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Test Linux and macOS
-        if: "runner.os != 'Windows'"
+        if: ${{ runner.os != 'Windows' }}
         run: cargo test --package anoncreds --features vendored
 
       - name: Test Windows
-        if: "runner.os == 'Windows'"
+        if: ${{ runner.os == 'Windows' }}
         env:
           OPENSSL_STATIC: 1
         run: cargo test --package anoncreds --features vendored
@@ -104,6 +104,10 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
             lib: libanoncreds.dylib
+          - architecture: darwin-universal
+            os: macos-latest
+            target: darwin-universal
+            lib: libanoncreds.dylib
           - architecture: windows-x86_64
             os: anoncreds-windows-latest
             arch: windows-x86_64
@@ -117,8 +121,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Rust toolchain
+        if: ${{ matrix.target != 'darwin-universal' }}
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.RUST_VERSION }}
           targets: ${{ matrix.target }}
 
       - name: Cache cargo resources
@@ -128,18 +134,27 @@ jobs:
           save-if: false
 
       - name: Build library for Windows
-        if: "runner.os == 'Windows'"
+        if: ${{ runner.os == 'Windows' }}
         env:
           OPENSSL_STATIC: 1
         run: cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
 
-      - name: Build library for macOS and Linux
-        if: "runner.os != 'Windows'"
+      - name: Build library for Linux
+        if: ${{ runner.os == 'Linux' }}
         run: |
           if [ -n "${{ matrix.use_cross }}" ]; then
-            cargo install --bins --git https://github.com/rust-embedded/cross --tag v${{ env.CROSS_VERSION }} cross
+            cargo install --git https://github.com/cross-rs/cross --tag v${{ env.CROSS_VERSION }} cross
             cross build --release --package anoncreds --target ${{matrix.target}} --features vendored
           else
+            cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
+          fi
+
+      - name: Build library for macOS
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          if [ "${{ matrix.architecture }}" == "darwin-universal" ]; then
+            ./build-universal.sh
+          else 
             cargo build --release --package anoncreds --target ${{matrix.target}} --features vendored
           fi
 
@@ -166,7 +181,7 @@ jobs:
           command: c
           cwd: release-artifacts
           files: .
-          outPath: 'library-${{ matrix.architecture }}.tar.gz'
+          outPath: "library-${{ matrix.architecture }}.tar.gz"
 
       - name: Add library artifacts to release
         if: |
@@ -175,7 +190,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           file: library-${{ matrix.architecture }}.tar.gz
-          asset_name: 'library-${{ matrix.architecture }}.tar.gz'
+          asset_name: "library-${{ matrix.architecture }}.tar.gz"
 
   build-javascript:
     name: Build and Test JavaScript wrapper
@@ -189,10 +204,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Node.JS 16.x
+      - name: Set up Node.JS 18.x
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
+          registry-url: "https://registry.npmjs.org/"
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Fetch library artifacts
         uses: actions/download-artifact@v3
@@ -200,60 +220,62 @@ jobs:
           name: library-linux-x86_64
 
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
 
       - name: Build JavaScript Wrapper
-        run: yarn build
+        run: pnpm build
 
       - name: Lint JavaScript Wrapper
-        run: yarn lint
+        run: pnpm lint
 
       - name: Format Check JavaScript Wrapper
-        run: yarn check-format
+        run: pnpm check-format
 
       - name: Type Check JavaScript Wrapper
-        run: yarn check-types
+        run: pnpm check-types
 
       - name: Test JavaScript Wrapper
         env:
           # binary is downloaded to root of repository
           LIB_ANONCREDS_PATH: ../../
-        run: yarn test
-
-      - name: Set NPM config
-        if: |
-          github.event_name == 'release' ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-wrappers == 'true')
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
-          echo "registry=https://registry.npmjs.org/" >> .npmrc
-          echo "always-auth=true" >> .npmrc
+        run: pnpm test
 
       - name: Publish JavaScript Wrapper
         if: |
           github.event_name == 'release' ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-wrappers == 'true')
-        run: npx lerna publish from-package --no-push --no-private --yes --no-git-tag-version
+        run: |
+          if [[ $(cat lerna.json | grep version | head -1 | grep dev) ]]; then
+            npx lerna publish from-package --no-push --no-private --yes --no-git-tag-version --dist-tag=alpha
+          else
+            npx lerna publish from-package --no-push --no-private --yes --no-git-tag-version
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 
   build-py:
     name: Build Python
     needs: [build-release]
 
+    env:
+      PYTHON_VERSION: "3.8"
+
     strategy:
       matrix:
         include:
           - runner: anoncreds-ubuntu-latest
-            os: ubuntu-x86_64
-            library: library-linux-x86_64
+            architecture: linux-aarch64
+            plat-name: manylinux2014_aarch64
+          - runner: anoncreds-ubuntu-latest
+            architecture: linux-x86_64
             plat-name: manylinux2014_x86_64
-          - runner: anoncreds-windows-latest
-            os: windows-x86_64
-            library: library-windows-x86_64
-            plat-name: win_amd64
           - runner: macos-latest
-            os: macos-x86_64
-            library: library-darwin-x86_64
-            plat-name: macosx_10_9_universal2 # macosx_10_9_x86_64
+            architecture: darwin-universal
+            plat-name: macosx_10_9_universal2
+          - runner: anoncreds-windows-latest
+            architecture: windows-x86_64
+            plat-name: win_amd64
 
     runs-on: ${{ matrix.runner }}
 
@@ -261,53 +283,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine auditwheel
+
       - name: Fetch library artifacts
         uses: actions/download-artifact@v3
         with:
-          name: ${{matrix.library}}
+          name: library-${{ matrix.architecture }}
           path: wrappers/python/anoncreds/
 
-      - name: Build python package
+      - name: Build wheel package
         run: |
           python setup.py bdist_wheel --python-tag=py3 --plat-name=${{ matrix.plat-name }}
         working-directory: wrappers/python
 
-      - name: Test python package
+      - if: ${{ matrix.architecture != 'linux-aarch64' }}
+        name: Test python package
         shell: sh
         run: |
           cd wrappers/python
-          pip install --upgrade pip
           pip install dist/*
           python -m demo.test
-      - if: "runner.os == 'Linux'"
-        name: Auditwheel
-        run: auditwheel show wrappers/python/dist/*
 
-      - name: Upload python package
-        uses: actions/upload-artifact@v3
-        with:
-          name: python-${{ runner.os }}
-          path: wrappers/python/dist/*
+      - if: ${{ runner.os == 'Linux' }}
+        name: Audit wheel
+        run: |
+          auditwheel show wrappers/python/dist/* | tee auditwheel.log
+          grep -q manylinux_2_17_ auditwheel.log
 
       - if: |
           (github.event_name == 'release' ||
             (github.event_name == 'workflow_dispatch' &&
-              github.event.inputs.publish == 'true'))
+              github.event.inputs.publish-wrappers == 'true'))
         name: Publish python package
+        working-directory: wrappers/python
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_ANONCREDS }}
         run: |
-          twine upload --repository testpypi --skip-existing wrappers/python/dist/*
+          twine upload --repository pypi --skip-existing dist/*
 
   build-android-libraries:
     name: Build Android Libraries
@@ -329,6 +350,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.RUST_VERSION }}
           targets: ${{ matrix.target }}
 
       - name: Cache cargo resources
@@ -336,7 +358,7 @@ jobs:
 
       - name: Build
         run: |
-          cargo install --bins --git https://github.com/rust-embedded/cross --tag v${{ env.CROSS_VERSION }} cross
+          cargo install --git https://github.com/cross-rs/cross --tag v${{ env.CROSS_VERSION }} cross
           cross build --release --target ${{ matrix.target }} --features=vendored
 
       - name: Upload artifacts
@@ -352,7 +374,7 @@ jobs:
     if: |
       (github.event_name == 'release' ||
       (github.event_name == 'workflow_dispatch' &&
-       github.event.inputs.publish == 'true'))
+       github.event.inputs.publish-binaries == 'true'))
     steps:
       - name: Fetch libraries
         uses: actions/download-artifact@v3
@@ -402,7 +424,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.architecture}}
-          path: target/${{matrix.architecture}}/release/libanoncreds.dylib
+          path: target/${{matrix.architecture}}/release/libanoncreds.a
 
   create-ios-xcframework:
     name: Create ios xcframework
@@ -411,12 +433,12 @@ jobs:
     if: |
       (github.event_name == 'release' ||
       (github.event_name == 'workflow_dispatch' &&
-       github.event.inputs.publish == 'true'))
+       github.event.inputs.publish-binaries == 'true'))
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Fetch dynamic libraries
+      - name: Fetch static libraries
         uses: actions/download-artifact@v3
       - run: >
           ./build-xcframework.sh aarch64-apple-ios \
@@ -448,7 +470,7 @@ jobs:
     if: |
       (github.event_name == 'release' ||
       (github.event_name == 'workflow_dispatch' &&
-       github.event.inputs.publish == 'true'))
+       github.event.inputs.publish-binaries == 'true'))
 
     steps:
       - name: Fetch Android libraries
@@ -468,10 +490,10 @@ jobs:
         with:
           command: c
           files: ./mobile
-          outPath: 'library-ios-android.tar.gz'
+          outPath: "library-ios-android.tar.gz"
 
       - name: Add library artifacts to release
         uses: svenstaro/upload-release-action@v2
         with:
           file: library-ios-android.tar.gz
-          asset_name: 'library-ios-android.tar.gz'
+          asset_name: "library-ios-android.tar.gz"

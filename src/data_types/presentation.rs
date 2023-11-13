@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 
+use crate::cl::Proof;
 use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
 
-use super::{cred_def::CredentialDefinitionId, rev_reg::RevocationRegistryId, schema::SchemaId};
+use super::{
+    cred_def::CredentialDefinitionId, rev_reg_def::RevocationRegistryDefinitionId, schema::SchemaId,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Presentation {
-    pub proof: ursa::cl::Proof,
+    pub proof: Proof,
     pub requested_proof: RequestedProof,
     pub identifiers: Vec<Identifier>,
 }
@@ -54,7 +57,7 @@ pub struct AttributeValue {
 pub struct Identifier {
     pub schema_id: SchemaId,
     pub cred_def_id: CredentialDefinitionId,
-    pub rev_reg_id: Option<RevocationRegistryId>,
+    pub rev_reg_id: Option<RevocationRegistryDefinitionId>,
     pub timestamp: Option<u64>,
 }
 

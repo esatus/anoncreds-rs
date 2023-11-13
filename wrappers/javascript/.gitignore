@@ -40,9 +40,6 @@ android.iml
 
 # node.js
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
 
 # BUCK
 buck-out/
@@ -51,3 +48,9 @@ android/app/libs
 android/keystores/debug.keystore
 
 **/native/mobile
+**/native/*.dll
+**/native/*.so
+**/native/*.dylib
+
+**/*-example/android
+**/*-example/ios

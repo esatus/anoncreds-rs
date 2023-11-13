@@ -1,4 +1,4 @@
-use super::tails::TailsReader;
+use crate::cl::{RevocationRegistry as CryptoRevocationRegistry, Witness};
 pub use crate::data_types::{
     cred_def::{CredentialDefinitionPrivate, CredentialKeyCorrectnessProof, SignatureType},
     cred_offer::CredentialOffer,
@@ -15,7 +15,6 @@ pub use crate::data_types::{
     schema::AttributeNames,
 };
 use crate::services::helpers::encode_credential_attribute;
-use crate::ursa::cl::{RevocationRegistry as CryptoRevocationRegistry, Witness};
 use crate::{
     error::{Error, ValidationError},
     invalid,
@@ -218,19 +217,19 @@ impl Validatable for CredentialRevocationState {
 pub struct CredentialRevocationConfig<'a> {
     pub reg_def: &'a RevocationRegistryDefinition,
     pub reg_def_private: &'a RevocationRegistryDefinitionPrivate,
+    pub status_list: &'a RevocationStatusList,
     pub registry_idx: u32,
-    pub tails_reader: TailsReader,
 }
 
 impl<'a> std::fmt::Debug for CredentialRevocationConfig<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "CredentialRevocationConfig {{ reg_def: {:?}, private: {:?}, idx: {}, reader: {:?} }}",
+            "CredentialRevocationConfig {{ reg_def: {:?}, private: {:?}, status_list: {:?}, idx: {} }}",
             self.reg_def,
             secret!(self.reg_def_private),
+            self.status_list,
             secret!(self.registry_idx),
-            self.tails_reader,
         )
     }
 }

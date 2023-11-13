@@ -1,6 +1,6 @@
+use crate::cl::{Issuer, RevocationRegistry as CryptoRevocationRegistry};
 use crate::data_types::cred_def::CredentialDefinitionId;
 use crate::data_types::issuer_id::IssuerId;
-use crate::data_types::rev_reg::{RevocationRegistryId, UrsaRevocationRegistry};
 use crate::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 use crate::data_types::schema::SchemaId;
 use crate::data_types::{
@@ -9,28 +9,22 @@ use crate::data_types::{
     rev_reg_def::{RevocationRegistryDefinitionValue, RevocationRegistryDefinitionValuePublicKeys},
     schema::Schema,
 };
-use crate::error::{Error, ErrorKind, Result, ValidationError};
+use crate::error::{Error, ErrorKind, Result};
 use crate::services::helpers::{
     build_credential_schema, build_credential_values, build_non_credential_schema,
 };
 use crate::types::{CredentialDefinitionConfig, CredentialRevocationConfig};
-use crate::ursa::cl::{
-    issuer::Issuer as CryptoIssuer, RevocationRegistryDelta as CryptoRevocationRegistryDelta,
-    Witness,
-};
 use crate::utils::validation::Validatable;
 use bitvec::bitvec;
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
-use super::tails::{TailsFileReader, TailsWriter};
+use super::tails::TailsWriter;
 use super::types::{
     AttributeNames, Credential, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
     CredentialOffer, CredentialRequest, CredentialValues, RegistryType,
     RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationStatusList,
     SignatureType,
 };
-
-const ACCUM_NO_ISSUED: &str = "1 0000000000000000000000000000000000000000000000000000000000000000 1 0000000000000000000000000000000000000000000000000000000000000000 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000 1 0000000000000000000000000000000000000000000000000000000000000000 1 0000000000000000000000000000000000000000000000000000000000000000";
 
 /// Create an Anoncreds schema according to the [Anoncreds v1.0
 /// specification - Schema](https://hyperledger.github.io/anoncreds-spec/#schema-publisher-publish-schema-object)
@@ -42,30 +36,29 @@ const ACCUM_NO_ISSUED: &str = "1 00000000000000000000000000000000000000000000000
 ///
 /// ```rust
 /// use anoncreds::issuer;
+/// use anoncreds::data_types::issuer_id::IssuerId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
 ///
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+///
 /// let schema = issuer::create_schema("schema name",
-///                                    "1.0", "did:web:xyz",
+///                                    "1.0", issuer_id,
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 /// ```
-pub fn create_schema<II>(
+pub fn create_schema(
     schema_name: &str,
     schema_version: &str,
-    issuer_id: II,
+    issuer_id: IssuerId,
     attr_names: AttributeNames,
-) -> Result<Schema>
-where
-    II: TryInto<IssuerId, Error = ValidationError>,
-{
+) -> Result<Schema> {
     trace!(
         "create_schema >>> schema_name: {}, schema_version: {}, attr_names: {:?}",
         schema_name,
         schema_version,
         attr_names,
     );
-    let issuer_id = issuer_id.try_into()?;
 
     let schema = Schema {
         name: schema_name.to_string(),
@@ -98,27 +91,32 @@ where
 /// use anoncreds::issuer;
 /// use anoncreds::types::CredentialDefinitionConfig;
 /// use anoncreds::types::SignatureType;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id,
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id,
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig::default()
 ///                                          ).expect("Unable to create Credential Definition");
 /// ```
-pub fn create_credential_definition<SI, II>(
-    schema_id: SI,
+pub fn create_credential_definition(
+    schema_id: SchemaId,
     schema: &Schema,
-    issuer_id: II,
+    issuer_id: IssuerId,
     tag: &str,
     signature_type: SignatureType,
     config: CredentialDefinitionConfig,
@@ -126,37 +124,33 @@ pub fn create_credential_definition<SI, II>(
     CredentialDefinition,
     CredentialDefinitionPrivate,
     CredentialKeyCorrectnessProof,
-)>
-where
-    SI: TryInto<SchemaId, Error = ValidationError>,
-    II: TryInto<IssuerId, Error = ValidationError>,
-{
+)> {
     trace!(
         "create_credential_definition >>> schema: {:?}, config: {:?}",
         schema,
         config
     );
-    let issuer_id = issuer_id.try_into()?;
-    let schema_id = schema_id.try_into()?;
 
     let credential_schema = build_credential_schema(&schema.attr_names.0)?;
     let non_credential_schema = build_non_credential_schema()?;
 
     let (credential_public_key, credential_private_key, correctness_proof) =
-        CryptoIssuer::new_credential_def(
+        Issuer::new_credential_def(
             &credential_schema,
             &non_credential_schema,
             config.support_revocation,
         )?;
 
+    // should be better to deconstruct the key than cloning it here
+    // as it's only being used here
     let cred_def = CredentialDefinition {
         schema_id,
         signature_type,
         issuer_id,
         tag: tag.to_owned(),
         value: CredentialDefinitionData {
-            primary: credential_public_key.get_primary_key()?.try_clone()?,
-            revocation: credential_public_key.get_revocation_key()?,
+            primary: credential_public_key.get_primary_key().try_clone()?,
+            revocation: credential_public_key.get_revocation_key().cloned(),
         },
     };
 
@@ -192,18 +186,25 @@ where
 /// use anoncreds::types::SignatureType;
 /// use anoncreds::types::RegistryType;
 /// use anoncreds::tails::TailsFileWriter;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def").expect("Invalid credential definition ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id,
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id.clone(),
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig {
@@ -214,8 +215,7 @@ where
 /// let mut tw = TailsFileWriter::new(None);
 /// let (rev_reg_def, rev_reg_def_priv) =
 ///     issuer::create_revocation_registry_def(&cred_def,
-///                                            "did:web:xyz/resource/cred-def",
-///                                            "did:web:xyz",
+///                                            cred_def_id,
 ///                                            "default-tag",
 ///                                            RegistryType::CL_ACCUM,
 ///                                            1000,
@@ -224,8 +224,7 @@ where
 /// ```
 pub fn create_revocation_registry_def<TW>(
     cred_def: &CredentialDefinition,
-    cred_def_id: impl TryInto<CredentialDefinitionId, Error = ValidationError>,
-    issuer_id: impl TryInto<IssuerId, Error = ValidationError>,
+    cred_def_id: CredentialDefinitionId,
     tag: &str,
     rev_reg_type: RegistryType,
     max_cred_num: u32,
@@ -239,14 +238,6 @@ where
 {
     trace!("create_revocation_registry >>> cred_def: {:?}, tag: {:?}, max_cred_num: {:?}, rev_reg_type: {:?}",
              cred_def, tag, max_cred_num, rev_reg_type);
-    let cred_def_id = cred_def_id.try_into()?;
-    let issuer_id = issuer_id.try_into()?;
-
-    if issuer_id != cred_def.issuer_id {
-        return Err(err_msg!(
-            "Issuer id must be the same as the issuer id in the credential definition"
-        ));
-    }
 
     let credential_pub_key = cred_def.get_public_key().map_err(err_map!(
         Unexpected,
@@ -254,9 +245,9 @@ where
     ))?;
 
     // NOTE: registry is created with issuance_by_default: false  and it is not used.
-    // The accum value in the registy is derived from issuance by default: false in `create_revocation_status_list`
+    // The accum value in the registry is derived from issuance by default: false in `create_revocation_status_list`
     let (revoc_key_pub, revoc_key_priv, _, mut rev_tails_generator) =
-        CryptoIssuer::new_revocation_registry_def(&credential_pub_key, max_cred_num, false)?;
+        Issuer::new_revocation_registry_def(&credential_pub_key, max_cred_num, false)?;
 
     let rev_keys_pub = RevocationRegistryDefinitionValuePublicKeys {
         accum_key: revoc_key_pub,
@@ -273,7 +264,7 @@ where
 
     let revoc_reg_def = RevocationRegistryDefinition {
         revoc_def_type: rev_reg_type,
-        issuer_id,
+        issuer_id: cred_def.issuer_id.clone(),
         tag: tag.to_string(),
         cred_def_id,
         value: revoc_reg_def_value,
@@ -305,18 +296,27 @@ where
 /// use anoncreds::types::SignatureType;
 /// use anoncreds::types::RegistryType;
 /// use anoncreds::tails::TailsFileWriter;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
+/// use anoncreds::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def",).expect("Invalid credential definition ID");
+/// let rev_reg_def_id = RevocationRegistryDefinitionId::new("did:web:xyz/resource/rev-reg-def").expect("Invalid revocation registry definition ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id,
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id.clone(),
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig {
@@ -327,8 +327,7 @@ where
 /// let mut tw = TailsFileWriter::new(None);
 /// let (rev_reg_def, rev_reg_def_priv) =
 ///     issuer::create_revocation_registry_def(&cred_def,
-///                                            "did:web:xyz/resource/cred-def",
-///                                            "did:web:xyz",
+///                                            cred_def_id,
 ///                                            "default-tag",
 ///                                            RegistryType::CL_ACCUM,
 ///                                            1000,
@@ -336,53 +335,37 @@ where
 ///                                            ).expect("Unable to create revocation registry");
 ///
 /// let rev_status_list =
-///     issuer::create_revocation_status_list("did:web:xyz/resource/rev-reg-def",
+///     issuer::create_revocation_status_list(&cred_def,
+///                                           rev_reg_def_id,
 ///                                           &rev_reg_def,
-///                                           "did:web:xyz",
-///                                           None,
-///                                           true
+///                                           &rev_reg_def_priv,
+///                                           true,
+///                                           None
 ///                                           ).expect("Unable to create revocation status list");
 /// ```
 pub fn create_revocation_status_list(
-    rev_reg_def_id: impl TryInto<RevocationRegistryDefinitionId, Error = ValidationError>,
+    cred_def: &CredentialDefinition,
+    rev_reg_def_id: RevocationRegistryDefinitionId,
     rev_reg_def: &RevocationRegistryDefinition,
-    issuer_id: impl TryInto<IssuerId, Error = ValidationError>,
-    timestamp: Option<u64>,
+    rev_reg_priv: &RevocationRegistryDefinitionPrivate,
     issuance_by_default: bool,
+    timestamp: Option<u64>,
 ) -> Result<RevocationStatusList> {
-    let rev_reg = UrsaRevocationRegistry::try_from(ACCUM_NO_ISSUED)?;
     let max_cred_num = rev_reg_def.value.max_cred_num;
-    let rev_reg_def_id = rev_reg_def_id.try_into()?;
-    let issuer_id = issuer_id.try_into()?;
-    let mut rev_reg: ursa::cl::RevocationRegistry = rev_reg.try_into()?;
-
-    if issuer_id != rev_reg_def.issuer_id {
-        return Err(err_msg!(
-            "Issuer id must be the same as the issuer id in the revocation registry definition"
-        ));
-    }
-
-    let list = if issuance_by_default {
-        let tails_reader = TailsFileReader::new_tails_reader(&rev_reg_def.value.tails_location);
-        let issued = (1..=max_cred_num).collect::<BTreeSet<_>>();
-
-        CryptoIssuer::update_revocation_registry(
-            &mut rev_reg,
-            max_cred_num,
-            issued,
-            BTreeSet::new(),
-            &tails_reader,
-        )?;
-        bitvec![0; max_cred_num as usize ]
-    } else {
-        bitvec![1; max_cred_num as usize ]
-    };
+    let cred_pub_key = cred_def.get_public_key()?;
+    let rev_reg = CryptoRevocationRegistry::initial_state(
+        &cred_pub_key,
+        &rev_reg_priv.value,
+        max_cred_num,
+        issuance_by_default,
+    )?;
+    let list = bitvec![if issuance_by_default { 0 } else { 1 }; max_cred_num as usize ];
 
     RevocationStatusList::new(
         Some(rev_reg_def_id.to_string().as_str()),
-        issuer_id,
+        rev_reg_def.issuer_id.clone(),
         list,
-        Some(rev_reg.try_into()?),
+        Some(rev_reg),
         timestamp,
     )
 }
@@ -400,18 +383,27 @@ pub fn create_revocation_status_list(
 /// use anoncreds::types::SignatureType;
 /// use anoncreds::types::RegistryType;
 /// use anoncreds::tails::TailsFileWriter;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
+/// use anoncreds::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def",).expect("Invalid credential definition ID");
+/// let rev_reg_def_id = RevocationRegistryDefinitionId::new("did:web:xyz/resource/rev-reg-def").expect("Invalid revocation registry definition ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id,
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id.clone(),
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig {
@@ -422,19 +414,19 @@ pub fn create_revocation_status_list(
 /// let mut tw = TailsFileWriter::new(None);
 /// let (rev_reg_def, rev_reg_def_priv) =
 ///     issuer::create_revocation_registry_def(&cred_def,
-///                                            "did:web:xyz/resource/cred-def",
-///                                            "did:web:xyz",
+///                                            cred_def_id,
 ///                                            "default-tag",
 ///                                            RegistryType::CL_ACCUM,
 ///                                            1000,
 ///                                            &mut tw
 ///                                            ).expect("Unable to create revocation registry");
 ///
-/// let rev_status_list = issuer::create_revocation_status_list("did:web:xyz/resource/rev-reg-def",
+/// let rev_status_list = issuer::create_revocation_status_list(&cred_def,
+///                                                             rev_reg_def_id,
 ///                                                             &rev_reg_def,
-///                                                             "did:web:xyz",
-///                                                             None,
-///                                                             true
+///                                                             &rev_reg_def_priv,
+///                                                             true,
+///                                                             None
 ///                                                             ).expect("Unable to create revocation status list");
 ///
 /// let updated_rev_status_list = issuer::update_revocation_status_list_timestamp_only(1000,
@@ -459,24 +451,35 @@ pub fn update_revocation_status_list_timestamp_only(
 /// # Example
 ///
 /// ```rust
+/// use std::collections::BTreeSet;
+///
 /// use anoncreds::issuer;
 /// use anoncreds::types::CredentialDefinitionConfig;
 /// use anoncreds::types::SignatureType;
 /// use anoncreds::types::RegistryType;
 /// use anoncreds::tails::TailsFileWriter;
-/// use std::collections::BTreeSet;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
+/// use anoncreds::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def",).expect("Invalid credential definition ID");
+/// let rev_reg_def_id = RevocationRegistryDefinitionId::new("did:web:xyz/resource/rev-reg-def").expect("Invalid revocation registry definition ID");
+
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id,
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id.clone(),
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig {
@@ -487,37 +490,41 @@ pub fn update_revocation_status_list_timestamp_only(
 /// let mut tw = TailsFileWriter::new(None);
 /// let (rev_reg_def, rev_reg_def_priv) =
 ///     issuer::create_revocation_registry_def(&cred_def,
-///                                            "did:web:xyz/resource/cred-def",
-///                                            "did:web:xyz",
+///                                            cred_def_id,
 ///                                            "default-tag",
 ///                                            RegistryType::CL_ACCUM,
 ///                                            1000,
 ///                                            &mut tw
 ///                                            ).expect("Unable to create revocation registry");
 ///
-/// let rev_status_list = issuer::create_revocation_status_list("did:web:xyz/resource/rev-reg-def",
+/// let rev_status_list = issuer::create_revocation_status_list(&cred_def,
+///                                                             rev_reg_def_id,
 ///                                                             &rev_reg_def,
-///                                                             "did:web:xyz",
-///                                                             None,
-///                                                             true
+///                                                             &rev_reg_def_priv,
+///                                                             true,
+///                                                             None
 ///                                                             ).expect("Unable to create revocation status list");
 ///
 /// let mut issued: BTreeSet<u32> = BTreeSet::new();
 /// issued.insert(1);
 ///
-/// let updated_rev_status_list = issuer::update_revocation_status_list(None,
+/// let updated_rev_status_list = issuer::update_revocation_status_list(&cred_def,
+///                                                                     &rev_reg_def,
+///                                                                     &rev_reg_def_priv,
+///                                                                     &rev_status_list,
 ///                                                                     Some(issued),
 ///                                                                     None,
-///                                                                     &rev_reg_def,
-///                                                                     &rev_status_list
+///                                                                     None
 ///                                                                     ).expect("Unable to update revocation status list");
 /// ```
 pub fn update_revocation_status_list(
-    timestamp: Option<u64>,
+    cred_def: &CredentialDefinition,
+    rev_reg_def: &RevocationRegistryDefinition,
+    rev_reg_priv: &RevocationRegistryDefinitionPrivate,
+    current_list: &RevocationStatusList,
     issued: Option<BTreeSet<u32>>,
     revoked: Option<BTreeSet<u32>>,
-    rev_reg_def: &RevocationRegistryDefinition,
-    current_list: &RevocationStatusList,
+    timestamp: Option<u64>,
 ) -> Result<RevocationStatusList> {
     let mut new_list = current_list.clone();
     let issued = issued.map(|i_list| {
@@ -534,22 +541,23 @@ pub fn update_revocation_status_list(
             .collect::<BTreeSet<_>>()
     });
 
-    let rev_reg_opt: Option<ursa::cl::RevocationRegistry> = current_list.try_into()?;
+    let rev_reg_opt: Option<CryptoRevocationRegistry> = current_list.into();
     let mut rev_reg = rev_reg_opt.ok_or_else(|| {
         Error::from_msg(
             ErrorKind::Unexpected,
             "Require Accumulator Value to update Rev Status List",
         )
     })?;
-    let tails_reader = TailsFileReader::new_tails_reader(&rev_reg_def.value.tails_location);
+    let cred_pub_key = cred_def.get_public_key()?;
     let max_cred_num = rev_reg_def.value.max_cred_num;
 
-    CryptoIssuer::update_revocation_registry(
+    Issuer::update_revocation_registry(
         &mut rev_reg,
         max_cred_num,
         issued.clone().unwrap_or_default(),
         revoked.clone().unwrap_or_default(),
-        &tails_reader,
+        &cred_pub_key,
+        &rev_reg_priv.value,
     )?;
     new_list.update(Some(rev_reg), issued, revoked, timestamp)?;
 
@@ -567,36 +575,41 @@ pub fn update_revocation_status_list(
 /// use anoncreds::issuer;
 /// use anoncreds::types::CredentialDefinitionConfig;
 /// use anoncreds::types::SignatureType;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def",).expect("Invalid credential definition ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id.clone(),
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id,
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig::default()
 ///                                          ).expect("Unable to create Credential Definition");
 ///
 /// let credential_offer =
-///     issuer::create_credential_offer("did:web:xyz/resource/schema",
-///                                     "did:web:xyz/resource/cred-def",
+///     issuer::create_credential_offer(schema_id,
+///                                     cred_def_id,
 ///                                     &key_correctness_proof,
 ///                                     ).expect("Unable to create Credential Offer");
 /// ```
 pub fn create_credential_offer(
-    schema_id: impl TryInto<SchemaId, Error = ValidationError>,
-    cred_def_id: impl TryInto<CredentialDefinitionId, Error = ValidationError>,
+    schema_id: SchemaId,
+    cred_def_id: CredentialDefinitionId,
     correctness_proof: &CredentialKeyCorrectnessProof,
 ) -> Result<CredentialOffer> {
-    let schema_id = schema_id.try_into()?;
-    let cred_def_id = cred_def_id.try_into()?;
     trace!("create_credential_offer >>> cred_def_id: {:?}", cred_def_id);
 
     let nonce = Nonce::new().map_err(err_map!(Unexpected, "Error creating nonce"))?;
@@ -630,26 +643,33 @@ pub fn create_credential_offer(
 ///
 /// use anoncreds::types::CredentialDefinitionConfig;
 /// use anoncreds::types::SignatureType;
+/// use anoncreds::data_types::issuer_id::IssuerId;
+/// use anoncreds::data_types::schema::SchemaId;
+/// use anoncreds::data_types::cred_def::CredentialDefinitionId;
 ///
 /// let attribute_names: &[&str] = &["name", "age"];
+/// let issuer_id = IssuerId::new("did:web:xyz").expect("Invalid issuer ID");
+/// let schema_id = SchemaId::new("did:web:xyz/resource/schema").expect("Invalid schema ID");
+/// let cred_def_id = CredentialDefinitionId::new("did:web:xyz/resource/cred-def",).expect("Invalid credential definition ID");
+///
 /// let schema = issuer::create_schema("schema name",
 ///                                    "1.0",
-///                                    "did:web:xyz",
+///                                    issuer_id.clone(),
 ///                                    attribute_names.into()
 ///                                    ).expect("Unable to create schema");
 ///
 /// let (cred_def, cred_def_priv, key_correctness_proof) =
-///     issuer::create_credential_definition("did:web:xyz/resource/schema",
+///     issuer::create_credential_definition(schema_id.clone(),
 ///                                          &schema,
-///                                          "did:web:xyz",
+///                                          issuer_id,
 ///                                          "default-tag",
 ///                                          SignatureType::CL,
 ///                                          CredentialDefinitionConfig::default()
 ///                                          ).expect("Unable to create Credential Definition");
 ///
 /// let credential_offer =
-///     issuer::create_credential_offer("did:web:xyz/resource/schema",
-///                                     "did:web:xyz/resource/cred-def",
+///     issuer::create_credential_offer(schema_id,
+///                                     cred_def_id,
 ///                                     &key_correctness_proof,
 ///                                     ).expect("Unable to create Credential Offer");
 ///
@@ -675,8 +695,6 @@ pub fn create_credential_offer(
 ///                               &credential_offer,
 ///                               &credential_request,
 ///                               credential_values.into(),
-///                               None,
-///                               None,
 ///                               None
 ///                               ).expect("Unable to create credential");
 /// ```
@@ -687,8 +705,6 @@ pub fn create_credential(
     cred_offer: &CredentialOffer,
     cred_request: &CredentialRequest,
     cred_values: CredentialValues,
-    rev_reg_id: Option<RevocationRegistryId>,
-    rev_status_list: Option<&RevocationStatusList>,
     revocation_config: Option<CredentialRevocationConfig>,
 ) -> Result<Credential> {
     trace!("create_credential >>> cred_def: {:?}, cred_def_private: {:?}, cred_offer.nonce: {:?}, cred_request: {:?},\
@@ -696,33 +712,31 @@ pub fn create_credential(
             cred_def, secret!(&cred_def_private), &cred_offer.nonce, &cred_request, secret!(&cred_values), revocation_config,
             );
 
-    let cred_public_key = cred_def.get_public_key().map_err(err_map!(
-        Unexpected,
-        "Error fetching public key from credential definition"
-    ))?;
+    let cred_public_key: anoncreds_clsignatures::CredentialPublicKey =
+        cred_def.get_public_key().map_err(err_map!(
+            Unexpected,
+            "Error fetching public key from credential definition"
+        ))?;
     let credential_values = build_credential_values(&cred_values.0, None)?;
 
-    let (credential_signature, signature_correctness_proof, rev_reg, witness) =
-        if let (Some(revocation_config), Some(rev_status_list)) =
-            (revocation_config, rev_status_list)
-        {
-            let rev_reg_def = &revocation_config.reg_def.value;
-            let rev_reg: Option<UrsaRevocationRegistry> = rev_status_list.into();
-            let rev_reg = rev_reg.ok_or_else(|| {
+    let (credential_signature, signature_correctness_proof, rev_reg_id, rev_reg, witness) =
+        if let Some(rev_config) = revocation_config {
+            let rev_reg_def: &RevocationRegistryDefinitionValue = &rev_config.reg_def.value;
+            let rev_reg: Option<CryptoRevocationRegistry> = rev_config.status_list.into();
+            let mut rev_reg = rev_reg.ok_or_else(|| {
                 err_msg!(
                     Unexpected,
                     "RevocationStatusList should have accumulator value"
                 )
             })?;
 
-            let mut rev_reg: ursa::cl::RevocationRegistry = rev_reg.try_into()?;
-
-            let status = rev_status_list
-                .get(revocation_config.registry_idx as usize)
+            let status = rev_config
+                .status_list
+                .get(rev_config.registry_idx as usize)
                 .ok_or_else(|| {
                     err_msg!(
                         "Revocation status list does not have the index {}",
-                        revocation_config.registry_idx
+                        rev_config.registry_idx
                     )
                 })?;
 
@@ -740,8 +754,8 @@ pub fn create_credential(
             // `issuance_by_default`.
             let issuance_by_default = !status;
 
-            let (credential_signature, signature_correctness_proof, delta) =
-                CryptoIssuer::sign_credential_with_revoc(
+            let (credential_signature, signature_correctness_proof, witness, _opt_delta) =
+                Issuer::sign_credential_with_revoc(
                     &cred_request.entropy()?,
                     &cred_request.blinded_ms,
                     &cred_request.blinded_ms_correctness_proof,
@@ -750,41 +764,21 @@ pub fn create_credential(
                     &credential_values,
                     &cred_public_key,
                     &cred_def_private.value,
-                    revocation_config.registry_idx,
+                    rev_config.registry_idx,
                     rev_reg_def.max_cred_num,
                     issuance_by_default,
                     &mut rev_reg,
-                    &revocation_config.reg_def_private.value,
-                    &revocation_config.tails_reader,
+                    &rev_config.reg_def_private.value,
                 )?;
-
-            let witness = {
-                // `delta` is None if `issuance_type == issuance_by_default`
-                // So in this case the delta goes from none to the new one,
-                // which is all issued (by default) and non is revoked
-                //
-                // Note: delta is actually never used but we keep it so it is inline with
-                // ursa::cl::Witness type
-                let rev_reg_delta = delta.unwrap_or_else(|| {
-                    let empty = HashSet::new();
-                    CryptoRevocationRegistryDelta::from_parts(None, &rev_reg, &empty, &empty)
-                });
-                Witness::new(
-                    revocation_config.registry_idx,
-                    rev_reg_def.max_cred_num,
-                    issuance_by_default,
-                    &rev_reg_delta,
-                    &revocation_config.tails_reader,
-                )?
-            };
             (
                 credential_signature,
                 signature_correctness_proof,
+                rev_config.status_list.id(),
                 Some(rev_reg),
                 Some(witness),
             )
         } else {
-            let (signature, correctness_proof) = CryptoIssuer::sign_credential(
+            let (signature, correctness_proof) = Issuer::sign_credential(
                 &cred_request.entropy()?,
                 &cred_request.blinded_ms,
                 &cred_request.blinded_ms_correctness_proof,
@@ -794,7 +788,7 @@ pub fn create_credential(
                 &cred_public_key,
                 &cred_def_private.value,
             )?;
-            (signature, correctness_proof, None, None)
+            (signature, correctness_proof, None, None, None)
         };
 
     let credential = Credential {
@@ -825,13 +819,15 @@ mod tests {
     #[test]
     fn test_issuer_id_equal_in_revocation_registry_definiton_and_credential_definition(
     ) -> Result<()> {
-        let credential_definition_issuer_id = "sample:id";
-        let revocation_registry_definition_issuer_id = credential_definition_issuer_id;
-
+        let issuer_id = "sample:uri".try_into()?;
+        let schema_id = "schema:id".try_into()?;
+        let cred_def_id = "sample:uri".try_into()?;
+        let credential_definition_issuer_id: IssuerId = "sample:id".try_into()?;
         let attr_names = AttributeNames::from(vec!["name".to_owned(), "age".to_owned()]);
-        let schema = create_schema("schema:name", "1.0", "sample:uri", attr_names)?;
+
+        let schema = create_schema("schema:name", "1.0", issuer_id, attr_names)?;
         let cred_def = create_credential_definition(
-            "schema:id",
+            schema_id,
             &schema,
             credential_definition_issuer_id,
             "default",
@@ -842,8 +838,7 @@ mod tests {
         )?;
         let res = create_revocation_registry_def(
             &cred_def.0,
-            "sample:uri",
-            revocation_registry_definition_issuer_id,
+            cred_def_id,
             "default",
             RegistryType::CL_ACCUM,
             1,
@@ -851,38 +846,6 @@ mod tests {
         );
 
         assert!(res.is_ok());
-        Ok(())
-    }
-
-    #[test]
-    fn test_issuer_id_unequal_in_revocation_registry_definiton_and_credential_definition(
-    ) -> Result<()> {
-        let credential_definition_issuer_id = "sample:id";
-        let revocation_registry_definition_issuer_id = "another:id";
-
-        let attr_names = AttributeNames::from(vec!["name".to_owned(), "age".to_owned()]);
-        let schema = create_schema("schema:name", "1.0", "sample:uri", attr_names)?;
-        let cred_def = create_credential_definition(
-            "schema:id",
-            &schema,
-            credential_definition_issuer_id,
-            "default",
-            SignatureType::CL,
-            CredentialDefinitionConfig {
-                support_revocation: true,
-            },
-        )?;
-        let res = create_revocation_registry_def(
-            &cred_def.0,
-            "sample:uri",
-            revocation_registry_definition_issuer_id,
-            "default",
-            RegistryType::CL_ACCUM,
-            1,
-            &mut TailsFileWriter::new(None),
-        );
-
-        assert!(res.is_err());
         Ok(())
     }
 
