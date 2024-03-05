@@ -3,6 +3,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
+using static anoncreds_rs_dotnet.Models.Structures;
 
 namespace anoncreds_rs_dotnet_test.Anoncreds
 {
@@ -33,6 +34,23 @@ namespace anoncreds_rs_dotnet_test.Anoncreds
 
             //Assert
             _ = actual.Should().NotBeEmpty();
+        }
+        #endregion
+
+        #region
+        [Test, TestCase(TestName = "SetBufferFreeAsync() call returns errorcode 0.")]
+        public async Task SetBufferFreeAsyncWorks()
+        {
+            //Arrange
+            string testText = "testmessage";
+
+            ByteBuffer testBuffer1 = ByteBuffer.Create(testText);
+
+            await ModApi.SetBufferFreeAsync(testBuffer1);
+
+            //Assert
+            _ = testBuffer1.len.Should().Be(0);
+
         }
         #endregion
     }

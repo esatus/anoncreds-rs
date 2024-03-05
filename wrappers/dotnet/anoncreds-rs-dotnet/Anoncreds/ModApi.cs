@@ -1,10 +1,18 @@
 ﻿using anoncreds_rs_dotnet.Models;
 using System.Threading.Tasks;
+using static anoncreds_rs_dotnet.Models.Structures;
 
 namespace anoncreds_rs_dotnet.Anoncreds
 {
     public static class ModApi
-    {
+    { 
+        public static Task SetBufferFreeAsync(ByteBuffer secretBytes)
+        {
+            NativeMethods.anoncreds_buffer_free(secretBytes);
+            return Task.CompletedTask;
+        }
+
+
         /// <summary>
         /// Sets the default logger.
         /// </summary>

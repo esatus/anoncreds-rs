@@ -17,7 +17,7 @@ namespace anoncreds_rs_dotnet.Anoncreds
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         internal static extern string anoncreds_version();
         [DllImport(Consts.CREDX_LIB_NAME, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        internal static extern int anoncreds_buffer_free(ByteBuffer byteBuffer);
+        internal static extern void anoncreds_buffer_free(ByteBuffer byteBuffer);
         #endregion
 
         #region PresReq

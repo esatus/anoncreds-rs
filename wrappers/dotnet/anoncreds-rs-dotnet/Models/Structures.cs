@@ -7,7 +7,7 @@ using System.Text;
 
 namespace anoncreds_rs_dotnet.Models
 {
-    internal class Structures
+    public static class Structures
     {
         [StructLayout(LayoutKind.Sequential)]
         public unsafe struct FfiStrList
